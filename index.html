@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a0e1a">
 <meta name="description" content="VozScribe Pro — Transcripción de reuniones con identificación de hablantes y resúmenes automáticos.">
-<title>VozScribe Pro · Dictado inteligente</title>
+<title>VozScribe Pro · Dictado inteligente</title><!-- v1.1 licencias -->
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -286,6 +286,12 @@ main{flex:1;max-width:1060px;width:100%;margin:0 auto;padding:0 22px 40px}
       <p>Con una API key, el botón <b>“Mejorar con IA”</b> reprocesa el audio grabado con diarización profesional (Deepgram nova-2, language=es). Sin key, la app funciona 100% local y gratuita.</p>
     </div>
     <div class="setrow">
+      <label>Licencia VozScribe Pro</label>
+      <input type="text" id="setLic" placeholder="Pega aquí tu clave de licencia Pro">
+      <p id="licEstado"></p>
+      <p>El plan Pro desbloquea: hablantes ilimitados, acta completa (Markdown/JSON), historial de sesiones, descarga de audio y modo IA.</p>
+    </div>
+    <div class="setrow">
       <label>Datos</label>
       <div class="inline">
         <button class="btn sm" id="btnExportAll">⬇ Exportar todos los datos</button>
@@ -351,6 +357,38 @@ let audioCtx=null,analyser=null,micStream=null,mediaRec=null,audioChunks=[],audi
 let frames=[];                                   // {t,f0,cent,rms}
 let lastFinalTime=0;
 let currentSummary=null;
+
+/* =====================================================================
+   LICENCIAS PRO (verificación offline con firma ECDSA P-256)
+===================================================================== */
+const PUB_JWK={"kty":"EC","crv":"P-256","x":"8_fwu098VBJrfbj7FUDKfilV8I9JnZxov4Jr3gjYiLs","y":"Sp4MYGS9kfMgw70EuULoMSCFucq4rW8uR70Xsp3KOLU"};
+const LIMITE_HABLANTES_GRATIS=2;
+let pro=null; // payload de la licencia si es válida
+const b64d=s=>Uint8Array.from(atob(s.replace(/-/g,"+").replace(/_/g,"/").padEnd(Math.ceil(s.length/4)*4,"=")),c=>c.charCodeAt(0));
+async function verifyLicense(key){
+  try{
+    if(!key)return null;
+    const parts=key.trim().split(".");
+    if(parts.length!==2)return null;
+    const payload=JSON.parse(new TextDecoder().decode(b64d(parts[0])));
+    const pub=await crypto.subtle.importKey("jwk",PUB_JWK,{name:"ECDSA",namedCurve:"P-256"},false,["verify"]);
+    const ok=await crypto.subtle.verify({name:"ECDSA",hash:"SHA-256"},pub,b64d(parts[1]),new TextEncoder().encode(parts[0]));
+    if(!ok||payload.plan!=="pro")return null;
+    if(payload.exp&&Date.now()>payload.exp)return null;
+    return payload;
+  }catch(e){return null}
+}
+function upsell(msg){
+  toast("🔒 "+msg+" — Hazte Pro en la página de venta");
+}
+function updateProUI(){
+  const el=$("#licEstado");
+  if(el)el.innerHTML=pro
+    ?`<span style="color:var(--ok)">✅ Licencia Pro activa</span> <span style="color:var(--mut)">(${esc(pro.email||"")})</span>`
+    :`<span style="color:var(--warn)">Plan gratuito</span> <span style="color:var(--mut)">— 2 hablantes, exportación TXT</span>`;
+  const badge=$("#statusTxt");
+  if(badge&&!recording)badge.textContent=pro?"Listo · PRO":"Listo · Gratis";
+}
 
 /* ---------------- pestañas ---------------- */
 $$("nav button").forEach(b=>b.onclick=()=>{
@@ -634,6 +672,7 @@ function renderSpeakers(){
 }
 let calColor=COLORS[0],calTarget=null;
 $("#btnAddSpk").onclick=()=>{
+  if(!pro&&speakers.length>=LIMITE_HABLANTES_GRATIS){upsell("El plan gratuito incluye "+LIMITE_HABLANTES_GRATIS+" hablantes");return}
   $("#calOverlay").classList.remove("hide");
   $("#calStep1").classList.remove("hide");$("#calStep2").classList.add("hide");
   $("#calName").value="";
@@ -822,18 +861,20 @@ $("#btnCopy").onclick=async()=>{
   await navigator.clipboard.writeText(plainTranscript());toast("📋 Transcripción copiada");
 };
 $("#btnTxt").onclick=()=>{if(!segments.length){toast("Nada que exportar");return}download("vozscribe-"+stamp()+".txt",plainTranscript())};
-const dlActa=()=>{if(!segments.length){toast("Nada que exportar");return}download("acta-"+stamp()+".md",buildActa(),"text/markdown")};
+const dlActa=()=>{if(!pro){upsell("El acta completa es una función Pro");return}if(!segments.length){toast("Nada que exportar");return}download("acta-"+stamp()+".md",buildActa(),"text/markdown")};
 $("#btnMd").onclick=dlActa;$("#btnMd2").onclick=dlActa;
 $("#btnJson").onclick=()=>{
+  if(!pro){upsell("La exportación JSON es una función Pro");return}
   if(!segments.length){toast("Nada que exportar");return}
   download("vozscribe-"+stamp()+".json",JSON.stringify({fecha:new Date().toISOString(),duracion:elapsed,hablantes:speakers.map(s=>({id:s.id,name:s.name,color:s.color})),segmentos:segments,resumen:currentSummary},null,2),"application/json");
 };
-$("#btnAudio").onclick=()=>{if(audioBlob)download("audio-"+stamp()+".webm",audioBlob)};
+$("#btnAudio").onclick=()=>{if(!pro){upsell("La descarga de audio es una función Pro");return}if(audioBlob)download("audio-"+stamp()+".webm",audioBlob)};
 
 /* =====================================================================
    HISTORIAL
 ===================================================================== */
 $("#btnSave").onclick=()=>{
+  if(!pro){upsell("El historial de sesiones es una función Pro");return}
   if(!segments.length){toast("Nada que guardar");return}
   const name=prompt("Nombre de la sesión:","Reunión "+new Date().toLocaleDateString("es-ES")+" "+new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"}));
   if(name===null)return;
@@ -873,6 +914,7 @@ function renderHistory(){
    MEJORAR CON IA (Deepgram diarización / OpenAI Whisper)
 ===================================================================== */
 $("#btnAI").onclick=async()=>{
+  if(!pro){upsell("El modo IA es una función Pro");return}
   if(!settings.key){toast("⚙️ Configura una API key en Ajustes para usar la IA");return}
   if(!audioBlob){toast("Primero graba una sesión (el audio se procesa al detener)");return}
   $("#btnAI").disabled=true;$("#btnAI").textContent="🤖 Procesando…";
@@ -911,10 +953,17 @@ function mapAISpeaker(n){
 function loadSettings(){
   $("#setLang").value=settings.lang;$("#setSens").value=settings.sens;
   $("#setProv").value=settings.prov;$("#setKey").value=settings.key;
+  $("#setLic").value=settings.license||"";
 }
-$("#btnSaveSet").onclick=()=>{
-  settings={lang:$("#setLang").value,sens:$("#setSens").value,prov:$("#setProv").value,key:$("#setKey").value.trim()};
-  LS.set("vs_settings",settings);toast("⚙️ Ajustes guardados");
+$("#btnSaveSet").onclick=async()=>{
+  settings={lang:$("#setLang").value,sens:$("#setSens").value,prov:$("#setProv").value,key:$("#setKey").value.trim(),license:$("#setLic").value.trim()};
+  LS.set("vs_settings",settings);
+  const prev=!!pro;
+  pro=await verifyLicense(settings.license);
+  updateProUI();
+  if(settings.license&&!pro)toast("⚠️ Ajustes guardados, pero la licencia no es válida o está caducada");
+  else if(pro&&!prev)toast("🎉 ¡Licencia Pro activada! Todas las funciones desbloqueadas");
+  else toast("⚙️ Ajustes guardados");
 };
 $("#btnExportAll").onclick=()=>download("vozscribe-backup-"+stamp()+".json",
   JSON.stringify({profiles:speakers,sessions:LS.get("vs_sessions",[]),settings:{lang:settings.lang,sens:settings.sens,prov:settings.prov,key:"***"}},null,2),"application/json");
@@ -926,6 +975,7 @@ $("#btnWipe").onclick=()=>{
 
 /* ---------------- init ---------------- */
 renderSpeakers();loadSettings();
+verifyLicense(settings.license).then(p=>{pro=p;updateProUI()});
 if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0){
   navigator.serviceWorker.register("sw.js").catch(function(){});
 }
