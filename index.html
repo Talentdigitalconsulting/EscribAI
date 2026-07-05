@@ -186,6 +186,15 @@ main{flex:1;max-width:1060px;width:100%;margin:0 auto;padding:0 22px 40px}
 <main>
 <!-- ============ GRABAR ============ -->
 <div class="tabpane" id="tab-record">
+  <div class="card" style="margin-bottom:14px">
+    <div class="spkbar">
+      <b style="font-size:13px">🏛️ Organización:</b>
+      <select id="orgSel" style="width:auto;min-width:170px;padding:7px 10px;font-size:12.5px;border-radius:10px"></select>
+      <button class="btn sm" id="btnOrgNew">＋ Nueva</button>
+      <button class="btn sm" id="btnOrgEdit">✏️ Editar</button>
+      <button class="btn sm pri" id="btnEnviar" title="Enviar el acta por email a los destinatarios de la organización seleccionada">📧 Enviar acta</button>
+    </div>
+  </div>
   <div class="card">
     <div class="spkbar" id="spkbar">
       <button class="btn sm pri" id="btnAddSpk">＋ Añadir hablante</button>
@@ -216,6 +225,8 @@ main{flex:1;max-width:1060px;width:100%;margin:0 auto;padding:0 22px 40px}
         <option value="clinica">🩺 Consulta profesional</option>
         <option value="formacion">🎓 Clase / Formación</option>
         <option value="entrevista">🎤 Entrevista</option>
+        <option value="asociacion">🤝 Asamblea de asociación</option>
+        <option value="pleno">🏛️ Pleno / órgano colegiado</option>
       </select>
       <button class="btn sm pri" id="btnSummarize">✨ Generar resumen</button>
       <button class="btn sm" id="btnCopy">📋 Copiar</button>
@@ -339,6 +350,38 @@ main{flex:1;max-width:1060px;width:100%;margin:0 auto;padding:0 22px 40px}
         <button class="btn" id="calCancel2">Cancelar</button>
         <button class="btn pri" id="calRec">🎙 Empezar</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: organización ============ -->
+<div class="overlay hide" id="orgOverlay">
+  <div class="modal">
+    <h2 id="orgTitle">Nueva organización</h2>
+    <p class="sub">Comunidad, empresa, asociación, órgano público… El acta y su envío quedan ligados a esta ficha para que nunca haya confusiones.</p>
+    <label style="font-size:13px;font-weight:600">Nombre</label>
+    <input id="orgNombre" placeholder="Ej.: CP Edificio Sol · Consejo Admón. ACME · AVV El Parque" style="margin-top:6px">
+    <label style="font-size:13px;font-weight:600;display:block;margin-top:12px">Tipo de acta por defecto</label>
+    <select id="orgPlantilla" style="margin-top:6px">
+      <option value="general">📄 Acta general</option>
+      <option value="junta">🏢 Junta de propietarios</option>
+      <option value="comercial">💼 Reunión comercial</option>
+      <option value="clinica">🩺 Consulta profesional</option>
+      <option value="formacion">🎓 Clase / Formación</option>
+      <option value="entrevista">🎤 Entrevista</option>
+      <option value="asociacion">🤝 Asamblea de asociación</option>
+      <option value="pleno">🏛️ Pleno / órgano colegiado</option>
+    </select>
+    <div class="inline" style="margin-top:12px">
+      <div style="flex:1"><label style="font-size:13px;font-weight:600">Presidente/a</label><input id="orgPres" style="margin-top:6px"></div>
+      <div style="flex:1"><label style="font-size:13px;font-weight:600">Secretario/a</label><input id="orgSec" style="margin-top:6px"></div>
+    </div>
+    <label style="font-size:13px;font-weight:600;display:block;margin-top:12px">Destinatarios del acta (emails separados por comas o líneas)</label>
+    <textarea id="orgDest" rows="3" placeholder="vecino1@mail.com, consejero2@mail.com…" style="margin-top:6px"></textarea>
+    <div class="foot">
+      <button class="btn danger hide" id="orgDel">🗑 Eliminar</button>
+      <button class="btn" id="orgCancel">Cancelar</button>
+      <button class="btn pri" id="orgSave">Guardar</button>
     </div>
   </div>
 </div>
@@ -842,7 +885,9 @@ const PLANTILLAS={
   comercial:{titulo:"💼 Informe de reunión comercial",cab:["Cliente / Empresa: ______________","Comercial: ______________","Fase: ☐ Prospección  ☐ Propuesta  ☐ Negociación  ☐ Cierre"],sec:[["🎯 Necesidades e intereses detectados","destacadas","—"],["✅ Acuerdos alcanzados","decisiones","—"],["📌 Compromisos y próximos pasos","tareas","—"],["❓ Objeciones y dudas del cliente","preguntas","—"],["📅 Fechas clave","fechas","—"]],pie:""},
   clinica:{titulo:"🩺 Nota de sesión / consulta",cab:["Profesional: ______________","Paciente/Cliente (iniciales): ____","Nº de sesión: ____"],sec:[["📝 Observaciones relevantes","destacadas","—"],["✅ Valoración y acuerdos de la sesión","decisiones","—"],["📌 Pauta / tareas encomendadas","tareas","—"],["📅 Próximas citas","fechas","—"]],pie:"Documento confidencial. Tratar conforme al RGPD y al secreto profesional."},
   formacion:{titulo:"🎓 Resumen de clase / formación",cab:["Curso / Asignatura: ______________","Docente: ______________"],sec:[["📋 Temas impartidos","temas",""],["📌 Tareas y ejercicios encomendados","tareas","—"],["❓ Dudas planteadas por los alumnos","preguntas","—"],["📅 Fechas de examen / entrega","fechas","—"]],pie:""},
-  entrevista:{titulo:"🎤 Entrevista transcrita",cab:["Entrevistador: ______________","Entrevistado: ______________"],sec:[["💬 Declaraciones destacadas","destacadas","—"],["📋 Temas tratados","temas",""],["❓ Preguntas clave","preguntas","—"]],pie:""}
+  entrevista:{titulo:"🎤 Entrevista transcrita",cab:["Entrevistador: ______________","Entrevistado: ______________"],sec:[["💬 Declaraciones destacadas","destacadas","—"],["📋 Temas tratados","temas",""],["❓ Preguntas clave","preguntas","—"]],pie:""},
+  asociacion:{titulo:"🤝 Acta de Asamblea de Asociación",cab:["Asociación: ______________","Tipo: ☐ Ordinaria  ☐ Extraordinaria","Presidente/a: ____________  Secretario/a: ____________"],sec:[["📋 Orden del día y temas tratados","temas",""],["✅ Acuerdos adoptados","decisiones","Sin acuerdos"],["📌 Encargos y comisiones","tareas","—"],["🗣️ Ruegos y preguntas","preguntas","—"],["📅 Plazos y fechas","fechas","—"]],pie:"Borrador de acta generado con EscribAI, pendiente de aprobación y firma conforme a los estatutos de la asociación."},
+  pleno:{titulo:"🏛️ Acta de sesión de órgano colegiado",cab:["Órgano: ______________","Sesión: ☐ Ordinaria  ☐ Extraordinaria   Quórum: ____","Preside: ____________  Secretario/a: ____________"],sec:[["📋 Orden del día y asuntos tratados","temas",""],["✅ Acuerdos y votaciones (a favor / en contra / abstenciones)","decisiones","Sin acuerdos"],["📌 Mandatos y gestiones encomendadas","tareas","—"],["🗣️ Intervenciones y ruegos","preguntas","—"],["📅 Plazos","fechas","—"]],pie:"Borrador de trabajo generado con EscribAI. El acta oficial requiere la redacción, diligencia y firma del Secretario/a con el visto bueno de la Presidencia."}
 };
 function buildActa(){
   const d=new Date(),sum=currentSummary||generateSummary();
@@ -852,7 +897,12 @@ function buildActa(){
   L.push("**Fecha:** "+d.toLocaleDateString("es-ES",{weekday:"long",year:"numeric",month:"long",day:"numeric"}));
   L.push("**Duración:** "+fmtT(elapsed)+" · **Palabras:** "+(sum?sum.totalWords:"-"));
   L.push("**Participantes:** "+(speakers.map(s=>s.name).join(", ")||"—"));
-  t.cab.forEach(c=>L.push("**"+c+"**"));
+  const _org=orgOf(currentOrg);
+  if(_org){
+    L.push("**Organización:** "+_org.nombre);
+    if(_org.pres)L.push("**Presidente/a:** "+_org.pres);
+    if(_org.sec)L.push("**Secretario/a:** "+_org.sec);
+  }else t.cab.forEach(c=>L.push("**"+c+"**"));
   L.push("");
   if(sum){
     for(const s of t.sec){
@@ -893,12 +943,87 @@ $("#btnJson").onclick=()=>{
 $("#btnAudio").onclick=()=>{if(!pro){upsell("La descarga de audio es una función Pro");return}if(audioBlob)download("audio-"+stamp()+".webm",audioBlob)};
 
 /* =====================================================================
+   ORGANIZACIONES (fichas de comunidad / empresa / asociación / órgano)
+===================================================================== */
+let orgs=LS.get("vs_orgs",[]);
+let currentOrg=LS.get("vs_org_actual",null);
+function orgOf(id){return orgs.find(o=>o.id===id)||null}
+function renderOrgs(){
+  const sel=$("#orgSel");
+  sel.innerHTML='<option value="">— Sin organización —</option>'+orgs.map(o=>`<option value="${o.id}">${esc(o.nombre)}</option>`).join("");
+  sel.value=currentOrg&&orgOf(currentOrg)?currentOrg:"";
+}
+$("#orgSel").onchange=()=>{
+  currentOrg=$("#orgSel").value?+$("#orgSel").value:null;
+  LS.set("vs_org_actual",currentOrg);
+  const o=orgOf(currentOrg);
+  if(o&&o.plantilla){settings.plantilla=o.plantilla;$("#setPlantilla").value=o.plantilla;LS.set("vs_settings",settings)}
+  if(o)toast("🏛️ Sesión asignada a: "+o.nombre);
+};
+let orgEditing=null;
+function openOrgModal(o){
+  orgEditing=o?o.id:null;
+  $("#orgTitle").textContent=o?"Editar organización":"Nueva organización";
+  $("#orgNombre").value=o?o.nombre:"";
+  $("#orgPlantilla").value=o?o.plantilla:"general";
+  $("#orgPres").value=o?o.pres:"";
+  $("#orgSec").value=o?o.sec:"";
+  $("#orgDest").value=o?o.dest.join(", "):"";
+  $("#orgDel").classList.toggle("hide",!o);
+  $("#orgOverlay").classList.remove("hide");
+}
+$("#btnOrgNew").onclick=()=>{
+  if(!pro&&orgs.length>=1){upsell("El plan gratuito incluye 1 organización");return}
+  openOrgModal(null);
+};
+$("#btnOrgEdit").onclick=()=>{
+  const o=orgOf(currentOrg);
+  if(!o){toast("Selecciona una organización primero");return}
+  openOrgModal(o);
+};
+$("#orgCancel").onclick=()=>$("#orgOverlay").classList.add("hide");
+$("#orgDel").onclick=()=>{
+  if(!confirm("¿Eliminar esta organización?"))return;
+  orgs=orgs.filter(o=>o.id!==orgEditing);LS.set("vs_orgs",orgs);
+  if(currentOrg===orgEditing){currentOrg=null;LS.set("vs_org_actual",null)}
+  renderOrgs();$("#orgOverlay").classList.add("hide");
+};
+$("#orgSave").onclick=()=>{
+  const nombre=$("#orgNombre").value.trim();
+  if(!nombre){toast("Pon un nombre a la organización");return}
+  const dest=$("#orgDest").value.split(/[\n,;]+/).map(s=>s.trim()).filter(s=>/.+@.+\..+/.test(s));
+  const data={nombre,plantilla:$("#orgPlantilla").value,pres:$("#orgPres").value.trim(),sec:$("#orgSec").value.trim(),dest};
+  if(orgEditing){Object.assign(orgs.find(o=>o.id===orgEditing),data)}
+  else{data.id=Date.now();orgs.push(data);currentOrg=data.id;LS.set("vs_org_actual",currentOrg)}
+  LS.set("vs_orgs",orgs);renderOrgs();
+  $("#orgOverlay").classList.add("hide");
+  toast("🏛️ Organización guardada: "+nombre);
+};
+$("#btnEnviar").onclick=()=>{
+  if(!segments.length){toast("No hay acta que enviar: graba o transcribe primero");return}
+  const o=orgOf(currentOrg);
+  if(!o){toast("Selecciona o crea una organización con destinatarios");return}
+  if(!o.dest.length){toast("«"+o.nombre+"» no tiene destinatarios: edítala y añádelos");return}
+  if(!confirm("Vas a enviar el acta de\n\n   «"+o.nombre+"»\n\na "+o.dest.length+" destinatario(s).\n\n¿Confirmas?"))return;
+  const sum=currentSummary||generateSummary();
+  const fecha=new Date().toLocaleDateString("es-ES");
+  let cuerpo="ACTA — "+o.nombre+" — "+fecha+"\n\n";
+  const bloque=(t,arr)=>{if(arr&&arr.length)cuerpo+=t+"\n"+arr.map(i=>"· "+i.who+": "+i.text).join("\n")+"\n\n"};
+  if(sum){bloque("ACUERDOS:",sum.decisiones);bloque("TAREAS:",sum.tareas);bloque("PLAZOS:",sum.fechas)}
+  cuerpo+="El acta completa se adjunta como archivo.\n\n— Generado con EscribAI";
+  download("acta-"+o.nombre.replace(/\s+/g,"-")+"-"+stamp()+".md",buildActa(),"text/markdown");
+  location.href="mailto:?bcc="+encodeURIComponent(o.dest.join(","))+"&subject="+encodeURIComponent("Acta — "+o.nombre+" — "+fecha)+"&body="+encodeURIComponent(cuerpo.slice(0,1800));
+  toast("📧 Email preparado — adjunta el archivo del acta que se acaba de descargar");
+};
+
+/* =====================================================================
    HISTORIAL
 ===================================================================== */
 $("#btnSave").onclick=()=>{
   if(!pro){upsell("El historial de sesiones es una función Pro");return}
   if(!segments.length){toast("Nada que guardar");return}
-  const name=prompt("Nombre de la sesión:","Reunión "+new Date().toLocaleDateString("es-ES")+" "+new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"}));
+  const _o=orgOf(currentOrg);
+  const name=prompt("Nombre de la sesión:",(_o?_o.nombre+" — ":"Reunión ")+new Date().toLocaleDateString("es-ES")+" "+new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"}));
   if(name===null)return;
   const list=LS.get("vs_sessions",[]);
   list.unshift({id:Date.now(),name:name||"Sesión",date:new Date().toISOString(),duration:elapsed,segments:segments,summary:currentSummary,speakers:speakers.map(s=>({id:s.id,name:s.name,color:s.color}))});
@@ -1025,7 +1150,7 @@ $("#btnWipe").onclick=()=>{
 };
 
 /* ---------------- init ---------------- */
-renderSpeakers();loadSettings();
+renderSpeakers();loadSettings();renderOrgs();
 verifyLicense(settings.license).then(p=>{pro=p;updateProUI()});
 if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0){
   navigator.serviceWorker.register("sw.js").catch(function(){});
