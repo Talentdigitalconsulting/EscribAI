@@ -1,5 +1,5 @@
-/* VozScribe Pro — Service Worker (PWA offline shell) */
-const CACHE = "vozscribe-v1";
+/* VozScribe Pro — Service Worker v2 (red primero para el HTML, caché para el resto) */
+const CACHE = "vozscribe-v2";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./icons/icon-192.png", "./icons/icon-512.png"];
 
 self.addEventListener("install", e => {
@@ -13,13 +13,24 @@ self.addEventListener("activate", e => {
 });
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
-  // Las llamadas a APIs de IA siempre van a la red
   if (/deepgram\.com|openai\.com/.test(e.request.url)) return;
-  e.respondWith(
-    caches.match(e.request).then(hit => hit || fetch(e.request).then(r => {
-      const copy = r.clone();
-      caches.open(CACHE).then(c => c.put(e.request, copy));
-      return r;
-    }).catch(() => caches.match("./index.html")))
-  );
+  const esHTML = e.request.mode === "navigate" || /\.html$|\/$/.test(new URL(e.request.url).pathname);
+  if (esHTML) {
+    // Red primero: siempre la última versión; caché solo si no hay conexión
+    e.respondWith(
+      fetch(e.request).then(r => {
+        const copy = r.clone();
+        caches.open(CACHE).then(c => c.put(e.request, copy));
+        return r;
+      }).catch(() => caches.match(e.request).then(h => h || caches.match("./index.html")))
+    );
+  } else {
+    e.respondWith(
+      caches.match(e.request).then(hit => hit || fetch(e.request).then(r => {
+        const copy = r.clone();
+        caches.open(CACHE).then(c => c.put(e.request, copy));
+        return r;
+      }))
+    );
+  }
 });
