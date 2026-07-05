@@ -1,6 +1,6 @@
 /* EscribAI — Service Worker v3 (red primero para el HTML, caché para el resto) */
-const CACHE = "escribai-v3";
-const ASSETS = ["./", "./index.html", "./manifest.json", "./icons/icon-192.png", "./icons/icon-512.png"];
+const CACHE = "escribai-v4";
+const ASSETS = ["./", "./index.html", "./manifest.json", "./auth.js", "./icons/icon-192.png", "./icons/icon-512.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
