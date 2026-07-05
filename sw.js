@@ -1,5 +1,5 @@
-/* VozScribe Pro — Service Worker v2 (red primero para el HTML, caché para el resto) */
-const CACHE = "vozscribe-v2";
+/* EscribAI — Service Worker v3 (red primero para el HTML, caché para el resto) */
+const CACHE = "escribai-v3";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./icons/icon-192.png", "./icons/icon-512.png"];
 
 self.addEventListener("install", e => {
@@ -16,7 +16,6 @@ self.addEventListener("fetch", e => {
   if (/deepgram\.com|openai\.com/.test(e.request.url)) return;
   const esHTML = e.request.mode === "navigate" || /\.html$|\/$/.test(new URL(e.request.url).pathname);
   if (esHTML) {
-    // Red primero: siempre la última versión; caché solo si no hay conexión
     e.respondWith(
       fetch(e.request).then(r => {
         const copy = r.clone();

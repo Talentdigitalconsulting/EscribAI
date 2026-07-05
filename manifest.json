@@ -1,6 +1,6 @@
 {
-  "name": "VozScribe Pro — Transcripción inteligente",
-  "short_name": "VozScribe",
+  "name": "EscribAI — Escucha, transcribe, resume",
+  "short_name": "EscribAI",
   "description": "Transcripción de reuniones en español con identificación de hablantes y resúmenes automáticos.",
   "lang": "es",
   "start_url": "./index.html",

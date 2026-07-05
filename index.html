@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a0e1a">
-<meta name="description" content="VozScribe Pro — Transcripción de reuniones con identificación de hablantes y resúmenes automáticos.">
-<title>VozScribe Pro · Dictado inteligente</title><!-- v1.1 licencias -->
+<meta name="description" content="EscribAI — Transcripción de reuniones con identificación de hablantes y resúmenes automáticos.">
+<title>EscribAI · Dictado inteligente</title><!-- v1.1 licencias -->
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -172,7 +172,7 @@ main{flex:1;max-width:1060px;width:100%;margin:0 auto;padding:0 22px 40px}
 
 <header>
   <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 15a4 4 0 0 0 4-4V6a4 4 0 1 0-8 0v5a4 4 0 0 0 4 4zm6-4a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.94V22h2v-3.06A8 8 0 0 0 20 11h-2z"/></svg></div>
-  <div class="brand"><b>VozScribe&nbsp;Pro</b><span>Transcripción inteligente de reuniones</span></div>
+  <div class="brand"><b>Escrib<span style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">AI</span></b><span>Escucha · Transcribe · Resume · Acta</span></div>
   <div class="status"><span class="dot" id="statusDot"></span><span id="statusTxt">Listo</span></div>
 </header>
 
@@ -286,7 +286,7 @@ main{flex:1;max-width:1060px;width:100%;margin:0 auto;padding:0 22px 40px}
       <p>Con una API key, el botón <b>“Mejorar con IA”</b> reprocesa el audio grabado con diarización profesional (Deepgram nova-2, language=es). Sin key, la app funciona 100% local y gratuita.</p>
     </div>
     <div class="setrow">
-      <label>Licencia VozScribe Pro</label>
+      <label>Licencia EscribAI</label>
       <input type="text" id="setLic" placeholder="Pega aquí tu clave de licencia Pro">
       <p id="licEstado"></p>
       <p>El plan Pro desbloquea: hablantes ilimitados, acta completa (Markdown/JSON), historial de sesiones, descarga de audio y modo IA.</p>
@@ -337,7 +337,7 @@ main{flex:1;max-width:1060px;width:100%;margin:0 auto;padding:0 22px 40px}
 
 <script>
 /* =====================================================================
-   VozScribe Pro · dictado + identificación de hablantes + resúmenes
+   EscribAI · dictado + identificación de hablantes + resúmenes
    100% local por defecto. IA opcional vía API key (Deepgram / OpenAI).
 ===================================================================== */
 "use strict";
@@ -829,7 +829,7 @@ function plainTranscript(){
 function buildActa(){
   const d=new Date(),sum=currentSummary||generateSummary();
   const L=[];
-  L.push("# 📋 Acta de reunión — VozScribe Pro");
+  L.push("# 📋 Acta de reunión — EscribAI");
   L.push("**Fecha:** "+d.toLocaleDateString("es-ES",{weekday:"long",year:"numeric",month:"long",day:"numeric"}));
   L.push("**Duración:** "+fmtT(elapsed)+" · **Palabras:** "+(sum?sum.totalWords:"-"));
   L.push("**Participantes:** "+(speakers.map(s=>s.name).join(", ")||"—")+"\n");
@@ -846,7 +846,7 @@ function buildActa(){
   }
   L.push("## 🗒️ Transcripción completa\n");
   segments.forEach(s=>L.push(`**[${fmtT(s.t0)}] ${spkOf(s.spk).name}:** ${s.text}\n`));
-  L.push("\n---\n_Generado con VozScribe Pro_");
+  L.push("\n---\n_Generado con EscribAI_");
   return L.join("\n");
 }
 function download(name,content,type){
@@ -860,13 +860,13 @@ $("#btnCopy").onclick=async()=>{
   if(!segments.length){toast("Nada que copiar");return}
   await navigator.clipboard.writeText(plainTranscript());toast("📋 Transcripción copiada");
 };
-$("#btnTxt").onclick=()=>{if(!segments.length){toast("Nada que exportar");return}download("vozscribe-"+stamp()+".txt",plainTranscript())};
+$("#btnTxt").onclick=()=>{if(!segments.length){toast("Nada que exportar");return}download("escribai-"+stamp()+".txt",plainTranscript())};
 const dlActa=()=>{if(!pro){upsell("El acta completa es una función Pro");return}if(!segments.length){toast("Nada que exportar");return}download("acta-"+stamp()+".md",buildActa(),"text/markdown")};
 $("#btnMd").onclick=dlActa;$("#btnMd2").onclick=dlActa;
 $("#btnJson").onclick=()=>{
   if(!pro){upsell("La exportación JSON es una función Pro");return}
   if(!segments.length){toast("Nada que exportar");return}
-  download("vozscribe-"+stamp()+".json",JSON.stringify({fecha:new Date().toISOString(),duracion:elapsed,hablantes:speakers.map(s=>({id:s.id,name:s.name,color:s.color})),segmentos:segments,resumen:currentSummary},null,2),"application/json");
+  download("escribai-"+stamp()+".json",JSON.stringify({fecha:new Date().toISOString(),duracion:elapsed,hablantes:speakers.map(s=>({id:s.id,name:s.name,color:s.color})),segmentos:segments,resumen:currentSummary},null,2),"application/json");
 };
 $("#btnAudio").onclick=()=>{if(!pro){upsell("La descarga de audio es una función Pro");return}if(audioBlob)download("audio-"+stamp()+".webm",audioBlob)};
 
@@ -965,7 +965,7 @@ $("#btnSaveSet").onclick=async()=>{
   else if(pro&&!prev)toast("🎉 ¡Licencia Pro activada! Todas las funciones desbloqueadas");
   else toast("⚙️ Ajustes guardados");
 };
-$("#btnExportAll").onclick=()=>download("vozscribe-backup-"+stamp()+".json",
+$("#btnExportAll").onclick=()=>download("escribai-backup-"+stamp()+".json",
   JSON.stringify({profiles:speakers,sessions:LS.get("vs_sessions",[]),settings:{lang:settings.lang,sens:settings.sens,prov:settings.prov,key:"***"}},null,2),"application/json");
 $("#btnWipe").onclick=()=>{
   if(!confirm("Se borrarán perfiles de voz, sesiones y ajustes. ¿Continuar?"))return;

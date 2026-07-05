@@ -1,12 +1,11 @@
 @echo off
 rem ============================================================
-rem  VozScribe Pro - Lanzador para Windows
+rem  EscribAI - Lanzador para Windows
 rem  Doble clic para abrir la app en modo aplicacion (ventana propia)
 rem ============================================================
-title VozScribe Pro
+title EscribAI
 cd /d "%~dp0"
 
-rem --- localizar Chrome o Edge ---
 set "NAV="
 if exist "%ProgramFiles%\Google\Chrome\Application\chrome.exe" set "NAV=%ProgramFiles%\Google\Chrome\Application\chrome.exe"
 if not defined NAV if exist "%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe" set "NAV=%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"
@@ -21,21 +20,18 @@ if not defined NAV (
   exit /b 1
 )
 
-rem --- intentar servidor local (mejor experiencia PWA) ---
 where python >nul 2>nul
 if %errorlevel%==0 (
-  echo Iniciando VozScribe Pro en http://localhost:8765 ...
-  start "VozScribe Server" /min cmd /c "python -m http.server 8765 --bind 127.0.0.1"
+  echo Iniciando EscribAI en http://localhost:8765 ...
+  start "EscribAI Server" /min cmd /c "python -m http.server 8765 --bind 127.0.0.1"
   timeout /t 2 /nobreak >nul
   start "" "%NAV%" --app=http://127.0.0.1:8765/index.html
   echo.
-  echo VozScribe Pro esta abierto. Cierra esta ventana para detener el servidor.
-  echo (La ventana minimizada "VozScribe Server" debe seguir abierta mientras uses la app)
+  echo EscribAI esta abierto. Cierra esta ventana para detener el servidor.
   pause >nul
-  taskkill /fi "WINDOWTITLE eq VozScribe Server*" /f >nul 2>nul
+  taskkill /fi "WINDOWTITLE eq EscribAI Server*" /f >nul 2>nul
 ) else (
-  rem --- sin Python: abrir directamente el archivo (funciona igual en Chrome/Edge) ---
-  echo Abriendo VozScribe Pro...
+  echo Abriendo EscribAI...
   start "" "%NAV%" --app="file:///%~dp0index.html"
 )
 exit /b 0

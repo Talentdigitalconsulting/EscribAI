@@ -1,13 +1,9 @@
-# 🎙️ VozScribe Pro (VozDictado)
+# 🤖 EscribAI
 
-Transcripción de reuniones en español con identificación de hablantes y resúmenes automáticos. PWA instalable — 100% local y privada.
+**Escucha · Transcribe · Resume · Acta** — App de transcripción de reuniones en español con identificación de hablantes y resúmenes automáticos. PWA instalable, privada por diseño.
 
-**App:** https://talentdigitalconsulting.github.io/VozDictado/
-**Landing de venta:** https://talentdigitalconsulting.github.io/VozDictado/venta.html
-**Privacidad:** https://talentdigitalconsulting.github.io/VozDictado/privacidad.html
+**App:** https://talentdigitalconsulting.github.io/EscribAI/
+**Landing:** https://talentdigitalconsulting.github.io/EscribAI/venta.html
+**Privacidad:** https://talentdigitalconsulting.github.io/EscribAI/privacidad.html
 
-- `index.html` — la aplicación
-- `venta.html` — landing comercial
-- `VozScribe.bat` — lanzador de escritorio para Windows
-- `PLAY-STORE.md` — cómo publicarla en Google Play con PWABuilder
-- `GUIA-DE-VENTA.md` — plan de monetización
+Un producto de Talent & Digital Consulting.

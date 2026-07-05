@@ -1,4 +1,4 @@
-# 💰 Guía para vender VozScribe Pro
+# 💰 Guía para vender EscribAI
 
 ## Lo que ya tienes
 
@@ -14,7 +14,7 @@ Sube la carpeta a Netlify (gratis, ver INSTALAR-EN-MOVIL.md). Configura `venta.h
 
 ### 2. Cobra (día 2)
 La forma más simple sin programar backend: **Stripe Payment Links**.
-1. Crea cuenta en stripe.com → Productos → añade "VozScribe Pro 9,99€/mes".
+1. Crea cuenta en stripe.com → Productos → añade "EscribAI 9,99€/mes".
 2. Genera el Payment Link y pégalo en `venta.html` donde pone `#ENLACE-STRIPE-PRO`.
 3. En "después del pago", redirige a una página con la app completa (ej. `app.html?plan=pro`).
 
