@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="description" content="VozScribe Pro — Transcripción de reuniones con identificación de hablantes y resúmenes automáticos.">
+<title>VozScribe Pro · Dictado inteligente</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+:root{
+  --bg:#0a0e1a; --panel:#111827; --panel2:#182036; --line:#232d47;
+  --txt:#e5eaf5; --mut:#8b96b3; --acc:#6366f1; --acc2:#22d3ee;
+  --ok:#34d399; --warn:#fbbf24; --err:#f87171;
+  --grad:linear-gradient(135deg,#6366f1,#22d3ee);
+  --r:16px; --sh:0 10px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:radial-gradient(1200px 600px at 80% -10%,rgba(99,102,241,.12),transparent),
+     radial-gradient(900px 500px at -10% 110%,rgba(34,211,238,.08),transparent),var(--bg);
+  color:var(--txt);font:15px/1.55 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased;min-height:100dvh;display:flex;flex-direction:column}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--txt);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;outline:none;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--acc)}
+::selection{background:rgba(99,102,241,.4)}
+h1,h2,h3{font-weight:700;letter-spacing:-.02em}
+.hide{display:none!important}
+
+/* ---------- header ---------- */
+header{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--line);
+  backdrop-filter:blur(8px);position:sticky;top:0;z-index:40;background:rgba(10,14,26,.8)}
+.logo{width:38px;height:38px;border-radius:11px;background:var(--grad);display:grid;place-items:center;flex:none;box-shadow:0 4px 16px rgba(99,102,241,.45)}
+.logo svg{width:22px;height:22px;fill:#fff}
+.brand b{font-size:17px}
+.brand span{display:block;font-size:11.5px;color:var(--mut);margin-top:-2px}
+.status{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--mut);
+  border:1px solid var(--line);padding:6px 12px;border-radius:99px;background:var(--panel)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--mut)}
+.dot.rec{background:var(--err);animation:pulse 1.2s infinite}
+.dot.on{background:var(--ok)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* ---------- tabs ---------- */
+nav{display:flex;gap:6px;padding:12px 22px 0;max-width:1060px;width:100%;margin:0 auto}
+nav button{padding:9px 18px;border-radius:12px 12px 0 0;color:var(--mut);font-weight:600;font-size:13.5px;
+  border:1px solid transparent;border-bottom:0;display:flex;gap:7px;align-items:center}
+nav button.act{color:var(--txt);background:var(--panel);border-color:var(--line)}
+nav button:hover{color:var(--txt)}
+main{flex:1;max-width:1060px;width:100%;margin:0 auto;padding:0 22px 40px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+.tabpane{padding-top:16px}
+
+/* ---------- speakers bar ---------- */
+.spkbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:14px 16px}
+.chip{display:flex;align-items:center;gap:8px;padding:7px 13px;border-radius:99px;background:var(--panel2);
+  border:1px solid var(--line);font-size:13px;font-weight:600;transition:.2s}
+.chip .sw{width:10px;height:10px;border-radius:50%}
+.chip.speaking{border-color:currentColor;box-shadow:0 0 0 3px rgba(99,102,241,.18);transform:scale(1.04)}
+.chip small{color:var(--mut);font-weight:400}
+.chip .x{color:var(--mut);margin-left:2px;font-size:15px;line-height:1}
+.chip .x:hover{color:var(--err)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:12px;font-weight:600;font-size:13.5px;
+  background:var(--panel2);border:1px solid var(--line);transition:.15s}
+.btn:hover{border-color:var(--acc);transform:translateY(-1px)}
+.btn.pri{background:var(--grad);border:0;color:#fff;box-shadow:0 6px 18px rgba(99,102,241,.4)}
+.btn.pri:hover{filter:brightness(1.1)}
+.btn.sm{padding:7px 13px;font-size:12.5px;border-radius:10px}
+.btn.danger{color:var(--err)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+
+/* ---------- recorder ---------- */
+.recwrap{padding:22px 16px 18px;text-align:center;position:relative;overflow:hidden}
+#wave{width:100%;height:110px;display:block;border-radius:12px;background:rgba(255,255,255,.02)}
+.timer{font:600 34px/1 "Inter",monospace;letter-spacing:2px;margin:16px 0 4px;font-variant-numeric:tabular-nums}
+.sub{color:var(--mut);font-size:13px}
+.controls{display:flex;justify-content:center;align-items:center;gap:22px;margin-top:18px}
+.micbtn{width:78px;height:78px;border-radius:50%;background:var(--grad);display:grid;place-items:center;
+  box-shadow:0 10px 30px rgba(99,102,241,.5);transition:.2s;position:relative}
+.micbtn:hover{transform:scale(1.05)}
+.micbtn svg{width:32px;height:32px;fill:#fff}
+.micbtn.rec{background:linear-gradient(135deg,#ef4444,#f97316)}
+.micbtn.rec::before{content:"";position:absolute;inset:-9px;border-radius:50%;border:2px solid rgba(239,68,68,.5);animation:ring 1.6s infinite}
+@keyframes ring{0%{transform:scale(.9);opacity:1}100%{transform:scale(1.25);opacity:0}}
+.roundbtn{width:52px;height:52px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:grid;place-items:center}
+.roundbtn svg{width:20px;height:20px;fill:var(--txt)}
+.roundbtn:hover{border-color:var(--acc)}
+.live-speaker{margin-top:14px;font-size:13px;color:var(--mut);min-height:20px}
+.live-speaker b{padding:3px 10px;border-radius:99px;font-size:12.5px}
+
+/* ---------- transcript ---------- */
+.transcript{padding:18px;max-height:52vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
+.transcript:empty::after{content:"La transcripción aparecerá aquí en tiempo real…";color:var(--mut);font-size:13.5px;text-align:center;padding:30px 0;display:block}
+.seg{display:flex;gap:12px;animation:fadein .3s}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+.avatar{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff}
+.bubble{background:var(--panel2);border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:10px 14px;flex:1;position:relative}
+.bubble .meta{display:flex;gap:10px;align-items:center;font-size:11.5px;color:var(--mut);margin-bottom:3px}
+.bubble .meta b{font-size:12px}
+.bubble .txt{font-size:14.5px}
+.bubble .txt[contenteditable="true"]{outline:1px dashed var(--acc);border-radius:6px;padding:2px 4px}
+.bubble .tools{position:absolute;top:8px;right:10px;display:none;gap:6px}
+.seg:hover .tools{display:flex}
+.tools button{color:var(--mut);font-size:12px}
+.tools button:hover{color:var(--txt)}
+.seg.interim .bubble{opacity:.6;border-style:dashed}
+.actions{display:flex;flex-wrap:wrap;gap:8px;padding:14px 16px;border-top:1px solid var(--line)}
+
+/* ---------- summary ---------- */
+.sumgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:14px}
+.sumcard{padding:16px}
+.sumcard h3{display:flex;gap:8px;align-items:center;margin-bottom:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;font-size:11.5px}
+.sumcard ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+.sumcard li{font-size:13.5px;padding-left:14px;position:relative}
+.sumcard li::before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%;background:var(--acc2)}
+.sumcard li b.who{font-size:11.5px;padding:1px 8px;border-radius:99px;margin-right:5px;color:#fff}
+.statsrow{display:flex;flex-wrap:wrap;gap:10px}
+.stat{flex:1;min-width:130px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat b{font-size:20px}
+.stat span{display:block;font-size:11.5px;color:var(--mut)}
+.bar{height:7px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;border-radius:99px}
+.topic{display:inline-flex;padding:5px 13px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);font-size:12.5px;margin:0 6px 6px 0}
+.empty{color:var(--mut);text-align:center;padding:48px 20px;font-size:14px}
+
+/* ---------- history ---------- */
+.hitem{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.hitem:last-child{border-bottom:0}
+.hitem .ic{width:40px;height:40px;border-radius:12px;background:var(--panel2);display:grid;place-items:center;flex:none}
+.hitem .inf{flex:1;min-width:0}
+.hitem .inf b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hitem .inf span{font-size:12px;color:var(--mut)}
+
+/* ---------- settings ---------- */
+.set{padding:20px;display:flex;flex-direction:column;gap:20px}
+.setrow label{display:block;font-weight:600;font-size:13.5px;margin-bottom:6px}
+.setrow p{font-size:12.5px;color:var(--mut);margin-top:5px}
+.inline{display:flex;gap:10px}
+
+/* ---------- modal ---------- */
+.overlay{position:fixed;inset:0;background:rgba(5,8,16,.75);backdrop-filter:blur(5px);z-index:100;display:grid;place-items:center;padding:20px}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:20px;max-width:520px;width:100%;padding:26px;box-shadow:var(--sh);max-height:90dvh;overflow-y:auto}
+.modal h2{font-size:19px;margin-bottom:4px}
+.modal .sub{margin-bottom:18px}
+.calmeter{height:90px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);margin:14px 0;position:relative;overflow:hidden}
+#calwave{width:100%;height:100%}
+.calphrase{background:var(--panel2);border-left:3px solid var(--acc);padding:12px 14px;border-radius:8px;font-size:13.5px;font-style:italic;margin:12px 0}
+.calprog{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin:10px 0 4px}
+.calprog i{display:block;height:100%;background:var(--grad);width:0%;transition:width .2s}
+.modal .foot{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.colorpick{display:flex;gap:8px;margin-top:8px}
+.colorpick i{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent}
+.colorpick i.sel{border-color:#fff}
+
+/* ---------- toast ---------- */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--panel2);
+  border:1px solid var(--line);padding:11px 20px;border-radius:12px;font-size:13.5px;z-index:200;transition:.3s;opacity:0;box-shadow:var(--sh)}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+@media(max-width:640px){
+  nav{padding:10px 12px 0;overflow-x:auto}
+  main{padding:0 12px 30px}
+  .timer{font-size:27px}
+  .micbtn{width:68px;height:68px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 15a4 4 0 0 0 4-4V6a4 4 0 1 0-8 0v5a4 4 0 0 0 4 4zm6-4a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.94V22h2v-3.06A8 8 0 0 0 20 11h-2z"/></svg></div>
+  <div class="brand"><b>VozScribe&nbsp;Pro</b><span>Transcripción inteligente de reuniones</span></div>
+  <div class="status"><span class="dot" id="statusDot"></span><span id="statusTxt">Listo</span></div>
+</header>
+
+<nav>
+  <button class="act" data-tab="record">🎙️ Grabar</button>
+  <button data-tab="summary">✨ Resumen</button>
+  <button data-tab="history">📁 Historial</button>
+  <button data-tab="settings">⚙️ Ajustes</button>
+</nav>
+
+<main>
+<!-- ============ GRABAR ============ -->
+<div class="tabpane" id="tab-record">
+  <div class="card">
+    <div class="spkbar" id="spkbar">
+      <button class="btn sm pri" id="btnAddSpk">＋ Añadir hablante</button>
+    </div>
+  </div>
+
+  <div class="card recwrap" style="margin-top:14px">
+    <canvas id="wave"></canvas>
+    <div class="timer" id="timer">00:00</div>
+    <div class="sub" id="recSub">Pulsa el micrófono para empezar a transcribir (es-ES)</div>
+    <div class="controls">
+      <button class="roundbtn" id="btnClear" title="Limpiar transcripción"><svg viewBox="0 0 24 24"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
+      <button class="micbtn" id="btnMic" title="Iniciar / detener">
+        <svg id="micIcon" viewBox="0 0 24 24"><path d="M12 15a4 4 0 0 0 4-4V6a4 4 0 1 0-8 0v5a4 4 0 0 0 4 4zm6-4a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.94V22h2v-3.06A8 8 0 0 0 20 11h-2z"/></svg>
+      </button>
+      <button class="roundbtn" id="btnPause" title="Pausar" disabled><svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg></button>
+    </div>
+    <div class="live-speaker" id="liveSpk"></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <div class="transcript" id="transcript"></div>
+    <div class="actions">
+      <button class="btn sm pri" id="btnSummarize">✨ Generar resumen</button>
+      <button class="btn sm" id="btnCopy">📋 Copiar</button>
+      <button class="btn sm" id="btnTxt">⬇ TXT</button>
+      <button class="btn sm" id="btnMd">⬇ Acta (MD)</button>
+      <button class="btn sm" id="btnJson">⬇ JSON</button>
+      <button class="btn sm" id="btnAudio" disabled>🔊 Audio</button>
+      <button class="btn sm" id="btnAI" title="Rediarización profesional con IA (requiere API key en Ajustes)">🤖 Mejorar con IA</button>
+      <button class="btn sm" id="btnSave">💾 Guardar sesión</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ RESUMEN ============ -->
+<div class="tabpane hide" id="tab-summary">
+  <div id="sumEmpty" class="card empty">Aún no hay resumen. Graba una conversación y pulsa <b>“Generar resumen”</b>.</div>
+  <div id="sumBody" class="hide">
+    <div class="card sumcard">
+      <h3>📊 Participación por hablante</h3>
+      <div class="statsrow" id="sumStats"></div>
+    </div>
+    <div class="sumgrid">
+      <div class="card sumcard"><h3>✅ Decisiones y acuerdos</h3><ul id="sumDec"></ul></div>
+      <div class="card sumcard"><h3>📌 Tareas y acciones</h3><ul id="sumTask"></ul></div>
+      <div class="card sumcard"><h3>📅 Fechas y plazos</h3><ul id="sumDate"></ul></div>
+      <div class="card sumcard"><h3>❓ Preguntas abiertas</h3><ul id="sumQ"></ul></div>
+    </div>
+    <div class="card sumcard" style="margin-top:14px">
+      <h3>🏷️ Temas principales</h3><div id="sumTopics"></div>
+    </div>
+    <div class="card sumcard" style="margin-top:14px">
+      <h3>📝 Frases destacadas</h3><ul id="sumKey"></ul>
+      <div style="margin-top:14px"><button class="btn sm pri" id="btnMd2">⬇ Descargar acta completa (Markdown)</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ HISTORIAL ============ -->
+<div class="tabpane hide" id="tab-history">
+  <div class="card" id="histList"><div class="empty">No hay sesiones guardadas todavía.</div></div>
+</div>
+
+<!-- ============ AJUSTES ============ -->
+<div class="tabpane hide" id="tab-settings">
+  <div class="card set">
+    <div class="setrow">
+      <label>Idioma / acento de reconocimiento</label>
+      <select id="setLang">
+        <option value="es-ES" selected>Español de España (es-ES) — todos los acentos peninsulares y canarios</option>
+        <option value="ca-ES">Catalán (ca-ES)</option>
+        <option value="gl-ES">Gallego (gl-ES)</option>
+        <option value="eu-ES">Euskera (eu-ES)</option>
+        <option value="es-MX">Español de México (es-MX)</option>
+        <option value="es-AR">Español de Argentina (es-AR)</option>
+      </select>
+      <p>El motor es-ES está entrenado con acentos andaluces, madrileños, gallegos, catalanes, canarios, etc.</p>
+    </div>
+    <div class="setrow">
+      <label>Sensibilidad de cambio de hablante</label>
+      <select id="setSens">
+        <option value="alta">Alta — cambia de hablante con facilidad</option>
+        <option value="media" selected>Media (recomendado)</option>
+        <option value="baja">Baja — solo con diferencias claras de voz</option>
+      </select>
+      <p>La identificación local usa el timbre y tono (frecuencia fundamental y brillo espectral) calibrados de cada voz.</p>
+    </div>
+    <div class="setrow">
+      <label>Diarización profesional con IA (opcional)</label>
+      <div class="inline">
+        <select id="setProv" style="max-width:180px">
+          <option value="deepgram">Deepgram</option>
+          <option value="openai">OpenAI Whisper</option>
+        </select>
+        <input type="password" id="setKey" placeholder="API key (se guarda solo en este dispositivo)">
+      </div>
+      <p>Con una API key, el botón <b>“Mejorar con IA”</b> reprocesa el audio grabado con diarización profesional (Deepgram nova-2, language=es). Sin key, la app funciona 100% local y gratuita.</p>
+    </div>
+    <div class="setrow">
+      <label>Datos</label>
+      <div class="inline">
+        <button class="btn sm" id="btnExportAll">⬇ Exportar todos los datos</button>
+        <button class="btn sm danger" id="btnWipe">🗑 Borrar todo</button>
+      </div>
+    </div>
+    <div class="setrow"><button class="btn pri" id="btnSaveSet">Guardar ajustes</button></div>
+  </div>
+</div>
+</main>
+
+<!-- ============ MODAL: nuevo hablante / calibración ============ -->
+<div class="overlay hide" id="calOverlay">
+  <div class="modal">
+    <div id="calStep1">
+      <h2>Nuevo hablante</h2>
+      <p class="sub">Configura el perfil de voz para poder identificar quién habla.</p>
+      <label style="font-size:13px;font-weight:600">Nombre</label>
+      <input id="calName" placeholder="Ej.: María, Cliente, Jefe de proyecto…" style="margin-top:6px">
+      <label style="font-size:13px;font-weight:600;display:block;margin-top:14px">Color</label>
+      <div class="colorpick" id="calColors"></div>
+      <div class="foot">
+        <button class="btn" id="calCancel1">Cancelar</button>
+        <button class="btn pri" id="calNext">Calibrar voz →</button>
+      </div>
+    </div>
+    <div id="calStep2" class="hide">
+      <h2>Calibración de voz</h2>
+      <p class="sub">Pide a <b id="calWho">…</b> que lea esta frase en voz alta y natural:</p>
+      <div class="calphrase">«El veloz murciélago hindú comía feliz cardillo y kiwi. La cigüeña tocaba el saxofón detrás del palenque de paja.»</div>
+      <div class="calmeter"><canvas id="calwave"></canvas></div>
+      <div class="calprog"><i id="calProgBar"></i></div>
+      <p class="sub" id="calMsg">Pulsa «Empezar» y habla durante 6 segundos.</p>
+      <div class="foot">
+        <button class="btn" id="calCancel2">Cancelar</button>
+        <button class="btn pri" id="calRec">🎙 Empezar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* =====================================================================
+   VozScribe Pro · dictado + identificación de hablantes + resúmenes
+   100% local por defecto. IA opcional vía API key (Deepgram / OpenAI).
+===================================================================== */
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
+const LS={get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))};
+const COLORS=["#6366f1","#22d3ee","#34d399","#fbbf24","#f87171","#e879f9","#fb923c","#a3e635"];
+const toast=m=>{const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),2600)};
+const fmtT=s=>`${String(Math.floor(s/60)).padStart(2,"0")}:${String(Math.floor(s%60)).padStart(2,"0")}`;
+const esc=t=>t.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------------- estado ---------------- */
+let speakers=LS.get("vs_profiles",[]);          // {id,name,color,f0,f0dev,cent}
+let settings=LS.get("vs_settings",{lang:"es-ES",sens:"media",prov:"deepgram",key:""});
+let segments=[];                                 // {t0,t1,text,spk}
+let recording=false,paused=false,recStart=0,elapsed=0,timerInt=null;
+let audioCtx=null,analyser=null,micStream=null,mediaRec=null,audioChunks=[],audioBlob=null;
+let frames=[];                                   // {t,f0,cent,rms}
+let lastFinalTime=0;
+let currentSummary=null;
+
+/* ---------------- pestañas ---------------- */
+$$("nav button").forEach(b=>b.onclick=()=>{
+  $$("nav button").forEach(x=>x.classList.remove("act"));b.classList.add("act");
+  $$(".tabpane").forEach(p=>p.classList.add("hide"));
+  $("#tab-"+b.dataset.tab).classList.remove("hide");
+  if(b.dataset.tab==="history")renderHistory();
+});
+
+/* =====================================================================
+   ANÁLISIS DE VOZ (pitch por autocorrelación + centroide espectral)
+===================================================================== */
+function detectPitch(buf,sr){
+  const N=buf.length;let rms=0;
+  for(let i=0;i<N;i++)rms+=buf[i]*buf[i];
+  rms=Math.sqrt(rms/N);
+  if(rms<0.012)return{f0:0,rms};
+  const minL=Math.floor(sr/350),maxL=Math.floor(sr/70);
+  let best=0,bestL=0;
+  for(let lag=minL;lag<=maxL&&lag<N;lag++){
+    let c=0;
+    for(let i=0;i<N-lag;i++)c+=buf[i]*buf[i+lag];
+    if(c>best){best=c;bestL=lag}
+  }
+  let norm=0;for(let i=0;i<N;i++)norm+=buf[i]*buf[i];
+  if(norm===0||best/norm<0.30)return{f0:0,rms};
+  return{f0:sr/bestL,rms};
+}
+function spectralCentroid(freqData,sr,fft){
+  let num=0,den=0;
+  for(let i=0;i<freqData.length;i++){
+    const m=(freqData[i]+140)/140;if(m<=0)continue;
+    num+=m*(i*sr/fft);den+=m;
+  }
+  return den?num/den:0;
+}
+const median=a=>{if(!a.length)return 0;const s=[...a].sort((x,y)=>x-y);return s[Math.floor(s.length/2)]};
+
+function classify(f0s,cents){
+  if(!speakers.length)return null;
+  if(speakers.length===1)return speakers[0].id;
+  const f0=median(f0s),cent=median(cents);
+  if(!f0)return null;
+  let bestId=null,bestD=Infinity;
+  for(const p of speakers){
+    if(!p.f0)continue;
+    const d=Math.abs(f0-p.f0)/Math.max(p.f0dev*2,18)+Math.abs(cent-p.cent)/600;
+    if(d<bestD){bestD=d;bestId=p.id}
+  }
+  return bestId;
+}
+
+/* =====================================================================
+   AUDIO: mic + visualizador + frames de características
+===================================================================== */
+async function initAudio(){
+  if(micStream)return;
+  micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+  audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  const src=audioCtx.createMediaStreamSource(micStream);
+  analyser=audioCtx.createAnalyser();analyser.fftSize=2048;
+  src.connect(analyser);
+  mediaRec=new MediaRecorder(micStream);
+  mediaRec.ondataavailable=e=>{if(e.data.size)audioChunks.push(e.data)};
+  mediaRec.onstop=()=>{audioBlob=new Blob(audioChunks,{type:mediaRec.mimeType||"audio/webm"});$("#btnAudio").disabled=false};
+}
+function stopAudio(){
+  if(mediaRec&&mediaRec.state!=="inactive")mediaRec.stop();
+  if(micStream){micStream.getTracks().forEach(t=>t.stop());micStream=null}
+  if(audioCtx){audioCtx.close();audioCtx=null}
+}
+function frameLoop(){
+  if(!recording||!analyser)return;
+  if(!paused){
+    const N=analyser.fftSize,buf=new Float32Array(N),fr=new Float32Array(analyser.frequencyBinCount);
+    analyser.getFloatTimeDomainData(buf);analyser.getFloatFrequencyData(fr);
+    const sr=audioCtx.sampleRate;
+    const r=detectPitch(buf,sr);
+    const cent=r.rms>0.012?spectralCentroid(fr,sr,N):0;
+    const t=(Date.now()-recStart)/1000;
+    frames.push({t,f0:r.f0,cent,rms:r.rms});
+    if(frames.length>3000)frames.splice(0,500);
+    if(r.f0){
+      const id=classify([r.f0],[cent]);
+      showLiveSpeaker(id);
+    }
+    drawWave(buf);
+  }
+  requestAnimationFrame(frameLoop);
+}
+function showLiveSpeaker(id){
+  const p=speakers.find(s=>s.id===id);
+  $("#liveSpk").innerHTML=p?`Hablando ahora: <b style="background:${p.color}22;color:${p.color};border:1px solid ${p.color}55">${esc(p.name)}</b>`:"";
+  $$(".chip").forEach(c=>c.classList.toggle("speaking",c.dataset.id===String(id)));
+}
+/* visualizador */
+const waveC=$("#wave"),wctx=waveC.getContext("2d");
+function sizeCanvas(){waveC.width=waveC.clientWidth*devicePixelRatio;waveC.height=waveC.clientHeight*devicePixelRatio}
+addEventListener("resize",sizeCanvas);sizeCanvas();
+function drawWave(buf){
+  const w=waveC.width,h=waveC.height;
+  wctx.clearRect(0,0,w,h);
+  const grad=wctx.createLinearGradient(0,0,w,0);
+  grad.addColorStop(0,"#6366f1");grad.addColorStop(1,"#22d3ee");
+  wctx.strokeStyle=grad;wctx.lineWidth=2*devicePixelRatio;wctx.beginPath();
+  const step=Math.ceil(buf.length/w*2);
+  for(let x=0;x<w;x++){
+    const v=buf[Math.min(buf.length-1,x*step)]||0;
+    const y=h/2+v*h*1.4;
+    if(x===0)wctx.moveTo(x,y);else wctx.lineTo(x,y);
+  }
+  wctx.stroke();
+}
+
+/* =====================================================================
+   RECONOCIMIENTO DE VOZ (Web Speech API)
+===================================================================== */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null;
+function startRecognition(){
+  if(!SR){toast("⚠️ Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.");return false}
+  rec=new SR();
+  rec.lang=settings.lang;rec.continuous=true;rec.interimResults=true;
+  rec.onresult=e=>{
+    let interim="";
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const r=e.results[i],txt=r[0].transcript.trim();
+      if(!txt)continue;
+      if(r.isFinal){
+        const t1=(Date.now()-recStart)/1000;
+        const t0=lastFinalTime;lastFinalTime=t1;
+        const fs=frames.filter(f=>f.t>=t0-0.3&&f.t<=t1&&f.f0>0);
+        const spk=classify(fs.map(f=>f.f0),fs.map(f=>f.cent));
+        addSegment({t0,t1,text:capitalize(txt),spk});
+      }else interim+=txt+" ";
+    }
+    renderInterim(interim.trim());
+  };
+  rec.onerror=e=>{
+    if(e.error==="not-allowed"){toast("🎙️ Permiso de micrófono denegado");stopSession()}
+    else if(e.error!=="no-speech"&&e.error!=="aborted")console.warn("SR error:",e.error);
+  };
+  rec.onend=()=>{if(recording&&!paused){try{rec.start()}catch(e){}}};
+  try{rec.start()}catch(e){}
+  return true;
+}
+const capitalize=t=>t.charAt(0).toUpperCase()+t.slice(1);
+
+/* =====================================================================
+   SESIÓN: iniciar / pausar / detener
+===================================================================== */
+$("#btnMic").onclick=()=>{if(recording)stopSession();else startSession()};
+async function startSession(){
+  if(!SR){toast("⚠️ Usa Google Chrome o Microsoft Edge para el reconocimiento de voz");return}
+  try{await initAudio()}catch(e){toast("🎙️ No se pudo acceder al micrófono: "+e.message);return}
+  recording=true;paused=false;recStart=Date.now()-elapsed*1000;lastFinalTime=elapsed;frames=[];
+  audioChunks=[];audioBlob=null;
+  try{mediaRec.start(1000)}catch(e){}
+  startRecognition();
+  frameLoop();
+  timerInt=setInterval(()=>{if(!paused){elapsed=(Date.now()-recStart)/1000;$("#timer").textContent=fmtT(elapsed)}},250);
+  $("#btnMic").classList.add("rec");
+  $("#micIcon").innerHTML='<path d="M6 6h12v12H6z"/>';
+  $("#btnPause").disabled=false;
+  $("#statusDot").className="dot rec";$("#statusTxt").textContent="Grabando…";
+  $("#recSub").textContent="Escuchando… habla con naturalidad";
+  toast("🎙️ Grabación iniciada");
+}
+function stopSession(){
+  recording=false;paused=false;
+  if(rec){rec.onend=null;try{rec.stop()}catch(e){}}
+  stopAudio();clearInterval(timerInt);
+  $("#btnMic").classList.remove("rec");
+  $("#micIcon").innerHTML='<path d="M12 15a4 4 0 0 0 4-4V6a4 4 0 1 0-8 0v5a4 4 0 0 0 4 4zm6-4a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.94V22h2v-3.06A8 8 0 0 0 20 11h-2z"/>';
+  $("#btnPause").disabled=true;
+  $("#statusDot").className="dot on";$("#statusTxt").textContent="Sesión finalizada";
+  $("#recSub").textContent="Sesión detenida. Puedes generar el resumen o guardar.";
+  showLiveSpeaker(null);
+  renderInterim("");
+}
+$("#btnPause").onclick=()=>{
+  paused=!paused;
+  if(paused){
+    try{rec.stop()}catch(e){}
+    if(mediaRec&&mediaRec.state==="recording")mediaRec.pause();
+    $("#statusTxt").textContent="En pausa";$("#statusDot").className="dot";
+  }else{
+    recStart=Date.now()-elapsed*1000;
+    try{rec.start()}catch(e){}
+    if(mediaRec&&mediaRec.state==="paused")mediaRec.resume();
+    $("#statusTxt").textContent="Grabando…";$("#statusDot").className="dot rec";
+  }
+  $("#btnPause").style.opacity=paused?".6":"1";
+};
+$("#btnClear").onclick=()=>{
+  if(segments.length&&!confirm("¿Borrar toda la transcripción actual?"))return;
+  segments=[];elapsed=0;$("#timer").textContent="00:00";renderTranscript();
+  $("#sumBody").classList.add("hide");$("#sumEmpty").classList.remove("hide");currentSummary=null;
+};
+
+/* =====================================================================
+   TRANSCRIPCIÓN: render + edición
+===================================================================== */
+function spkOf(id){return speakers.find(s=>s.id===id)||{name:"Sin identificar",color:"#8b96b3",id:null}}
+function addSegment(seg){
+  const last=segments[segments.length-1];
+  if(last&&last.spk===seg.spk&&seg.t0-last.t1<2.5){last.text+=" "+seg.text;last.t1=seg.t1}
+  else segments.push(seg);
+  renderTranscript();
+}
+function renderTranscript(){
+  const box=$("#transcript");
+  const interimEl=box.querySelector(".interim");
+  box.innerHTML="";
+  segments.forEach((s,i)=>{
+    const p=spkOf(s.spk);
+    const el=document.createElement("div");el.className="seg";
+    el.innerHTML=`<div class="avatar" style="background:${p.color}">${esc((p.name[0]||"?").toUpperCase())}</div>
+      <div class="bubble" style="border-left:3px solid ${p.color}">
+        <div class="meta"><b style="color:${p.color}">${esc(p.name)}</b><span>${fmtT(s.t0)}</span></div>
+        <div class="txt" data-i="${i}">${esc(s.text)}</div>
+        <div class="tools">
+          <button data-act="spk" data-i="${i}" title="Cambiar hablante">👤</button>
+          <button data-act="edit" data-i="${i}" title="Editar texto">✏️</button>
+          <button data-act="del" data-i="${i}" title="Eliminar">🗑</button>
+        </div>
+      </div>`;
+    box.appendChild(el);
+  });
+  if(interimEl)box.appendChild(interimEl);
+  box.scrollTop=box.scrollHeight;
+}
+function renderInterim(txt){
+  const box=$("#transcript");
+  let el=box.querySelector(".interim");
+  if(!txt){if(el)el.remove();return}
+  if(!el){
+    el=document.createElement("div");el.className="seg interim";
+    el.innerHTML=`<div class="avatar" style="background:#334">…</div><div class="bubble"><div class="txt"></div></div>`;
+    box.appendChild(el);
+  }
+  el.querySelector(".txt").textContent=txt;
+  box.scrollTop=box.scrollHeight;
+}
+$("#transcript").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  const i=+b.dataset.i,act=b.dataset.act;
+  if(act==="del"){segments.splice(i,1);renderTranscript()}
+  if(act==="edit"){
+    const txt=document.querySelector(`#transcript .txt[data-i="${i}"]`);
+    txt.contentEditable="true";txt.focus();
+    txt.onblur=()=>{txt.contentEditable="false";segments[i].text=txt.textContent.trim()};
+  }
+  if(act==="spk"){
+    if(!speakers.length){toast("Añade hablantes primero");return}
+    const cur=segments[i].spk;
+    const idx=speakers.findIndex(s=>s.id===cur);
+    segments[i].spk=speakers[(idx+1)%speakers.length].id;
+    renderTranscript();toast("Hablante cambiado a "+spkOf(segments[i].spk).name);
+  }
+});
+
+/* =====================================================================
+   HABLANTES: chips + calibración
+===================================================================== */
+function renderSpeakers(){
+  const bar=$("#spkbar");
+  bar.querySelectorAll(".chip").forEach(c=>c.remove());
+  const btn=$("#btnAddSpk");
+  speakers.forEach(p=>{
+    const c=document.createElement("div");c.className="chip";c.dataset.id=p.id;c.style.color=p.color;
+    c.innerHTML=`<span class="sw" style="background:${p.color}"></span>${esc(p.name)}
+      <small>${p.f0?Math.round(p.f0)+" Hz":"sin calibrar"}</small>
+      <button class="x" title="Eliminar">×</button>`;
+    c.querySelector(".x").onclick=()=>{
+      if(!confirm("¿Eliminar a "+p.name+"?"))return;
+      speakers=speakers.filter(s=>s.id!==p.id);LS.set("vs_profiles",speakers);renderSpeakers();
+    };
+    bar.insertBefore(c,btn);
+  });
+}
+let calColor=COLORS[0],calTarget=null;
+$("#btnAddSpk").onclick=()=>{
+  $("#calOverlay").classList.remove("hide");
+  $("#calStep1").classList.remove("hide");$("#calStep2").classList.add("hide");
+  $("#calName").value="";
+  const cp=$("#calColors");cp.innerHTML="";
+  const used=speakers.map(s=>s.color);
+  const free=COLORS.find(c=>!used.includes(c))||COLORS[0];
+  calColor=free;
+  COLORS.forEach(col=>{
+    const i=document.createElement("i");i.style.background=col;
+    if(col===free)i.classList.add("sel");
+    i.onclick=()=>{cp.querySelectorAll("i").forEach(x=>x.classList.remove("sel"));i.classList.add("sel");calColor=col};
+    cp.appendChild(i);
+  });
+};
+function closeCal(){$("#calOverlay").classList.add("hide");stopCalAudio()}
+$("#calCancel1").onclick=closeCal;
+$("#calCancel2").onclick=closeCal;
+$("#calNext").onclick=()=>{
+  const name=$("#calName").value.trim();
+  if(!name){toast("Escribe un nombre");return}
+  calTarget={id:Date.now(),name,color:calColor,f0:0,f0dev:0,cent:0};
+  $("#calWho").textContent=name;
+  $("#calStep1").classList.add("hide");$("#calStep2").classList.remove("hide");
+  $("#calProgBar").style.width="0%";
+  $("#calMsg").textContent="Pulsa «Empezar» y habla durante 6 segundos.";
+  $("#calRec").disabled=false;
+};
+let calCtx=null,calStream=null;
+function stopCalAudio(){
+  if(calStream){calStream.getTracks().forEach(t=>t.stop());calStream=null}
+  if(calCtx){calCtx.close();calCtx=null}
+}
+$("#calRec").onclick=async()=>{
+  const btn=$("#calRec");btn.disabled=true;
+  try{calStream=await navigator.mediaDevices.getUserMedia({audio:true})}
+  catch(e){toast("No se pudo acceder al micrófono");btn.disabled=false;return}
+  calCtx=new(window.AudioContext||window.webkitAudioContext)();
+  const src=calCtx.createMediaStreamSource(calStream);
+  const an=calCtx.createAnalyser();an.fftSize=2048;src.connect(an);
+  const cv=$("#calwave"),cx=cv.getContext("2d");
+  cv.width=cv.clientWidth*devicePixelRatio;cv.height=cv.clientHeight*devicePixelRatio;
+  const f0s=[],cents=[];
+  const t0=Date.now(),DUR=6000;
+  $("#calMsg").textContent="🎙️ Grabando… lee la frase con voz natural";
+  (function loop(){
+    if(!calCtx)return;
+    const N=an.fftSize,buf=new Float32Array(N),fr=new Float32Array(an.frequencyBinCount);
+    an.getFloatTimeDomainData(buf);an.getFloatFrequencyData(fr);
+    const r=detectPitch(buf,calCtx.sampleRate);
+    if(r.f0){f0s.push(r.f0);cents.push(spectralCentroid(fr,calCtx.sampleRate,N))}
+    cx.clearRect(0,0,cv.width,cv.height);
+    cx.strokeStyle=calTarget.color;cx.lineWidth=2*devicePixelRatio;cx.beginPath();
+    for(let x=0;x<cv.width;x++){
+      const v=buf[Math.min(N-1,Math.floor(x*N/cv.width))]||0;
+      const y=cv.height/2+v*cv.height*1.5;
+      if(x===0)cx.moveTo(x,y);else cx.lineTo(x,y);
+    }
+    cx.stroke();
+    const pct=Math.min(100,(Date.now()-t0)/DUR*100);
+    $("#calProgBar").style.width=pct+"%";
+    if(Date.now()-t0<DUR)requestAnimationFrame(loop);
+    else finishCal(f0s,cents);
+  })();
+};
+function finishCal(f0s,cents){
+  stopCalAudio();
+  if(f0s.length<20){
+    $("#calMsg").textContent="⚠️ No se detectó suficiente voz. Inténtalo de nuevo más cerca del micrófono.";
+    $("#calRec").disabled=false;return;
+  }
+  const f0=median(f0s);
+  const dev=median(f0s.map(x=>Math.abs(x-f0)));
+  calTarget.f0=f0;calTarget.f0dev=Math.max(dev,8);calTarget.cent=median(cents);
+  speakers.push(calTarget);LS.set("vs_profiles",speakers);
+  renderSpeakers();
+  $("#calOverlay").classList.add("hide");
+  toast("✅ Voz de "+calTarget.name+" calibrada ("+Math.round(f0)+" Hz)");
+}
+
+/* =====================================================================
+   RESUMEN LOCAL (reglas en español)
+===================================================================== */
+const STOP=new Set("de la que el en y a los del se las por un para con no una su al lo como más pero sus le ya o este sí porque esta entre cuando muy sin sobre también me hasta hay donde quien desde todo nos durante todos uno les ni contra otros ese eso ante ellos e esto mí antes algunos qué unos yo otro otras otra él tanto esa estos mucho quienes nada muchos cual poco ella estar estas algunas algo nosotros mi mis tú te ti tu tus ellas nosotras vosotros vosotras os mío mía míos mías tuyo tuya tuyos tuyas suyo suya suyos suyas nuestro nuestra nuestros nuestras vuestro vuestra vuestros vuestras esos esas estoy estás está estamos estáis están esté estés estemos estéis estén estaré estarás estará estaremos estaréis estarán es son era eras éramos eran sea seas seamos sean seré serás será seremos seréis serán he has ha hemos habéis han haya hayas hayamos hayan tengo tienes tiene tenemos tenéis tienen bueno vale pues entonces bien ahora aquí así claro creo vamos ver decir hacer puede pueden hace cosa cosas tema parte".split(" "));
+const RX={
+  decision:/\b(decidimos|hemos decidido|se decide|acordamos|hemos acordado|queda acordado|se acuerda|aprobamos|queda aprobado|se aprueba|confirmamos|queda confirmado|vamos a proceder|lo dejamos así|de acuerdo entonces|trato hecho|cerramos el tema)\b/i,
+  task:/\b(hay que|tienes que|tenéis que|tenemos que|se encarga|me encargo|te encargas|encargará|queda pendiente|pendiente de|habrá que|se compromete|encárgate|deberíamos|debemos|debes|deben)\b/i,
+  date:/\b(lunes|martes|miércoles|jueves|viernes|sábado|domingo|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|mañana|pasado mañana|la semana que viene|la próxima semana|el mes que viene|fin de mes|a final de|\d{1,2}\s+de\s+\w+|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?|\d{1,2}:\d{2})\b/i,
+  question:/\?\s*$/,
+  important:/\b(importante|urgente|clave|crítico|crítica|fundamental|prioridad|imprescindible|ojo con|atención|riesgo|problema grave|bloqueante)\b/i
+};
+function splitSentences(t){return t.split(/(?<=[.!?…])\s+|\n+/).map(s=>s.trim()).filter(s=>s.length>8)}
+function generateSummary(){
+  if(!segments.length){toast("No hay transcripción que resumir");return null}
+  const sum={decisiones:[],tareas:[],fechas:[],preguntas:[],destacadas:[],temas:[],stats:[]};
+  const freq={};
+  let totalWords=0;
+  const perSpk={};
+  segments.forEach(seg=>{
+    const p=spkOf(seg.spk);
+    const w=seg.text.split(/\s+/).length;
+    totalWords+=w;
+    perSpk[p.name]=perSpk[p.name]||{words:0,color:p.color,turns:0};
+    perSpk[p.name].words+=w;perSpk[p.name].turns++;
+    for(const s of splitSentences(seg.text)){
+      const item={text:s,who:p.name,color:p.color};
+      if(RX.decision.test(s))sum.decisiones.push(item);
+      else if(RX.task.test(s))sum.tareas.push(item);
+      if(RX.date.test(s))sum.fechas.push(item);
+      if(RX.question.test(s))sum.preguntas.push(item);
+      if(RX.important.test(s))sum.destacadas.push(item);
+    }
+    seg.text.toLowerCase().replace(/[^a-záéíóúüñ\s]/g," ").split(/\s+/).forEach(w=>{
+      if(w.length>3&&!STOP.has(w))freq[w]=(freq[w]||0)+1;
+    });
+  });
+  sum.temas=Object.entries(freq).filter(e=>e[1]>1).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  sum.stats=Object.entries(perSpk).map(([name,d])=>({name,words:d.words,color:d.color,turns:d.turns,pct:Math.round(d.words/totalWords*100)}));
+  sum.totalWords=totalWords;sum.duration=elapsed;
+  for(const k of["decisiones","tareas","fechas","preguntas","destacadas"]){
+    const seen=new Set();
+    sum[k]=sum[k].filter(i=>{if(seen.has(i.text))return false;seen.add(i.text);return true}).slice(0,15);
+  }
+  return sum;
+}
+function renderSummary(sum){
+  currentSummary=sum;
+  $("#sumEmpty").classList.add("hide");$("#sumBody").classList.remove("hide");
+  $("#sumStats").innerHTML=sum.stats.map(s=>`
+    <div class="stat"><b>${s.pct}%</b><span>${esc(s.name)} · ${s.words} palabras · ${s.turns} turnos</span>
+    <div class="bar"><i style="width:${s.pct}%;background:${s.color}"></i></div></div>`).join("")||"<div class='empty'>—</div>";
+  const li=(arr,empty)=>arr.length?arr.map(i=>`<li><b class="who" style="background:${i.color}">${esc(i.who)}</b>${esc(i.text)}</li>`).join(""):`<li style="color:var(--mut)">${empty}</li>`;
+  $("#sumDec").innerHTML=li(sum.decisiones,"No se detectaron decisiones explícitas.");
+  $("#sumTask").innerHTML=li(sum.tareas,"No se detectaron tareas.");
+  $("#sumDate").innerHTML=li(sum.fechas,"No se mencionaron fechas ni plazos.");
+  $("#sumQ").innerHTML=li(sum.preguntas,"No quedaron preguntas abiertas.");
+  $("#sumKey").innerHTML=li(sum.destacadas,"Sin frases marcadas como importantes.");
+  $("#sumTopics").innerHTML=sum.temas.map(e=>`<span class="topic">${esc(e[0])} <b style="color:var(--acc2)">×${e[1]}</b></span>`).join("")||"<span class='sub'>—</span>";
+}
+$("#btnSummarize").onclick=()=>{
+  const s=generateSummary();if(!s)return;
+  renderSummary(s);
+  $$("nav button").forEach(x=>x.classList.remove("act"));
+  document.querySelector('nav button[data-tab="summary"]').classList.add("act");
+  $$(".tabpane").forEach(p=>p.classList.add("hide"));$("#tab-summary").classList.remove("hide");
+  toast("✨ Resumen generado");
+};
+
+/* =====================================================================
+   EXPORTACIÓN
+===================================================================== */
+function plainTranscript(){
+  return segments.map(s=>`[${fmtT(s.t0)}] ${spkOf(s.spk).name}: ${s.text}`).join("\n");
+}
+function buildActa(){
+  const d=new Date(),sum=currentSummary||generateSummary();
+  const L=[];
+  L.push("# 📋 Acta de reunión — VozScribe Pro");
+  L.push("**Fecha:** "+d.toLocaleDateString("es-ES",{weekday:"long",year:"numeric",month:"long",day:"numeric"}));
+  L.push("**Duración:** "+fmtT(elapsed)+" · **Palabras:** "+(sum?sum.totalWords:"-"));
+  L.push("**Participantes:** "+(speakers.map(s=>s.name).join(", ")||"—")+"\n");
+  if(sum){
+    const sec=(t,arr,e)=>{L.push("## "+t);L.push(arr.length?arr.map(i=>`- **${i.who}:** ${i.text}`).join("\n"):"_"+e+"_");L.push("")};
+    sec("✅ Decisiones y acuerdos",sum.decisiones,"Sin decisiones explícitas");
+    sec("📌 Tareas y acciones",sum.tareas,"Sin tareas detectadas");
+    sec("📅 Fechas y plazos",sum.fechas,"Sin fechas mencionadas");
+    sec("❓ Preguntas abiertas",sum.preguntas,"Sin preguntas abiertas");
+    L.push("## 🏷️ Temas principales");
+    L.push(sum.temas.map(e=>"`"+e[0]+"` (×"+e[1]+")").join(" · ")||"_—_");L.push("");
+    L.push("## 📊 Participación");
+    sum.stats.forEach(s=>L.push(`- **${s.name}**: ${s.pct}% (${s.words} palabras, ${s.turns} turnos)`));L.push("");
+  }
+  L.push("## 🗒️ Transcripción completa\n");
+  segments.forEach(s=>L.push(`**[${fmtT(s.t0)}] ${spkOf(s.spk).name}:** ${s.text}\n`));
+  L.push("\n---\n_Generado con VozScribe Pro_");
+  return L.join("\n");
+}
+function download(name,content,type){
+  type=type||"text/plain";
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(content instanceof Blob?content:new Blob([content],{type:type+";charset=utf-8"}));
+  a.download=name;a.click();URL.revokeObjectURL(a.href);
+}
+const stamp=()=>new Date().toISOString().slice(0,16).replace(/[T:]/g,"-");
+$("#btnCopy").onclick=async()=>{
+  if(!segments.length){toast("Nada que copiar");return}
+  await navigator.clipboard.writeText(plainTranscript());toast("📋 Transcripción copiada");
+};
+$("#btnTxt").onclick=()=>{if(!segments.length){toast("Nada que exportar");return}download("vozscribe-"+stamp()+".txt",plainTranscript())};
+const dlActa=()=>{if(!segments.length){toast("Nada que exportar");return}download("acta-"+stamp()+".md",buildActa(),"text/markdown")};
+$("#btnMd").onclick=dlActa;$("#btnMd2").onclick=dlActa;
+$("#btnJson").onclick=()=>{
+  if(!segments.length){toast("Nada que exportar");return}
+  download("vozscribe-"+stamp()+".json",JSON.stringify({fecha:new Date().toISOString(),duracion:elapsed,hablantes:speakers.map(s=>({id:s.id,name:s.name,color:s.color})),segmentos:segments,resumen:currentSummary},null,2),"application/json");
+};
+$("#btnAudio").onclick=()=>{if(audioBlob)download("audio-"+stamp()+".webm",audioBlob)};
+
+/* =====================================================================
+   HISTORIAL
+===================================================================== */
+$("#btnSave").onclick=()=>{
+  if(!segments.length){toast("Nada que guardar");return}
+  const name=prompt("Nombre de la sesión:","Reunión "+new Date().toLocaleDateString("es-ES")+" "+new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"}));
+  if(name===null)return;
+  const list=LS.get("vs_sessions",[]);
+  list.unshift({id:Date.now(),name:name||"Sesión",date:new Date().toISOString(),duration:elapsed,segments:segments,summary:currentSummary,speakers:speakers.map(s=>({id:s.id,name:s.name,color:s.color}))});
+  LS.set("vs_sessions",list.slice(0,50));
+  toast("💾 Sesión guardada");
+};
+function renderHistory(){
+  const list=LS.get("vs_sessions",[]);
+  const box=$("#histList");
+  if(!list.length){box.innerHTML='<div class="empty">No hay sesiones guardadas todavía.</div>';return}
+  box.innerHTML="";
+  list.forEach(s=>{
+    const el=document.createElement("div");el.className="hitem";
+    el.innerHTML=`<div class="ic">🎙️</div>
+      <div class="inf"><b>${esc(s.name)}</b><span>${new Date(s.date).toLocaleString("es-ES")} · ${fmtT(s.duration)} · ${s.segments.length} intervenciones</span></div>
+      <button class="btn sm" data-a="open">Abrir</button>
+      <button class="btn sm danger" data-a="del">🗑</button>`;
+    el.querySelector('[data-a="open"]').onclick=()=>{
+      segments=s.segments;elapsed=s.duration;currentSummary=s.summary||null;
+      $("#timer").textContent=fmtT(elapsed);
+      renderTranscript();
+      if(currentSummary)renderSummary(currentSummary);
+      document.querySelector('nav button[data-tab="record"]').click();
+      toast("Sesión cargada: "+s.name);
+    };
+    el.querySelector('[data-a="del"]').onclick=()=>{
+      if(!confirm("¿Eliminar esta sesión?"))return;
+      LS.set("vs_sessions",LS.get("vs_sessions",[]).filter(x=>x.id!==s.id));renderHistory();
+    };
+    box.appendChild(el);
+  });
+}
+
+/* =====================================================================
+   MEJORAR CON IA (Deepgram diarización / OpenAI Whisper)
+===================================================================== */
+$("#btnAI").onclick=async()=>{
+  if(!settings.key){toast("⚙️ Configura una API key en Ajustes para usar la IA");return}
+  if(!audioBlob){toast("Primero graba una sesión (el audio se procesa al detener)");return}
+  $("#btnAI").disabled=true;$("#btnAI").textContent="🤖 Procesando…";
+  try{
+    if(settings.prov==="deepgram"){
+      const r=await fetch("https://api.deepgram.com/v1/listen?model=nova-2&language=es&diarize=true&punctuate=true&utterances=true",{
+        method:"POST",headers:{Authorization:"Token "+settings.key,"Content-Type":audioBlob.type||"audio/webm"},body:audioBlob});
+      if(!r.ok)throw new Error("Deepgram: "+r.status+" "+(await r.text()).slice(0,120));
+      const j=await r.json();
+      const utts=(j.results&&j.results.utterances)||[];
+      if(!utts.length)throw new Error("Sin resultados de diarización");
+      segments=utts.map(u=>({t0:u.start,t1:u.end,text:capitalize(u.transcript),spk:mapAISpeaker(u.speaker)}));
+      renderTranscript();toast("✅ Rediarizado con IA: "+new Set(utts.map(u=>u.speaker)).size+" voces detectadas");
+    }else{
+      const fd=new FormData();
+      fd.append("file",audioBlob,"audio.webm");fd.append("model","whisper-1");fd.append("language","es");
+      const r=await fetch("https://api.openai.com/v1/audio/transcriptions",{method:"POST",headers:{Authorization:"Bearer "+settings.key},body:fd});
+      if(!r.ok)throw new Error("OpenAI: "+r.status);
+      const j=await r.json();
+      segments=[{t0:0,t1:elapsed,text:j.text,spk:segments[0]?segments[0].spk:null}];
+      renderTranscript();toast("✅ Transcripción mejorada con Whisper (sin diarización)");
+    }
+  }catch(e){toast("❌ "+e.message)}
+  $("#btnAI").disabled=false;$("#btnAI").textContent="🤖 Mejorar con IA";
+};
+function mapAISpeaker(n){
+  if(speakers[n])return speakers[n].id;
+  const p={id:Date.now()+n,name:"Hablante "+(n+1),color:COLORS[n%COLORS.length],f0:0,f0dev:0,cent:0};
+  speakers.push(p);LS.set("vs_profiles",speakers);renderSpeakers();
+  return p.id;
+}
+
+/* =====================================================================
+   AJUSTES
+===================================================================== */
+function loadSettings(){
+  $("#setLang").value=settings.lang;$("#setSens").value=settings.sens;
+  $("#setProv").value=settings.prov;$("#setKey").value=settings.key;
+}
+$("#btnSaveSet").onclick=()=>{
+  settings={lang:$("#setLang").value,sens:$("#setSens").value,prov:$("#setProv").value,key:$("#setKey").value.trim()};
+  LS.set("vs_settings",settings);toast("⚙️ Ajustes guardados");
+};
+$("#btnExportAll").onclick=()=>download("vozscribe-backup-"+stamp()+".json",
+  JSON.stringify({profiles:speakers,sessions:LS.get("vs_sessions",[]),settings:{lang:settings.lang,sens:settings.sens,prov:settings.prov,key:"***"}},null,2),"application/json");
+$("#btnWipe").onclick=()=>{
+  if(!confirm("Se borrarán perfiles de voz, sesiones y ajustes. ¿Continuar?"))return;
+  localStorage.removeItem("vs_profiles");localStorage.removeItem("vs_sessions");localStorage.removeItem("vs_settings");
+  location.reload();
+};
+
+/* ---------------- init ---------------- */
+renderSpeakers();loadSettings();
+if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0){
+  navigator.serviceWorker.register("sw.js").catch(function(){});
+}
+if(!SR)$("#recSub").textContent="⚠️ Este navegador no soporta dictado. Abre la app en Chrome o Edge.";
+</script>
+</body>
+</html>
