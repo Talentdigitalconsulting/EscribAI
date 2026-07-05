@@ -132,7 +132,12 @@ document.getElementById("authAccion").onclick=async()=>{
 };
 document.getElementById("btnUser").onclick=async()=>{
   if(sesionUser){
-    if(confirm("¿Cerrar sesión de "+sesionUser.email+"?")){await sb.auth.signOut();toast("Sesión cerrada")}
+    if(!confirm("¿Cerrar sesión de "+sesionUser.email+"?"))return;
+    try{await sb.auth.signOut({scope:"local"})}catch(e){console.warn("signout",e)}
+    sesionUser=null;perfil=null;
+    await cargarPerfil();
+    mostrarAuth(true);
+    toast("👋 Sesión cerrada");
   }else mostrarAuth(true);
 };
 function mostrarAuth(v){document.getElementById("authOverlay").classList.toggle("hide",!v)}
@@ -150,6 +155,12 @@ async function cargarPerfil(){
   if(sesionUser){
     const{data}=await sb.from("perfiles").select("*").eq("id",sesionUser.id).maybeSingle();
     perfil=data||null;
+    if(!perfil){ // auto-reparación: crea el perfil si el registro fue anterior a las tablas
+      const m=sesionUser.user_metadata||{};
+      try{await sb.from("perfiles").insert({id:sesionUser.id,email:sesionUser.email,nombre:m.nombre||m.full_name||"",apellidos:m.apellidos||"",telefono:m.telefono||""})}catch(e){}
+      const r2=await sb.from("perfiles").select("*").eq("id",sesionUser.id).maybeSingle();
+      perfil=r2.data||null;
+    }
     const{data:du}=await sb.from("datos_usuario").select("*").eq("user_id",sesionUser.id).maybeSingle();
     if(du){
       if(du.orgs&&du.orgs.length){orgs=du.orgs;LS.set("vs_orgs",orgs);renderOrgs()}
