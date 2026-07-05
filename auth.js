@@ -99,8 +99,13 @@ document.getElementById("authOlvido").onclick=async e=>{
   e.preventDefault();
   const email=document.getElementById("authEmail").value.trim();
   if(!email){toast("Escribe tu correo arriba y vuelve a pulsar");return}
+  const el=e.target;if(el._busy)return;el._busy=true;el.style.opacity=".5";
   const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
-  toast(error?"❌ "+error.message:"📬 Te hemos enviado un correo para restablecer la contraseña");
+  el._busy=false;el.style.opacity="1";
+  if(error){
+    console.error("reset:",error);
+    toast("❌ "+(error.status===429?"Límite de correos alcanzado: sube «Emails per hour» en Supabase → Authentication → Rate Limits, o espera 1 hora":error.message));
+  }else toast("📬 Correo enviado a "+email+" — puede tardar 1-2 min; revisa también el spam");
 };
 document.getElementById("btnGoogle").onclick=async()=>{
   const{error}=await sb.auth.signInWithOAuth({provider:"google",options:{redirectTo:location.origin+location.pathname}});
