@@ -208,7 +208,15 @@ main{flex:1;max-width:1060px;width:100%;margin:0 auto;padding:0 22px 40px}
 
   <div class="card" style="margin-top:14px">
     <div class="transcript" id="transcript"></div>
-    <div class="actions">
+    <div class="actions" style="align-items:center">
+      <select id="setPlantilla" style="width:auto;padding:7px 10px;font-size:12.5px;border-radius:10px" title="Plantilla del acta">
+        <option value="general">📄 Acta general</option>
+        <option value="junta">🏢 Junta de propietarios</option>
+        <option value="comercial">💼 Reunión comercial</option>
+        <option value="clinica">🩺 Consulta profesional</option>
+        <option value="formacion">🎓 Clase / Formación</option>
+        <option value="entrevista">🎤 Entrevista</option>
+      </select>
       <button class="btn sm pri" id="btnSummarize">✨ Generar resumen</button>
       <button class="btn sm" id="btnCopy">📋 Copiar</button>
       <button class="btn sm" id="btnTxt">⬇ TXT</button>
@@ -216,6 +224,8 @@ main{flex:1;max-width:1060px;width:100%;margin:0 auto;padding:0 22px 40px}
       <button class="btn sm" id="btnJson">⬇ JSON</button>
       <button class="btn sm" id="btnAudio" disabled>🔊 Audio</button>
       <button class="btn sm" id="btnAI" title="Rediarización profesional con IA (requiere API key en Ajustes)">🤖 Mejorar con IA</button>
+      <button class="btn sm" id="btnFile" title="Transcribir un audio ya grabado con identificación de voces (Pro + API key Deepgram)">📂 Transcribir archivo</button>
+      <input type="file" id="fileInput" accept="audio/*,video/*" class="hide">
       <button class="btn sm" id="btnSave">💾 Guardar sesión</button>
     </div>
   </div>
@@ -826,27 +836,39 @@ $("#btnSummarize").onclick=()=>{
 function plainTranscript(){
   return segments.map(s=>`[${fmtT(s.t0)}] ${spkOf(s.spk).name}: ${s.text}`).join("\n");
 }
+const PLANTILLAS={
+  general:{titulo:"📋 Acta de reunión",cab:[],sec:[["✅ Decisiones y acuerdos","decisiones","Sin decisiones explícitas"],["📌 Tareas y acciones","tareas","Sin tareas detectadas"],["📅 Fechas y plazos","fechas","Sin fechas mencionadas"],["❓ Preguntas abiertas","preguntas","Sin preguntas abiertas"],["🏷️ Temas principales","temas",""]],pie:""},
+  junta:{titulo:"🏢 Acta de Junta de Propietarios",cab:["Comunidad: ______________________________","Lugar y hora de celebración: ______________","Presidente: ____________  Secretario/Administrador: ____________","Convocatoria: ☐ Primera  ☐ Segunda"],sec:[["📋 Orden del día y temas tratados","temas",""],["✅ Acuerdos adoptados","decisiones","No se adoptaron acuerdos"],["📌 Encargos y gestiones pendientes","tareas","Sin encargos"],["📅 Plazos y fechas acordadas","fechas","Sin plazos"],["🗣️ Ruegos y preguntas","preguntas","Sin ruegos ni preguntas"]],pie:"Borrador generado automáticamente con EscribAI. Carece de validez hasta su revisión y firma por Presidente y Secretario conforme a la Ley de Propiedad Horizontal."},
+  comercial:{titulo:"💼 Informe de reunión comercial",cab:["Cliente / Empresa: ______________","Comercial: ______________","Fase: ☐ Prospección  ☐ Propuesta  ☐ Negociación  ☐ Cierre"],sec:[["🎯 Necesidades e intereses detectados","destacadas","—"],["✅ Acuerdos alcanzados","decisiones","—"],["📌 Compromisos y próximos pasos","tareas","—"],["❓ Objeciones y dudas del cliente","preguntas","—"],["📅 Fechas clave","fechas","—"]],pie:""},
+  clinica:{titulo:"🩺 Nota de sesión / consulta",cab:["Profesional: ______________","Paciente/Cliente (iniciales): ____","Nº de sesión: ____"],sec:[["📝 Observaciones relevantes","destacadas","—"],["✅ Valoración y acuerdos de la sesión","decisiones","—"],["📌 Pauta / tareas encomendadas","tareas","—"],["📅 Próximas citas","fechas","—"]],pie:"Documento confidencial. Tratar conforme al RGPD y al secreto profesional."},
+  formacion:{titulo:"🎓 Resumen de clase / formación",cab:["Curso / Asignatura: ______________","Docente: ______________"],sec:[["📋 Temas impartidos","temas",""],["📌 Tareas y ejercicios encomendados","tareas","—"],["❓ Dudas planteadas por los alumnos","preguntas","—"],["📅 Fechas de examen / entrega","fechas","—"]],pie:""},
+  entrevista:{titulo:"🎤 Entrevista transcrita",cab:["Entrevistador: ______________","Entrevistado: ______________"],sec:[["💬 Declaraciones destacadas","destacadas","—"],["📋 Temas tratados","temas",""],["❓ Preguntas clave","preguntas","—"]],pie:""}
+};
 function buildActa(){
   const d=new Date(),sum=currentSummary||generateSummary();
+  const t=PLANTILLAS[settings.plantilla||"general"]||PLANTILLAS.general;
   const L=[];
-  L.push("# 📋 Acta de reunión — EscribAI");
+  L.push("# "+t.titulo+" — EscribAI");
   L.push("**Fecha:** "+d.toLocaleDateString("es-ES",{weekday:"long",year:"numeric",month:"long",day:"numeric"}));
   L.push("**Duración:** "+fmtT(elapsed)+" · **Palabras:** "+(sum?sum.totalWords:"-"));
-  L.push("**Participantes:** "+(speakers.map(s=>s.name).join(", ")||"—")+"\n");
+  L.push("**Participantes:** "+(speakers.map(s=>s.name).join(", ")||"—"));
+  t.cab.forEach(c=>L.push("**"+c+"**"));
+  L.push("");
   if(sum){
-    const sec=(t,arr,e)=>{L.push("## "+t);L.push(arr.length?arr.map(i=>`- **${i.who}:** ${i.text}`).join("\n"):"_"+e+"_");L.push("")};
-    sec("✅ Decisiones y acuerdos",sum.decisiones,"Sin decisiones explícitas");
-    sec("📌 Tareas y acciones",sum.tareas,"Sin tareas detectadas");
-    sec("📅 Fechas y plazos",sum.fechas,"Sin fechas mencionadas");
-    sec("❓ Preguntas abiertas",sum.preguntas,"Sin preguntas abiertas");
-    L.push("## 🏷️ Temas principales");
-    L.push(sum.temas.map(e=>"`"+e[0]+"` (×"+e[1]+")").join(" · ")||"_—_");L.push("");
+    for(const s of t.sec){
+      L.push("## "+s[0]);
+      if(s[1]==="temas")L.push(sum.temas.map(e=>"`"+e[0]+"` (×"+e[1]+")").join(" · ")||"_—_");
+      else L.push(sum[s[1]].length?sum[s[1]].map(i=>`- **${i.who}:** ${i.text}`).join("\n"):"_"+s[2]+"_");
+      L.push("");
+    }
     L.push("## 📊 Participación");
     sum.stats.forEach(s=>L.push(`- **${s.name}**: ${s.pct}% (${s.words} palabras, ${s.turns} turnos)`));L.push("");
   }
   L.push("## 🗒️ Transcripción completa\n");
   segments.forEach(s=>L.push(`**[${fmtT(s.t0)}] ${spkOf(s.spk).name}:** ${s.text}\n`));
-  L.push("\n---\n_Generado con EscribAI_");
+  L.push("\n---");
+  if(t.pie)L.push("_"+t.pie+"_");
+  L.push("_Generado con EscribAI_");
   return L.join("\n");
 }
 function download(name,content,type){
@@ -913,6 +935,34 @@ function renderHistory(){
 /* =====================================================================
    MEJORAR CON IA (Deepgram diarización / OpenAI Whisper)
 ===================================================================== */
+const DG_URL="https://api.deepgram.com/v1/listen?model=nova-2&language=es&diarize=true&punctuate=true&utterances=true";
+function cargarUtterances(utts){
+  segments=utts.map(u=>({t0:u.start,t1:u.end,text:capitalize(u.transcript),spk:mapAISpeaker(u.speaker)}));
+  elapsed=utts[utts.length-1].end;$("#timer").textContent=fmtT(elapsed);
+  renderTranscript();
+}
+$("#btnFile").onclick=()=>{
+  if(!pro){upsell("Transcribir archivos es una función Pro");return}
+  if(!settings.key||settings.prov!=="deepgram"){toast("⚙️ Configura tu API key de Deepgram en Ajustes (proveedor: Deepgram)");return}
+  $("#fileInput").click();
+};
+$("#fileInput").onchange=async e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  if(f.size>500*1024*1024){toast("❌ Archivo demasiado grande (máx. 500 MB)");return}
+  toast("📂 Transcribiendo «"+f.name+"»… puede tardar un poco");
+  $("#btnFile").disabled=true;$("#btnFile").textContent="📂 Procesando…";
+  try{
+    const r=await fetch(DG_URL,{method:"POST",headers:{Authorization:"Token "+settings.key,"Content-Type":f.type||"audio/mpeg"},body:f});
+    if(!r.ok)throw new Error("Deepgram: "+r.status+" "+(await r.text()).slice(0,120));
+    const j=await r.json();
+    const utts=(j.results&&j.results.utterances)||[];
+    if(!utts.length)throw new Error("No se detectó voz en el archivo");
+    cargarUtterances(utts);
+    audioBlob=f;$("#btnAudio").disabled=false;
+    toast("✅ Archivo transcrito: "+new Set(utts.map(u=>u.speaker)).size+" voces detectadas");
+  }catch(err){toast("❌ "+err.message)}
+  $("#btnFile").disabled=false;$("#btnFile").textContent="📂 Transcribir archivo";
+};
 $("#btnAI").onclick=async()=>{
   if(!pro){upsell("El modo IA es una función Pro");return}
   if(!settings.key){toast("⚙️ Configura una API key en Ajustes para usar la IA");return}
@@ -920,14 +970,13 @@ $("#btnAI").onclick=async()=>{
   $("#btnAI").disabled=true;$("#btnAI").textContent="🤖 Procesando…";
   try{
     if(settings.prov==="deepgram"){
-      const r=await fetch("https://api.deepgram.com/v1/listen?model=nova-2&language=es&diarize=true&punctuate=true&utterances=true",{
+      const r=await fetch(DG_URL,{
         method:"POST",headers:{Authorization:"Token "+settings.key,"Content-Type":audioBlob.type||"audio/webm"},body:audioBlob});
       if(!r.ok)throw new Error("Deepgram: "+r.status+" "+(await r.text()).slice(0,120));
       const j=await r.json();
       const utts=(j.results&&j.results.utterances)||[];
       if(!utts.length)throw new Error("Sin resultados de diarización");
-      segments=utts.map(u=>({t0:u.start,t1:u.end,text:capitalize(u.transcript),spk:mapAISpeaker(u.speaker)}));
-      renderTranscript();toast("✅ Rediarizado con IA: "+new Set(utts.map(u=>u.speaker)).size+" voces detectadas");
+      cargarUtterances(utts);toast("✅ Rediarizado con IA: "+new Set(utts.map(u=>u.speaker)).size+" voces detectadas");
     }else{
       const fd=new FormData();
       fd.append("file",audioBlob,"audio.webm");fd.append("model","whisper-1");fd.append("language","es");
@@ -954,9 +1003,11 @@ function loadSettings(){
   $("#setLang").value=settings.lang;$("#setSens").value=settings.sens;
   $("#setProv").value=settings.prov;$("#setKey").value=settings.key;
   $("#setLic").value=settings.license||"";
+  $("#setPlantilla").value=settings.plantilla||"general";
 }
+$("#setPlantilla").onchange=()=>{settings.plantilla=$("#setPlantilla").value;LS.set("vs_settings",settings)};
 $("#btnSaveSet").onclick=async()=>{
-  settings={lang:$("#setLang").value,sens:$("#setSens").value,prov:$("#setProv").value,key:$("#setKey").value.trim(),license:$("#setLic").value.trim()};
+  settings={lang:$("#setLang").value,sens:$("#setSens").value,prov:$("#setProv").value,key:$("#setKey").value.trim(),license:$("#setLic").value.trim(),plantilla:$("#setPlantilla").value};
   LS.set("vs_settings",settings);
   const prev=!!pro;
   pro=await verifyLicense(settings.license);
