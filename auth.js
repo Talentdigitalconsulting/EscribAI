@@ -141,7 +141,14 @@ document.getElementById("authAccion").onclick=async()=>{
       if(error)throw error;
       toast("👋 ¡Hola de nuevo!");
     }
-  }catch(err){toast("❌ "+(err.message==="Invalid login credentials"?"Correo o contraseña incorrectos":err.message))}
+  }catch(err){
+    console.error("auth:",err);
+    let m=err&&err.message&&err.message!=="{}"?err.message:"";
+    if(m==="Invalid login credentials")m="Correo o contraseña incorrectos";
+    else if(m==="User already registered")m="Ese correo ya tiene cuenta: usa «Entrar» o recupera la contraseña";
+    else if(!m||err.status>=500)m="No se pudo enviar el correo de verificación (fallo del SMTP). Arreglo: en Supabase → SMTP pon un remitente verificado en Brevo, o desactiva «Confirm email» en Authentication → Providers.";
+    toast("❌ "+m);
+  }
   btn.disabled=false;
 };
 document.getElementById("btnUser").onclick=async()=>{
