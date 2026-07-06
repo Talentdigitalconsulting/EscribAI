@@ -214,7 +214,7 @@ async function syncNube(){
   if(!sesionUser)return;
   try{
     await sb.from("datos_usuario").upsert({user_id:sesionUser.id,
-      ajustes:{license:settings.license,key:settings.key,prov:settings.prov,lang:settings.lang,sens:settings.sens,plantilla:settings.plantilla},
+      ajustes:{license:settings.license,key:settings.key,prov:settings.prov,lang:settings.lang,sens:settings.sens,plantilla:settings.plantilla,misPlantillas:settings.misPlantillas||[]},
       orgs:orgs,actualizado:new Date().toISOString()});
   }catch(e){console.warn("sync",e)}
 }
