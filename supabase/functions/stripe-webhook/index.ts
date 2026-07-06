@@ -40,10 +40,11 @@ Deno.serve(async (req) => {
   try {
     if (ev.type === "checkout.session.completed") {
       const s = ev.data.object as Stripe.Checkout.Session;
-      await activar(s.customer_details?.email ?? "", s.amount_total ?? 0, ev.type, (s.customer as string) ?? null);
+      // amount_subtotal = precio sin impuestos → inmune al IVA que Stripe añada
+      await activar(s.customer_details?.email ?? "", s.amount_subtotal ?? s.amount_total ?? 0, ev.type, (s.customer as string) ?? null);
     } else if (ev.type === "invoice.paid") {
       const inv = ev.data.object as Stripe.Invoice;
-      await activar(inv.customer_email ?? "", inv.amount_paid ?? 0, ev.type, (inv.customer as string) ?? null);
+      await activar(inv.customer_email ?? "", inv.subtotal ?? inv.amount_paid ?? 0, ev.type, (inv.customer as string) ?? null);
     } else if (ev.type === "customer.subscription.deleted") {
       const sub = ev.data.object as Stripe.Subscription;
       const cust = (await stripe.customers.retrieve(sub.customer as string)) as Stripe.Customer;
