@@ -251,6 +251,10 @@ async function subirActa(s){
     sesionUser=session?session.user:null;
     await cargarPerfil();
     mostrarAuth(!sesionUser);
+    if(sesionUser&&!LS.get("vs_tutorial_visto",false)){
+      LS.set("vs_tutorial_visto",true);
+      if(typeof abrirTutorial==="function")setTimeout(()=>abrirTutorial(0),600);
+    }
   });
   const{data:{session}}=await sb.auth.getSession();
   sesionUser=session?session.user:null;

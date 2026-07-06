@@ -156,6 +156,27 @@ main{flex:1;max-width:1060px;width:100%;margin:0 auto;padding:0 22px 40px}
 .colorpick i.sel{border-color:#fff}
 .ptl{font-size:13px;font-weight:600;display:block;margin:12px 0 6px}
 
+/* ---------- tutorial ---------- */
+.tutwrap{display:flex;gap:16px;min-height:340px}
+.tutmenu{width:200px;flex:none;display:flex;flex-direction:column;gap:4px;overflow-y:auto;max-height:56vh}
+.tutmenu button{text-align:left;padding:8px 10px;border-radius:9px;font-size:12.5px;color:var(--mut)}
+.tutmenu button:hover{color:var(--txt)}
+.tutmenu button.act{background:var(--panel2);color:var(--txt);border:1px solid var(--line)}
+.tutbody{flex:1;display:flex;flex-direction:column;min-width:0}
+.tutbody h3{font-size:16px;margin-bottom:10px}
+.tutbody p{color:#c6cde0;font-size:14px;line-height:1.75;flex:1}
+.tutnav{display:flex;gap:10px;align-items:center;margin-top:16px}
+.tutnav .prog{color:var(--mut);font-size:12px;margin-right:auto}
+@media(max-width:640px){.tutwrap{flex-direction:column}.tutmenu{width:100%;flex-direction:row;flex-wrap:wrap;max-height:none}}
+
+/* ---------- anuncios (solo plan gratis, pantallas anchas) ---------- */
+.adrail{position:fixed;top:130px;width:160px;z-index:5;display:none}
+#adL{left:calc(50% - 700px)}
+#adR{right:calc(50% - 700px)}
+body.conAnuncios .adrail{display:none}
+@media(min-width:1460px){body.conAnuncios .adrail{display:block}}
+.adbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 14px;text-align:center;font-size:12px;color:var(--mut)}
+
 /* ---------- toast ---------- */
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--panel2);
   border:1px solid var(--line);padding:11px 20px;border-radius:12px;font-size:13.5px;z-index:200;transition:.3s;opacity:0;box-shadow:var(--sh)}
@@ -176,8 +197,11 @@ main{flex:1;max-width:1060px;width:100%;margin:0 auto;padding:0 22px 40px}
 <header>
   <div class="logo"><img src="icons/logo.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:11px" onerror="this.remove()"><svg viewBox="0 0 24 24"><path d="M12 15a4 4 0 0 0 4-4V6a4 4 0 1 0-8 0v5a4 4 0 0 0 4 4zm6-4a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.94V22h2v-3.06A8 8 0 0 0 20 11h-2z"/></svg></div>
   <div class="brand"><b>Escrib<span style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">AI</span></b><span>Escucha · Transcribe · Resume · Acta</span></div>
+  <button class="btn sm" id="btnTut" title="Ver el tutorial">❓</button>
   <div class="status"><span class="dot" id="statusDot"></span><span id="statusTxt">Listo</span></div>
 </header>
+<div class="adrail" id="adL"></div>
+<div class="adrail" id="adR"></div>
 
 <nav>
   <button class="act" data-tab="record">🎙️ Grabar</button>
@@ -433,6 +457,28 @@ main{flex:1;max-width:1060px;width:100%;margin:0 auto;padding:0 22px 40px}
   </div>
 </div>
 
+<!-- ============ MODAL: tutorial ============ -->
+<div class="overlay hide" id="tutOverlay">
+  <div class="modal" style="max-width:720px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <h2 style="margin:0">📖 Tutorial de EscribAI</h2>
+      <button class="btn sm" id="tutCerrar" style="margin-left:auto">✕ Cerrar</button>
+    </div>
+    <div class="tutwrap">
+      <div class="tutmenu" id="tutMenu"></div>
+      <div class="tutbody">
+        <h3 id="tutTitulo"></h3>
+        <p id="tutTexto"></p>
+        <div class="tutnav">
+          <span class="prog" id="tutProg"></span>
+          <button class="btn sm" id="tutPrev">← Anterior</button>
+          <button class="btn sm pri" id="tutNext">Siguiente →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -488,6 +534,7 @@ function updateProUI(){
     :`<span style="color:var(--warn)">Plan gratuito</span> <span style="color:var(--mut)">— 2 hablantes, exportación TXT</span>`;
   const badge=$("#statusTxt");
   if(badge&&!recording)badge.textContent=pro?"Listo · PRO":"Listo · Gratis";
+  if(typeof renderAds==="function")renderAds();
 }
 
 /* ---------------- pestañas ---------------- */
@@ -551,6 +598,7 @@ async function initAudio(){
   const src=audioCtx.createMediaStreamSource(micStream);
   analyser=audioCtx.createAnalyser();analyser.fftSize=2048;
   src.connect(analyser);
+  micStream.getAudioTracks().forEach(t=>{t.onended=()=>setTimeout(()=>{if(typeof recuperarMic==="function")recuperarMic()},800)});
   mediaRec=new MediaRecorder(micStream);
   mediaRec.ondataavailable=e=>{if(e.data.size)audioChunks.push(e.data)};
   mediaRec.onstop=()=>{audioBlob=new Blob(audioChunks,{type:mediaRec.mimeType||"audio/webm"});$("#btnAudio").disabled=false};
@@ -655,6 +703,7 @@ async function startSession(){
   $("#btnPause").disabled=false;
   $("#statusDot").className="dot rec";$("#statusTxt").textContent="Grabando…";
   $("#recSub").textContent="Escuchando… habla con naturalidad";
+  if(typeof pedirWakeLock==="function")pedirWakeLock();
   toast("🎙️ Grabación iniciada");
 }
 function stopSession(){
@@ -664,6 +713,7 @@ function stopSession(){
   $("#btnMic").classList.remove("rec");
   $("#micIcon").innerHTML='<path d="M12 15a4 4 0 0 0 4-4V6a4 4 0 1 0-8 0v5a4 4 0 0 0 4 4zm6-4a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.94V22h2v-3.06A8 8 0 0 0 20 11h-2z"/>';
   $("#btnPause").disabled=true;
+  if(typeof soltarWakeLock==="function")soltarWakeLock();
   $("#statusDot").className="dot on";$("#statusTxt").textContent="Sesión finalizada";
   $("#recSub").textContent="Sesión detenida. Puedes generar el resumen o guardar.";
   showLiveSpeaker(null);
@@ -1400,6 +1450,112 @@ $("#wmInput").onchange=e=>{
   };
   r.readAsArrayBuffer(f);
 };
+
+/* =====================================================================
+   TUTORIAL POR CAPÍTULOS (reabrible con ❓)
+===================================================================== */
+const TUTORIAL=[
+ {i:"🚀",t:"Primeros pasos",p:[
+  ["Qué es EscribAI","EscribAI escucha tus reuniones, identifica quién habla por su voz, transcribe en tiempo real y redacta el acta sola. Todo se procesa en tu dispositivo: tus conversaciones no se suben a ningún servidor."],
+  ["Tu cuenta","Con la cuenta gratuita tienes transcripción ilimitada, 2 perfiles de voz, 1 organización y exportación en TXT. Tus ajustes, organizaciones y actas guardadas viajan con tu cuenta: entra con el mismo correo en el PC y en el móvil y lo tendrás todo."],
+  ["La pantalla principal","Arriba están las pestañas: Grabar (el trabajo del día a día), Resumen (el acta), Historial (sesiones guardadas), Ajustes y Planes. El botón ❓ de la cabecera reabre este tutorial cuando quieras: puedes elegir el capítulo que te interese en el menú de la izquierda."]]},
+ {i:"🗣️",t:"Hablantes y calibración",p:[
+  ["Añadir hablantes","Pulsa «＋ Añadir hablante» y escribe el nombre de cada participante (María, Cliente, Presidente…). Cada uno tiene un color, y sus intervenciones aparecerán pintadas con él."],
+  ["Calibrar la voz","Cada persona lee una frase en voz alta durante 6 segundos. EscribAI aprende su tono y su timbre para reconocerla después cuando hable. Hazlo cerca del micrófono y con voz natural."],
+  ["Precisión","La identificación funciona mejor con voces diferenciadas. Si la app confunde a dos personas con voces muy parecidas, pasa el cursor por la burbuja y corrige el hablante con el botón 👤. También puedes ajustar la sensibilidad de cambio de hablante en Ajustes."]]},
+ {i:"🎙️",t:"Grabar y transcribir",p:[
+  ["Empezar a grabar","Pulsa el micrófono grande. Verás la onda de sonido, el cronómetro y el texto apareciendo en tiempo real, cada frase asignada a su hablante. El botón de pausa detiene temporalmente; volver a pulsar el micrófono termina la sesión."],
+  ["Editar sobre la marcha","Pasa el cursor (o el dedo) por cualquier burbuja: ✏️ edita el texto, 👤 cambia el hablante y 🗑 la elimina. La transcripción es tuya: corrígela cuanto necesites antes de generar el acta."],
+  ["En el móvil","Instala la app desde Chrome con «Añadir a pantalla de inicio». Durante la grabación, EscribAI mantiene la pantalla encendida por ti. Si el sistema interrumpe el micrófono (por ejemplo una llamada entrante que no descuelgas), la grabación se reconecta sola en cuanto vuelve a estar libre."]]},
+ {i:"🏛️",t:"Organizaciones",p:[
+  ["Qué son","Una organización es la ficha de quien se reúne: una comunidad de propietarios, un consejo de administración, una asociación, un cliente. Guarda su nombre, presidente, secretario, la plantilla de acta que le corresponde y los emails de los destinatarios."],
+  ["Crear y usar","Antes de grabar, elige la organización en la barra superior (o crea una con «＋ Nueva»). El acta saldrá sellada con sus datos y la sesión quedará archivada a su nombre. El plan gratis incluye 1 organización; el Pro, ilimitadas."],
+  ["Envío sin errores","Al pulsar «📧 Enviar acta», la app te muestra a qué organización y a cuántos destinatarios se enviará, y te pide confirmación. Los destinatarios van en copia oculta y el asunto lleva el nombre y la fecha. Imposible confundirse de comunidad."]]},
+ {i:"✨",t:"Resumen y plantillas",p:[
+  ["Generar el resumen","Al terminar la reunión pulsa «✨ Generar resumen»: EscribAI detecta decisiones y acuerdos, tareas, fechas y plazos, preguntas abiertas, frases importantes, los temas tratados y el porcentaje de participación de cada asistente."],
+  ["Plantillas de acta","El desplegable junto a «Generar resumen» elige el formato del acta: general, junta de propietarios, reunión comercial, consulta profesional, clase, entrevista, asamblea de asociación o pleno. Cada una organiza el documento como ese sector espera."],
+  ["El acta","El acta incluye la cabecera con fecha, duración, participantes y organización, las secciones de la plantilla elegida y la transcripción completa. Descárgala con «⬇ Acta (MD)» o en Word con «⬇ Word»."]]},
+ {i:"⭐",t:"Mis plantillas (Pro)",p:[
+  ["Tu propio modelo","En el desplegable de plantillas entra en «✏️ Mis plantillas…» y crea el tuyo: nombre, título del documento y una cabecera con tus campos fijos (nº de colegiado, expediente, despacho…), una línea por campo."],
+  ["Con qué se rellena","Añade las secciones que quieras, cada una con tu propio encabezado («Conclusiones del perito», «Pauta terapéutica»…) y un desplegable que indica qué contenido la alimenta: acuerdos, tareas, fechas, preguntas, frases destacadas o temas. La reunión se vuelca directamente en tu estructura."],
+  ["Dónde viven","Tus plantillas se sincronizan con tu cuenta y las tendrás en todos tus dispositivos. Además, puedes asignar una plantilla por defecto a cada organización, y se seleccionará sola al elegirla."]]},
+ {i:"📄",t:"Word con tu formato (Pro)",p:[
+  ["Sube tu modelo","En «Mis plantillas» → «Modelo Word propio», sube el .docx que usas siempre, con tu membrete, logo y estilos. Donde quieras cada dato escribe un marcador: {{ACUERDOS}}, {{TAREAS}}, {{FECHA}}, {{PARTICIPANTES}}, {{TRANSCRIPCION}}…"],
+  ["Rellenado automático","Desde entonces, el botón «⬇ Word» te devuelve TU documento con la reunión volcada dentro y el formato intacto. Consejo: escribe cada marcador de una sola vez, sin cambiar de fuente o formato a mitad de palabra."]]},
+ {i:"📂",t:"Archivos y modo IA (Pro)",p:[
+  ["Transcribir audios ya grabados","«📂 Transcribir archivo» acepta audios y vídeos: la reunión grabada con el móvil, un audio de WhatsApp, una entrevista. Los transcribe identificando las voces. Requiere tu clave de Deepgram en Ajustes (cuesta céntimos por hora de audio)."],
+  ["Mejorar con IA","«🤖 Mejorar con IA» reprocesa el audio de la sesión recién grabada con diarización profesional en la nube. Útil cuando hay muchas voces, se pisan al hablar o necesitas máxima precisión."]]},
+ {i:"📧",t:"Guardar y exportar",p:[
+  ["Guardar sesiones","«💾 Guardar sesión» archiva la reunión con su nombre y su organización (Pro). La recuperas en la pestaña Historial y, con tu cuenta, también desde cualquier otro dispositivo."],
+  ["Exportaciones","Tienes TXT (gratis), acta en Markdown, Word (con o sin tu modelo), JSON con todos los datos y el audio de la grabación. Y «📋 Copiar» para pegar la transcripción donde quieras."]]},
+ {i:"👤",t:"Cuenta y planes",p:[
+  ["Tu plan","En ⭐ Planes ves tu plan actual y las opciones: Pro Mensual (9,99€), Pro Anual (79€, dos meses gratis) y Empresas (29€). El pago es seguro con Stripe y el plan se activa automáticamente en segundos."],
+  ["Gestionar la suscripción","Desde Planes → «⚙️ Gestionar / cancelar suscripción» entras en el portal seguro de pagos: cambiar la tarjeta, descargar facturas o cancelar cuando quieras. Al cancelar vuelves al plan gratis sin perder tus datos."],
+  ["Acceso y contraseña","Entra con tu correo y contraseña (marca «Recordar mi correo») o con Google. Si olvidas la contraseña, escribe tu correo en la pantalla de acceso y pulsa «¿Has olvidado tu contraseña?»: recibirás un enlace para crear una nueva."]]}
+];
+let tutC=0,tutP=0;
+function abrirTutorial(c){tutC=c||0;tutP=0;renderTutMenu();renderTutPaso();$("#tutOverlay").classList.remove("hide")}
+function renderTutMenu(){
+  const m=$("#tutMenu");m.innerHTML="";
+  TUTORIAL.forEach((c,i)=>{
+    const b=document.createElement("button");b.textContent=c.i+" "+c.t;
+    if(i===tutC)b.className="act";
+    b.onclick=()=>{tutC=i;tutP=0;renderTutMenu();renderTutPaso()};
+    m.appendChild(b);
+  });
+}
+function renderTutPaso(){
+  const c=TUTORIAL[tutC],p=c.p[tutP];
+  $("#tutTitulo").textContent=p[0];
+  $("#tutTexto").textContent=p[1];
+  $("#tutProg").textContent="Capítulo "+(tutC+1)+"/"+TUTORIAL.length+" · Paso "+(tutP+1)+"/"+c.p.length;
+  $("#tutPrev").disabled=(tutC===0&&tutP===0);
+  $("#tutNext").textContent=(tutP<c.p.length-1)?"Siguiente →":(tutC<TUTORIAL.length-1?"Siguiente capítulo →":"Terminar ✓");
+}
+$("#tutPrev").onclick=()=>{if(tutP>0)tutP--;else if(tutC>0){tutC--;tutP=TUTORIAL[tutC].p.length-1}renderTutMenu();renderTutPaso()};
+$("#tutNext").onclick=()=>{
+  const c=TUTORIAL[tutC];
+  if(tutP<c.p.length-1)tutP++;
+  else if(tutC<TUTORIAL.length-1){tutC++;tutP=0}
+  else{$("#tutOverlay").classList.add("hide");return}
+  renderTutMenu();renderTutPaso();
+};
+$("#tutCerrar").onclick=()=>$("#tutOverlay").classList.add("hide");
+$("#btnTut").onclick=()=>abrirTutorial(0);
+
+/* =====================================================================
+   ANUNCIOS EN PLAN GRATIS (carriles laterales, solo pantallas anchas)
+===================================================================== */
+const ADS_HTML=""; // pega aquí tu bloque de AdSense u otra red cuando lo tengas
+function renderAds(){
+  const casa='<div class="adbox"><div style="font-size:26px">⭐</div><b style="color:var(--txt)">Pasa a Pro</b><p style="margin:8px 0">Sin anuncios, plantillas propias, actas en Word, historial en la nube…</p><button class="btn sm pri" onclick="var b=document.querySelector(\'nav button[data-tab=planes]\');if(b)b.click()">Ver planes</button></div>';
+  ["adL","adR"].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=ADS_HTML||casa});
+  document.body.classList.toggle("conAnuncios",!pro);
+}
+
+/* =====================================================================
+   GRABACIÓN RESISTENTE (móvil: llamadas entrantes, pantalla, recuperación)
+===================================================================== */
+let wakeLock=null;
+async function pedirWakeLock(){try{if("wakeLock" in navigator)wakeLock=await navigator.wakeLock.request("screen")}catch(e){}}
+function soltarWakeLock(){try{if(wakeLock){wakeLock.release();wakeLock=null}}catch(e){}}
+async function recuperarMic(){
+  if(!recording||paused)return;
+  const vivo=micStream&&micStream.getTracks().some(t=>t.readyState==="live");
+  if(vivo)return;
+  toast("🎙️ Reconectando micrófono…");
+  try{
+    stopAudio();
+    await initAudio();
+    try{mediaRec.start(1000)}catch(e){}
+    try{rec.start()}catch(e){}
+    frameLoop();
+    toast("✅ Grabación reanudada");
+  }catch(e){toast("❌ No se pudo recuperar el micrófono: "+e.message)}
+}
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="visible"&&recording){pedirWakeLock();setTimeout(recuperarMic,600)}
+});
 
 /* ---------------- init ---------------- */
 renderSpeakers();loadSettings();renderOrgs();
