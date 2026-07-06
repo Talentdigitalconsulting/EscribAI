@@ -1,5 +1,5 @@
 /* EscribAI — Service Worker v3 (red primero para el HTML, caché para el resto) */
-const CACHE = "escribai-v4";
+const CACHE = "escribai-v5";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./auth.js", "./icons/icon-192.png", "./icons/icon-512.png"];
 
 self.addEventListener("install", e => {
@@ -14,7 +14,7 @@ self.addEventListener("activate", e => {
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
   if (/deepgram\.com|openai\.com/.test(e.request.url)) return;
-  const esHTML = e.request.mode === "navigate" || /\.html$|\/$/.test(new URL(e.request.url).pathname);
+  const esHTML = e.request.mode === "navigate" || /\.html$|\/$|auth\.js$/.test(new URL(e.request.url).pathname);
   if (esHTML) {
     e.respondWith(
       fetch(e.request).then(r => {

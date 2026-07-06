@@ -191,9 +191,19 @@ async function cargarPerfil(){
       perfil=r2.data||null;
     }
     const{data:du}=await sb.from("datos_usuario").select("*").eq("user_id",sesionUser.id).maybeSingle();
+    let curar=false;
     if(du){
-      if(du.orgs&&du.orgs.length){orgs=du.orgs;LS.set("vs_orgs",orgs);renderOrgs()}
-      if(du.ajustes){settings=Object.assign(settings,du.ajustes);LS.set("vs_settings",settings);loadSettings()}
+      if(du.orgs&&du.orgs.length&&!orgs.length){orgs=du.orgs;LS.set("vs_orgs",orgs);renderOrgs()}
+      if(du.ajustes){
+        // la nube solo pisa lo local cuando aporta un valor; lo vacío nunca borra nada
+        ["license","key","prov","lang","sens","plantilla"].forEach(k=>{
+          if(du.ajustes[k]&&du.ajustes[k]!==settings[k]){settings[k]=du.ajustes[k]}
+          else if(settings[k]&&!du.ajustes[k])curar=true;
+        });
+        if(Array.isArray(du.ajustes.misPlantillas)&&du.ajustes.misPlantillas.length&&!(settings.misPlantillas&&settings.misPlantillas.length))settings.misPlantillas=du.ajustes.misPlantillas;
+        else if(settings.misPlantillas&&settings.misPlantillas.length&&!(du.ajustes.misPlantillas&&du.ajustes.misPlantillas.length))curar=true;
+        LS.set("vs_settings",settings);loadSettings();
+      }
     }
     const{data:acts}=await sb.from("actas").select("*").eq("user_id",sesionUser.id).order("fecha",{ascending:false}).limit(50);
     if(acts&&acts.length){
@@ -206,6 +216,8 @@ async function cargarPerfil(){
   }
   licPayload=await verifyLicense(settings.license);
   recalcPro();
+  if(typeof curar!=="undefined"&&curar)syncNube();
+  console.log("[EscribAI] sesión:",sesionUser?sesionUser.email:"-","| plan nube:",perfil?perfil.plan:"-","| licencia local:",settings.license?"sí":"no","| PRO:",!!pro);
   const b=document.getElementById("btnUser");
   b.textContent=sesionUser?"👤 "+(sesionUser.email.split("@")[0]):"👤 Entrar";
   b.title=sesionUser?sesionUser.email+" — clic para salir":"Entrar o crear cuenta";
