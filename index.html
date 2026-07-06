@@ -341,6 +341,10 @@ body.conAnuncios .adrail{display:none}
       <p>El plan Pro desbloquea: hablantes ilimitados, acta completa (Markdown/JSON), historial de sesiones, descarga de audio y modo IA.</p>
     </div>
     <div class="setrow">
+      <label>Audio de las reuniones</label>
+      <label style="display:flex;gap:8px;align-items:center;font-size:13px;cursor:pointer"><input type="checkbox" id="setAudioAuto" style="width:auto" checked> Guardar automáticamente el audio al terminar (nombre: organización + fecha)</label>
+    </div>
+    <div class="setrow">
       <label>Datos</label>
       <div class="inline">
         <button class="btn sm" id="btnExportAll">⬇ Exportar todos los datos</button>
@@ -601,7 +605,14 @@ async function initAudio(){
   micStream.getAudioTracks().forEach(t=>{t.onended=()=>setTimeout(()=>{if(typeof recuperarMic==="function")recuperarMic()},800)});
   mediaRec=new MediaRecorder(micStream);
   mediaRec.ondataavailable=e=>{if(e.data.size)audioChunks.push(e.data)};
-  mediaRec.onstop=()=>{audioBlob=new Blob(audioChunks,{type:mediaRec.mimeType||"audio/webm"});$("#btnAudio").disabled=false};
+  mediaRec.onstop=()=>{
+    audioBlob=new Blob(audioChunks,{type:mediaRec.mimeType||"audio/webm"});
+    $("#btnAudio").disabled=false;
+    if(!recording&&settings.audioAuto!==false&&audioBlob.size>0){
+      download(nombreAudio(),audioBlob);
+      toast("🔊 Audio guardado en Descargas: "+nombreAudio());
+    }
+  };
 }
 function stopAudio(){
   if(mediaRec&&mediaRec.state!=="inactive")mediaRec.stop();
@@ -1031,6 +1042,12 @@ function download(name,content,type){
   a.download=name;a.click();URL.revokeObjectURL(a.href);
 }
 const stamp=()=>new Date().toISOString().slice(0,16).replace(/[T:]/g,"-");
+function nombreAudio(){
+  const o=orgOf(currentOrg);
+  const d=new Date();
+  const f=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")+" "+String(d.getHours()).padStart(2,"0")+"."+String(d.getMinutes()).padStart(2,"0");
+  return (o?o.nombre:"Reunion").replace(/[\\/:*?"<>|]+/g,"-")+" — "+f+".webm";
+}
 $("#btnCopy").onclick=async()=>{
   if(!segments.length){toast("Nada que copiar");return}
   await navigator.clipboard.writeText(plainTranscript());toast("📋 Transcripción copiada");
@@ -1043,7 +1060,7 @@ $("#btnJson").onclick=()=>{
   if(!segments.length){toast("Nada que exportar");return}
   download("escribai-"+stamp()+".json",JSON.stringify({fecha:new Date().toISOString(),duracion:elapsed,hablantes:speakers.map(s=>({id:s.id,name:s.name,color:s.color})),segmentos:segments,resumen:currentSummary},null,2),"application/json");
 };
-$("#btnAudio").onclick=()=>{if(!pro){upsell("La descarga de audio es una función Pro");return}if(audioBlob)download("audio-"+stamp()+".webm",audioBlob)};
+$("#btnAudio").onclick=()=>{if(!pro){upsell("La descarga de audio es una función Pro");return}if(audioBlob)download(nombreAudio(),audioBlob)};
 
 /* =====================================================================
    ORGANIZACIONES (fichas de comunidad / empresa / asociación / órgano)
@@ -1241,6 +1258,7 @@ function loadSettings(){
   $("#setLang").value=settings.lang;$("#setSens").value=settings.sens;
   $("#setProv").value=settings.prov;$("#setKey").value=settings.key;
   $("#setLic").value=settings.license||"";
+  $("#setAudioAuto").checked=settings.audioAuto!==false;
   renderPlantillasSel();
 }
 $("#setPlantilla").onchange=()=>{
@@ -1249,7 +1267,7 @@ $("#setPlantilla").onchange=()=>{
   settings.plantilla=v;LS.set("vs_settings",settings);
 };
 $("#btnSaveSet").onclick=async()=>{
-  settings={lang:$("#setLang").value,sens:$("#setSens").value,prov:$("#setProv").value,key:$("#setKey").value.trim(),license:$("#setLic").value.trim(),plantilla:$("#setPlantilla").value};
+  settings={lang:$("#setLang").value,sens:$("#setSens").value,prov:$("#setProv").value,key:$("#setKey").value.trim(),license:$("#setLic").value.trim(),plantilla:$("#setPlantilla").value,audioAuto:$("#setAudioAuto").checked,misPlantillas:settings.misPlantillas||[]};
   LS.set("vs_settings",settings);
   const prev=!!pro;
   pro=await verifyLicense(settings.license);
