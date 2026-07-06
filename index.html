@@ -171,6 +171,7 @@ main{flex:1;max-width:1060px;width:100%;margin:0 auto;padding:0 22px 40px}
 </head>
 <body>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <header>
   <div class="logo"><img src="icons/logo.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:11px" onerror="this.remove()"><svg viewBox="0 0 24 24"><path d="M12 15a4 4 0 0 0 4-4V6a4 4 0 1 0-8 0v5a4 4 0 0 0 4 4zm6-4a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.94V22h2v-3.06A8 8 0 0 0 20 11h-2z"/></svg></div>
@@ -234,6 +235,7 @@ main{flex:1;max-width:1060px;width:100%;margin:0 auto;padding:0 22px 40px}
       <button class="btn sm" id="btnCopy">📋 Copiar</button>
       <button class="btn sm" id="btnTxt">⬇ TXT</button>
       <button class="btn sm" id="btnMd">⬇ Acta (MD)</button>
+      <button class="btn sm" id="btnWord">⬇ Word</button>
       <button class="btn sm" id="btnJson">⬇ JSON</button>
       <button class="btn sm" id="btnAudio" disabled>🔊 Audio</button>
       <button class="btn sm" id="btnAI" title="Rediarización profesional con IA (requiere API key en Ajustes)">🤖 Mejorar con IA</button>
@@ -395,6 +397,13 @@ main{flex:1;max-width:1060px;width:100%;margin:0 auto;padding:0 22px 40px}
       <h2>Mis plantillas</h2>
       <p class="sub">Crea tus propios modelos de acta: la reunión se volcará directamente en tu formato.</p>
       <div id="ptItems" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
+      <div style="background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px">
+        <b style="font-size:13px">📄 Modelo Word propio (opcional)</b>
+        <p class="sub" style="margin:6px 0" id="wmEstado"></p>
+        <button class="btn sm" id="wmSubir">⬆ Subir modelo .docx</button>
+        <input type="file" id="wmInput" accept=".docx" class="hide">
+        <p class="sub" style="margin-top:8px">En tu Word escribe marcadores donde quieras cada dato: <code>{{ACUERDOS}}</code> <code>{{TAREAS}}</code> <code>{{FECHAS}}</code> <code>{{PREGUNTAS}}</code> <code>{{DESTACADAS}}</code> <code>{{TEMAS}}</code> <code>{{PARTICIPACION}}</code> <code>{{TRANSCRIPCION}}</code> <code>{{RESUMEN}}</code> <code>{{FECHA}}</code> <code>{{DURACION}}</code> <code>{{PARTICIPANTES}}</code> <code>{{ORGANIZACION}}</code> <code>{{PRESIDENTE}}</code> <code>{{SECRETARIO}}</code> <code>{{TITULO}}</code>. El botón «⬇ Word» devolverá tu documento relleno, con tu formato intacto.</p>
+      </div>
       <div class="foot">
         <button class="btn" id="ptCerrar">Cerrar</button>
         <button class="btn pri" id="ptNueva">＋ Nueva plantilla</button>
@@ -1225,7 +1234,7 @@ function renderPlantillasSel(){
   if(!sel.value){sel.value="general";settings.plantilla="general"}
 }
 let ptEditando=null;
-function abrirPt(){renderPtItems();$("#ptLista").classList.remove("hide");$("#ptEditor").classList.add("hide");$("#ptOverlay").classList.remove("hide")}
+function abrirPt(){renderPtItems();renderWm();$("#ptLista").classList.remove("hide");$("#ptEditor").classList.add("hide");$("#ptOverlay").classList.remove("hide")}
 function renderPtItems(){
   const box=$("#ptItems");
   const ps=misPlantillas();
@@ -1293,6 +1302,103 @@ $("#ptGuardar").onclick=()=>{
   if(typeof syncNube==="function")syncNube();
   toast("⭐ Plantilla guardada: "+nombre);
   $("#ptEditor").classList.add("hide");$("#ptLista").classList.remove("hide");renderPtItems();
+};
+
+/* =====================================================================
+   EXPORTAR A WORD (modelo .docx propio con {{marcadores}} o doc generado)
+===================================================================== */
+function datosActa(){
+  const sum=currentSummary||generateSummary();if(!sum)return null;
+  const t=plantillaActual();
+  const o=orgOf(currentOrg);
+  const lista=a=>(a&&a.length)?a.map(i=>"• "+i.who+": "+i.text).join("\n"):"—";
+  return{
+    TITULO:t.titulo||"Acta de reunión",
+    FECHA:new Date().toLocaleDateString("es-ES",{weekday:"long",year:"numeric",month:"long",day:"numeric"}),
+    ORGANIZACION:o?o.nombre:"",PRESIDENTE:o?(o.pres||""):"",SECRETARIO:o?(o.sec||""):"",
+    PARTICIPANTES:speakers.map(s=>s.name).join(", ")||"—",
+    DURACION:fmtT(elapsed),
+    ACUERDOS:lista(sum.decisiones),TAREAS:lista(sum.tareas),FECHAS:lista(sum.fechas),
+    PREGUNTAS:lista(sum.preguntas),DESTACADAS:lista(sum.destacadas),
+    TEMAS:sum.temas.map(e=>e[0]+" (×"+e[1]+")").join(" · ")||"—",
+    PARTICIPACION:sum.stats.map(s=>"• "+s.name+": "+s.pct+"% ("+s.words+" palabras)").join("\n"),
+    TRANSCRIPCION:segments.map(s=>"["+fmtT(s.t0)+"] "+spkOf(s.spk).name+": "+s.text).join("\n"),
+    RESUMEN:["ACUERDOS:",lista(sum.decisiones),"","TAREAS:",lista(sum.tareas),"","FECHAS Y PLAZOS:",lista(sum.fechas)].join("\n")
+  };
+}
+const xmlEsc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const xmlMulti=s=>xmlEsc(s).split("\n").join('</w:t><w:br/><w:t xml:space="preserve">');
+async function rellenarModeloWord(){
+  const mod=LS.get("vs_wordmodelo",null);
+  const d=datosActa();if(!d)return;
+  const bin=atob(mod.b64);
+  const bytes=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+  const zip=await JSZip.loadAsync(bytes);
+  let xml=await zip.file("word/document.xml").async("string");
+  let usados=0;
+  xml=xml.replace(/\{\{[\s\S]{0,600}?\}\}/g,m=>{
+    const clave=m.replace(/<[^>]+>/g,"").replace(/[{}\s]/g,"").toUpperCase();
+    if(d[clave]!==undefined){usados++;return xmlMulti(d[clave])}
+    return m;
+  });
+  if(!usados){toast("⚠️ El modelo no contiene marcadores {{...}} reconocibles. Escríbelos de una vez, sin cambiar de formato a mitad.");return}
+  zip.file("word/document.xml",xml);
+  const blob=await zip.generateAsync({type:"blob",mimeType:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+  download("acta-"+stamp()+".docx",blob);
+  toast("📄 Acta volcada en tu modelo Word ("+usados+" campos rellenados)");
+}
+function exportarWordGenerico(){
+  const d=datosActa();if(!d)return;
+  const t=plantillaActual();
+  const sum=currentSummary||generateSummary();
+  const nl=s=>esc(String(s)).split("\n").join("<br>");
+  let c="<h1>"+esc(t.titulo)+"</h1>";
+  c+="<p><b>Fecha:</b> "+esc(d.FECHA)+"<br><b>Duración:</b> "+d.DURACION+"<br><b>Participantes:</b> "+esc(d.PARTICIPANTES)+"</p>";
+  if(d.ORGANIZACION)c+="<p><b>Organización:</b> "+esc(d.ORGANIZACION)+(d.PRESIDENTE?"<br><b>Presidente/a:</b> "+esc(d.PRESIDENTE):"")+(d.SECRETARIO?"<br><b>Secretario/a:</b> "+esc(d.SECRETARIO):"")+"</p>";
+  else (t.cab||[]).forEach(x=>c+="<p><b>"+esc(x)+"</b></p>");
+  for(const s of t.sec){
+    c+="<h2>"+esc(s[0])+"</h2>";
+    if(s[1]==="temas")c+="<p>"+esc(d.TEMAS)+"</p>";
+    else{const arr=sum[s[1]]||[];c+=arr.length?"<ul>"+arr.map(i=>"<li><b>"+esc(i.who)+":</b> "+esc(i.text)+"</li>").join("")+"</ul>":"<p>—</p>"}
+  }
+  if(t.stats!==false)c+="<h2>Participación</h2><p>"+nl(d.PARTICIPACION)+"</p>";
+  if(t.trans!==false)c+="<h2>Transcripción completa</h2><p>"+nl(d.TRANSCRIPCION)+"</p>";
+  if(t.pie)c+="<p><i>"+esc(t.pie)+"</i></p>";
+  const html='<html xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt}h1{font-size:16pt}h2{font-size:13pt;color:#1f3763}</style></head><body>'+c+"</body></html>";
+  download("acta-"+stamp()+".doc",new Blob([html],{type:"application/msword"}));
+  toast("📄 Acta exportada a Word");
+}
+$("#btnWord").onclick=()=>{
+  if(!pro){upsell("La exportación a Word es una función Pro");return}
+  if(!segments.length){toast("Nada que exportar");return}
+  if(LS.get("vs_wordmodelo",null)&&window.JSZip)rellenarModeloWord().catch(e=>{console.error(e);toast("❌ No se pudo rellenar el modelo: "+e.message)});
+  else exportarWordGenerico();
+};
+function renderWm(){
+  const m=LS.get("vs_wordmodelo",null);
+  $("#wmEstado").innerHTML=m
+    ?'Modelo activo: <b>'+esc(m.nombre)+'</b> — el botón «⬇ Word» lo rellenará. <button class="btn sm danger" id="wmQuitar" style="margin-left:8px">Quitar</button>'
+    :'Sin modelo subido: «⬇ Word» generará un documento con la plantilla seleccionada.';
+  const q=document.getElementById("wmQuitar");
+  if(q)q.onclick=()=>{localStorage.removeItem("vs_wordmodelo");renderWm();toast("Modelo Word eliminado")};
+}
+$("#wmSubir").onclick=()=>{
+  if(!pro){upsell("El modelo Word propio es una función Pro");return}
+  $("#wmInput").click();
+};
+$("#wmInput").onchange=e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  if(!/\.docx$/i.test(f.name)){toast("Debe ser un archivo .docx (Word moderno)");return}
+  if(f.size>2*1024*1024){toast("El modelo no puede superar 2 MB");return}
+  const r=new FileReader();
+  r.onload=()=>{
+    const u=new Uint8Array(r.result);let bin="";
+    for(let i=0;i<u.length;i+=32768)bin+=String.fromCharCode.apply(null,u.subarray(i,i+32768));
+    LS.set("vs_wordmodelo",{nombre:f.name,b64:btoa(bin)});
+    renderWm();toast("📄 Modelo Word guardado: "+f.name);
+  };
+  r.readAsArrayBuffer(f);
 };
 
 /* ---------------- init ---------------- */
