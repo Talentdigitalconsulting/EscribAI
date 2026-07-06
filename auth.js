@@ -12,7 +12,7 @@ const PAY_LINKS={
 };
 const GOOGLE_ACTIVO=false; // ponlo en true cuando el proveedor Google esté configurado en Supabase
 /* Portal de clientes de Stripe (gestionar/cancelar suscripción). Actívalo en Stripe → Settings → Billing → Customer portal */
-const PORTAL_LINK="";
+const PORTAL_LINK="https://billing.stripe.com/p/login/28E8wQ7tK7PdfYA03Z9k400";
 const PLANES=[
   {id:"demo",nombre:"Demo",precio:"0€",per:"para siempre",puntos:["Transcripción en tiempo real ilimitada","2 perfiles de voz","1 organización","Resumen automático","Exportación TXT"]},
   {id:"pro_mes",nombre:"Pro Mensual",precio:"9,99€",per:"/mes",puntos:["Todo lo de la Demo","Hablantes y organizaciones ilimitados","8 plantillas de acta y envío por email","Historial en la nube","Transcripción de archivos y modo IA"]},
