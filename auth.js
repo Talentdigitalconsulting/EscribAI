@@ -5,7 +5,12 @@
 const SB_URL="https://tbaliejmtaeniffmqgif.supabase.co";
 const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRiYWxpZWptdGFlbmlmZm1xZ2lmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNzI5MDQsImV4cCI6MjA5ODg0ODkwNH0.6deb7nWjNS7Y1EyKPI-ADEnwut0b6ZzIQLg6KPFrBZ8";
 /* Enlaces de pago (Stripe Payment Links). Vacío = contacto por email */
-const PAY_LINKS={pro_mes:"",pro_anyo:"",empresas:""};
+const PAY_LINKS={
+  pro_mes:"https://buy.stripe.com/3cI8wQ6pG2uTcMobMH9k402",
+  pro_anyo:"https://buy.stripe.com/28E9AUaFW1qPbIk1839k401",
+  empresas:"https://buy.stripe.com/28E8wQ7tK7PdfYA03Z9k400"
+};
+const GOOGLE_ACTIVO=false; // ponlo en true cuando el proveedor Google esté configurado en Supabase
 const PLANES=[
   {id:"demo",nombre:"Demo",precio:"0€",per:"para siempre",puntos:["Transcripción en tiempo real ilimitada","2 perfiles de voz","1 organización","Resumen automático","Exportación TXT"]},
   {id:"pro_mes",nombre:"Pro Mensual",precio:"9,99€",per:"/mes",puntos:["Todo lo de la Demo","Hablantes y organizaciones ilimitados","8 plantillas de acta y envío por email","Historial en la nube","Transcripción de archivos y modo IA"]},
@@ -104,10 +109,14 @@ document.getElementById("authOlvido").onclick=async e=>{
   el._busy=false;el.style.opacity="1";
   if(error){
     console.error("reset:",error);
-    toast("❌ "+(error.status===429?"Límite de correos alcanzado: sube «Emails per hour» en Supabase → Authentication → Rate Limits, o espera 1 hora":error.message));
+    let msg=error.message&&error.message!=="{}"?error.message:"";
+    if(error.status===429)msg="Límite de correos alcanzado: sube «Emails per hour» en Supabase → Rate Limits";
+    else if(error.status>=500||!msg)msg="El servidor de correo rechazó el envío. Revisa en Brevo que el remitente esté verificado (Senders → ✓) y que en Supabase → SMTP el Sender email coincida exactamente.";
+    toast("❌ "+msg);
   }else toast("📬 Correo enviado a "+email+" — puede tardar 1-2 min; revisa también el spam");
 };
 document.getElementById("btnGoogle").onclick=async()=>{
+  if(!GOOGLE_ACTIVO){toast("🔧 El acceso con Google estará disponible muy pronto. De momento usa tu correo y contraseña.");return}
   const{error}=await sb.auth.signInWithOAuth({provider:"google",options:{redirectTo:location.origin+location.pathname}});
   if(error)toast("❌ Google: "+error.message);
 };
@@ -232,4 +241,9 @@ async function subirActa(s){
   sesionUser=session?session.user:null;
   await cargarPerfil();
   mostrarAuth(!sesionUser);
+  if(new URLSearchParams(location.search).get("pago")==="ok"){
+    history.replaceState(null,"",location.pathname);
+    toast("🎉 ¡Pago recibido! Tu plan se activará en unos segundos…");
+    setTimeout(async()=>{await cargarPerfil();toast(planNube()?"⭐ ¡Plan premium activo! Disfrútalo":"El plan se activará en breve; si en unos minutos no aparece, escríbenos.")},6000);
+  }
 })();
