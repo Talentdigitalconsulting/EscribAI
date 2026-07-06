@@ -815,7 +815,7 @@ function renderSpeakers(){
       <button class="x" title="Eliminar">×</button>`;
     c.querySelector(".x").onclick=()=>{
       if(!confirm("¿Eliminar a "+p.name+"?"))return;
-      speakers=speakers.filter(s=>s.id!==p.id);LS.set("vs_profiles",speakers);renderSpeakers();
+      speakers=speakers.filter(s=>s.id!==p.id);LS.set("vs_profiles",speakers);renderSpeakers();guardarVocesEnOrg();
     };
     bar.insertBefore(c,btn);
   });
@@ -898,8 +898,10 @@ function finishCal(f0s,cents){
   calTarget.f0=f0;calTarget.f0dev=Math.max(dev,8);calTarget.cent=median(cents);
   speakers.push(calTarget);LS.set("vs_profiles",speakers);
   renderSpeakers();
+  guardarVocesEnOrg();
   $("#calOverlay").classList.add("hide");
-  toast("✅ Voz de "+calTarget.name+" calibrada ("+Math.round(f0)+" Hz)");
+  const _oc=orgOf(currentOrg);
+  toast("✅ Voz de "+calTarget.name+" calibrada ("+Math.round(f0)+" Hz)"+(_oc?" y guardada en "+_oc.nombre:""));
 }
 
 /* =====================================================================
@@ -1059,8 +1061,18 @@ $("#orgSel").onchange=()=>{
   LS.set("vs_org_actual",currentOrg);
   const o=orgOf(currentOrg);
   if(o&&o.plantilla){settings.plantilla=o.plantilla;$("#setPlantilla").value=o.plantilla;LS.set("vs_settings",settings)}
-  if(o)toast("🏛️ Sesión asignada a: "+o.nombre);
+  if(o&&o.voces&&o.voces.length){
+    speakers=JSON.parse(JSON.stringify(o.voces));
+    LS.set("vs_profiles",speakers);renderSpeakers();
+    toast("🏛️ "+o.nombre+" — 🗣️ "+speakers.length+" voces cargadas, sin volver a calibrar");
+  }else if(o)toast("🏛️ Sesión asignada a: "+o.nombre);
 };
+function guardarVocesEnOrg(){
+  const o=orgOf(currentOrg);if(!o)return;
+  o.voces=JSON.parse(JSON.stringify(speakers));
+  LS.set("vs_orgs",orgs);
+  if(typeof syncNube==="function")syncNube();
+}
 let orgEditing=null;
 function openOrgModal(o){
   orgEditing=o?o.id:null;
@@ -1470,6 +1482,7 @@ const TUTORIAL=[
  {i:"🏛️",t:"Organizaciones",p:[
   ["Qué son","Una organización es la ficha de quien se reúne: una comunidad de propietarios, un consejo de administración, una asociación, un cliente. Guarda su nombre, presidente, secretario, la plantilla de acta que le corresponde y los emails de los destinatarios."],
   ["Crear y usar","Antes de grabar, elige la organización en la barra superior (o crea una con «＋ Nueva»). El acta saldrá sellada con sus datos y la sesión quedará archivada a su nombre. El plan gratis incluye 1 organización; el Pro, ilimitadas."],
+  ["Voces que se recuerdan","Las voces calibradas se guardan dentro de la organización: en la próxima reunión, al seleccionarla, los participantes se cargan solos y la app los reconoce sin volver a calibrar. Solo tendrás que calibrar a alguien nuevo la primera vez que asista."],
   ["Envío sin errores","Al pulsar «📧 Enviar acta», la app te muestra a qué organización y a cuántos destinatarios se enviará, y te pide confirmación. Los destinatarios van en copia oculta y el asunto lleva el nombre y la fecha. Imposible confundirse de comunidad."]]},
  {i:"✨",t:"Resumen y plantillas",p:[
   ["Generar el resumen","Al terminar la reunión pulsa «✨ Generar resumen»: EscribAI detecta decisiones y acuerdos, tareas, fechas y plazos, preguntas abiertas, frases importantes, los temas tratados y el porcentaje de participación de cada asistente."],
