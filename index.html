@@ -154,6 +154,7 @@ main{flex:1;max-width:1060px;width:100%;margin:0 auto;padding:0 22px 40px}
 .colorpick{display:flex;gap:8px;margin-top:8px}
 .colorpick i{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent}
 .colorpick i.sel{border-color:#fff}
+.ptl{font-size:13px;font-weight:600;display:block;margin:12px 0 6px}
 
 /* ---------- toast ---------- */
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--panel2);
@@ -383,6 +384,42 @@ main{flex:1;max-width:1060px;width:100%;margin:0 auto;padding:0 22px 40px}
       <button class="btn danger hide" id="orgDel">🗑 Eliminar</button>
       <button class="btn" id="orgCancel">Cancelar</button>
       <button class="btn pri" id="orgSave">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: mis plantillas ============ -->
+<div class="overlay hide" id="ptOverlay">
+  <div class="modal" style="max-width:560px">
+    <div id="ptLista">
+      <h2>Mis plantillas</h2>
+      <p class="sub">Crea tus propios modelos de acta: la reunión se volcará directamente en tu formato.</p>
+      <div id="ptItems" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
+      <div class="foot">
+        <button class="btn" id="ptCerrar">Cerrar</button>
+        <button class="btn pri" id="ptNueva">＋ Nueva plantilla</button>
+      </div>
+    </div>
+    <div id="ptEditor" class="hide">
+      <h2 id="ptEdTitulo">Nueva plantilla</h2>
+      <label class="ptl">Nombre (aparecerá en el selector)</label>
+      <input id="ptNombre" placeholder="Ej.: Mi acta de peritaje">
+      <label class="ptl">Título del documento</label>
+      <input id="ptTitulo" placeholder="Ej.: 📋 Informe de peritaje acústico">
+      <label class="ptl">Cabecera — una línea por campo fijo (opcional)</label>
+      <textarea id="ptCab" rows="3" placeholder="Perito: Jesús García — Colegiado nº 1234&#10;Expediente: ______"></textarea>
+      <label class="ptl">Secciones del acta (encabezado + con qué se rellena)</label>
+      <div id="ptSecs" style="display:flex;flex-direction:column;gap:8px"></div>
+      <button class="btn sm" id="ptAddSec" style="margin-top:8px">＋ Añadir sección</button>
+      <label class="ptl">Pie del documento (opcional)</label>
+      <textarea id="ptPie" rows="2" placeholder="Ej.: Documento confidencial sujeto a secreto profesional."></textarea>
+      <label style="display:flex;gap:8px;align-items:center;font-size:12.5px;margin-top:10px;cursor:pointer"><input type="checkbox" id="ptStats" checked style="width:auto"> Incluir participación por hablante</label>
+      <label style="display:flex;gap:8px;align-items:center;font-size:12.5px;margin-top:6px;cursor:pointer"><input type="checkbox" id="ptTrans" checked style="width:auto"> Incluir transcripción completa</label>
+      <div class="foot">
+        <button class="btn danger hide" id="ptDel">🗑 Eliminar</button>
+        <button class="btn" id="ptVolver">← Volver</button>
+        <button class="btn pri" id="ptGuardar">Guardar plantilla</button>
+      </div>
     </div>
   </div>
 </div>
@@ -892,7 +929,7 @@ const PLANTILLAS={
 };
 function buildActa(){
   const d=new Date(),sum=currentSummary||generateSummary();
-  const t=PLANTILLAS[settings.plantilla||"general"]||PLANTILLAS.general;
+  const t=plantillaActual();
   const L=[];
   L.push("# "+t.titulo+" — EscribAI");
   L.push("**Fecha:** "+d.toLocaleDateString("es-ES",{weekday:"long",year:"numeric",month:"long",day:"numeric"}));
@@ -912,11 +949,15 @@ function buildActa(){
       else L.push(sum[s[1]].length?sum[s[1]].map(i=>`- **${i.who}:** ${i.text}`).join("\n"):"_"+s[2]+"_");
       L.push("");
     }
-    L.push("## 📊 Participación");
-    sum.stats.forEach(s=>L.push(`- **${s.name}**: ${s.pct}% (${s.words} palabras, ${s.turns} turnos)`));L.push("");
+    if(t.stats!==false){
+      L.push("## 📊 Participación");
+      sum.stats.forEach(s=>L.push(`- **${s.name}**: ${s.pct}% (${s.words} palabras, ${s.turns} turnos)`));L.push("");
+    }
   }
-  L.push("## 🗒️ Transcripción completa\n");
-  segments.forEach(s=>L.push(`**[${fmtT(s.t0)}] ${spkOf(s.spk).name}:** ${s.text}\n`));
+  if(t.trans!==false){
+    L.push("## 🗒️ Transcripción completa\n");
+    segments.forEach(s=>L.push(`**[${fmtT(s.t0)}] ${spkOf(s.spk).name}:** ${s.text}\n`));
+  }
   L.push("\n---");
   if(t.pie)L.push("_"+t.pie+"_");
   L.push("_Generado con EscribAI_");
@@ -1129,9 +1170,13 @@ function loadSettings(){
   $("#setLang").value=settings.lang;$("#setSens").value=settings.sens;
   $("#setProv").value=settings.prov;$("#setKey").value=settings.key;
   $("#setLic").value=settings.license||"";
-  $("#setPlantilla").value=settings.plantilla||"general";
+  renderPlantillasSel();
 }
-$("#setPlantilla").onchange=()=>{settings.plantilla=$("#setPlantilla").value;LS.set("vs_settings",settings)};
+$("#setPlantilla").onchange=()=>{
+  const v=$("#setPlantilla").value;
+  if(v==="__gestionar"){$("#setPlantilla").value=settings.plantilla||"general";abrirPt();return}
+  settings.plantilla=v;LS.set("vs_settings",settings);
+};
 $("#btnSaveSet").onclick=async()=>{
   settings={lang:$("#setLang").value,sens:$("#setSens").value,prov:$("#setProv").value,key:$("#setKey").value.trim(),license:$("#setLic").value.trim(),plantilla:$("#setPlantilla").value};
   LS.set("vs_settings",settings);
@@ -1148,6 +1193,106 @@ $("#btnWipe").onclick=()=>{
   if(!confirm("Se borrarán perfiles de voz, sesiones y ajustes. ¿Continuar?"))return;
   localStorage.removeItem("vs_profiles");localStorage.removeItem("vs_sessions");localStorage.removeItem("vs_settings");
   location.reload();
+};
+
+/* =====================================================================
+   PLANTILLAS PERSONALIZADAS DEL USUARIO
+===================================================================== */
+const FUENTES=[["decisiones","✅ Decisiones y acuerdos"],["tareas","📌 Tareas y acciones"],["fechas","📅 Fechas y plazos"],["preguntas","❓ Preguntas"],["destacadas","📝 Frases destacadas"],["temas","🏷️ Temas principales"]];
+function misPlantillas(){return settings.misPlantillas||[]}
+function plantillaActual(){
+  const id=settings.plantilla||"general";
+  if(typeof id==="string"&&id.indexOf("u:")===0){
+    const p=misPlantillas().find(x=>"u:"+x.id===id);
+    if(p)return{titulo:p.titulo||p.nombre,cab:p.cab||[],sec:(p.sec||[]).map(s=>[s.h,s.k,"—"]),pie:p.pie||"",trans:p.trans!==false,stats:p.stats!==false};
+  }
+  return PLANTILLAS[id]||PLANTILLAS.general;
+}
+function renderPlantillasSel(){
+  ["setPlantilla","orgPlantilla"].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    sel.querySelectorAll("option[data-u]").forEach(o=>o.remove());
+    misPlantillas().forEach(p=>{
+      const o=document.createElement("option");o.value="u:"+p.id;o.textContent="⭐ "+p.nombre;o.dataset.u="1";
+      sel.appendChild(o);
+    });
+  });
+  const sel=$("#setPlantilla");
+  let g=sel.querySelector('option[value="__gestionar"]');
+  if(!g){g=document.createElement("option");g.value="__gestionar";g.textContent="✏️ Mis plantillas…"}
+  sel.appendChild(g);
+  sel.value=settings.plantilla||"general";
+  if(!sel.value){sel.value="general";settings.plantilla="general"}
+}
+let ptEditando=null;
+function abrirPt(){renderPtItems();$("#ptLista").classList.remove("hide");$("#ptEditor").classList.add("hide");$("#ptOverlay").classList.remove("hide")}
+function renderPtItems(){
+  const box=$("#ptItems");
+  const ps=misPlantillas();
+  box.innerHTML=ps.length?"":'<p class="sub">Aún no tienes plantillas propias. Crea la primera con el botón de abajo.</p>';
+  ps.forEach(p=>{
+    const el=document.createElement("div");
+    el.style.cssText="display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 14px";
+    el.innerHTML=`<b style="flex:1;font-size:13.5px">⭐ ${esc(p.nombre)}</b><span class="sub">${(p.sec||[]).length} secciones</span><button class="btn sm">✏️ Editar</button>`;
+    el.querySelector("button").onclick=()=>abrirPtEditor(p);
+    box.appendChild(el);
+  });
+}
+function filaSec(hd,k){
+  const row=document.createElement("div");
+  row.style.cssText="display:flex;gap:8px;align-items:center";
+  row.className="ptsec";
+  row.innerHTML=`<input placeholder="Encabezado (ej.: Conclusiones)" value="${esc(hd||"")}" style="flex:2">
+    <select style="flex:1;width:auto">${FUENTES.map(f=>`<option value="${f[0]}"${f[0]===k?" selected":""}>${f[1]}</option>`).join("")}</select>
+    <button class="x" style="color:var(--mut);font-size:16px" title="Quitar sección">×</button>`;
+  row.querySelector(".x").onclick=()=>row.remove();
+  return row;
+}
+function abrirPtEditor(p){
+  ptEditando=p?p.id:null;
+  $("#ptEdTitulo").textContent=p?"Editar plantilla":"Nueva plantilla";
+  $("#ptNombre").value=p?p.nombre:"";
+  $("#ptTitulo").value=p?p.titulo||"":"";
+  $("#ptCab").value=p?(p.cab||[]).join("\n"):"";
+  $("#ptPie").value=p?p.pie||"":"";
+  $("#ptStats").checked=p?p.stats!==false:true;
+  $("#ptTrans").checked=p?p.trans!==false:true;
+  const secs=$("#ptSecs");secs.innerHTML="";
+  const base=(p&&p.sec&&p.sec.length)?p.sec:[{h:"Puntos acordados",k:"decisiones"},{h:"Acciones pendientes",k:"tareas"}];
+  base.forEach(s=>secs.appendChild(filaSec(s.h,s.k)));
+  $("#ptDel").classList.toggle("hide",!p);
+  $("#ptLista").classList.add("hide");$("#ptEditor").classList.remove("hide");
+}
+$("#ptAddSec").onclick=()=>$("#ptSecs").appendChild(filaSec("",FUENTES[0][0]));
+$("#ptNueva").onclick=()=>{
+  if(!pro){upsell("Las plantillas personalizadas son una función Pro");return}
+  abrirPtEditor(null);
+};
+$("#ptVolver").onclick=()=>{$("#ptEditor").classList.add("hide");$("#ptLista").classList.remove("hide");renderPtItems()};
+$("#ptCerrar").onclick=()=>$("#ptOverlay").classList.add("hide");
+$("#ptDel").onclick=()=>{
+  if(!confirm("¿Eliminar esta plantilla?"))return;
+  settings.misPlantillas=misPlantillas().filter(x=>x.id!==ptEditando);
+  if(settings.plantilla==="u:"+ptEditando)settings.plantilla="general";
+  LS.set("vs_settings",settings);renderPlantillasSel();
+  if(typeof syncNube==="function")syncNube();
+  $("#ptEditor").classList.add("hide");$("#ptLista").classList.remove("hide");renderPtItems();
+};
+$("#ptGuardar").onclick=()=>{
+  const nombre=$("#ptNombre").value.trim();
+  if(!nombre){toast("Pon un nombre a la plantilla");return}
+  const sec=[].slice.call(document.querySelectorAll("#ptSecs .ptsec")).map(r=>({h:r.querySelector("input").value.trim(),k:r.querySelector("select").value})).filter(s=>s.h);
+  if(!sec.length){toast("Añade al menos una sección con encabezado");return}
+  const data={nombre,titulo:$("#ptTitulo").value.trim()||("📋 "+nombre),
+    cab:$("#ptCab").value.split("\n").map(s=>s.trim()).filter(Boolean),
+    sec:sec,pie:$("#ptPie").value.trim(),stats:$("#ptStats").checked,trans:$("#ptTrans").checked};
+  if(ptEditando){Object.assign(misPlantillas().find(x=>x.id===ptEditando),data)}
+  else{data.id=Date.now();settings.misPlantillas=misPlantillas().concat([data]);settings.plantilla="u:"+data.id}
+  LS.set("vs_settings",settings);
+  renderPlantillasSel();
+  if(typeof syncNube==="function")syncNube();
+  toast("⭐ Plantilla guardada: "+nombre);
+  $("#ptEditor").classList.add("hide");$("#ptLista").classList.remove("hide");renderPtItems();
 };
 
 /* ---------------- init ---------------- */
