@@ -11,6 +11,8 @@ const PAY_LINKS={
   empresas:"https://buy.stripe.com/28E8wQ7tK7PdfYA03Z9k400"
 };
 const GOOGLE_ACTIVO=false; // ponlo en true cuando el proveedor Google esté configurado en Supabase
+/* Portal de clientes de Stripe (gestionar/cancelar suscripción). Actívalo en Stripe → Settings → Billing → Customer portal */
+const PORTAL_LINK="";
 const PLANES=[
   {id:"demo",nombre:"Demo",precio:"0€",per:"para siempre",puntos:["Transcripción en tiempo real ilimitada","2 perfiles de voz","1 organización","Resumen automático","Exportación TXT"]},
   {id:"pro_mes",nombre:"Pro Mensual",precio:"9,99€",per:"/mes",puntos:["Todo lo de la Demo","Hablantes y organizaciones ilimitados","8 plantillas de acta y envío por email","Historial en la nube","Transcripción de archivos y modo IA"]},
@@ -43,7 +45,8 @@ function renderPlanes(){
   const actual=planNube()?perfil.plan:(licPayload?"licencia":"demo");
   document.getElementById("planActual").innerHTML="Tu plan actual: <b style='color:var(--acc2)'>"+
     (actual==="licencia"?"PRO (licencia de por vida)":PLANES.find(p=>p.id===actual||p.id===actual+"_mes")?.nombre||actual)+"</b>"+
-    (perfil&&perfil.plan_hasta?" · válido hasta "+new Date(perfil.plan_hasta).toLocaleDateString("es-ES"):"");
+    (perfil&&perfil.plan_hasta?" · válido hasta "+new Date(perfil.plan_hasta).toLocaleDateString("es-ES"):"")+
+    (planNube()?' <button class="btn sm" style="margin-left:12px" onclick="gestionarSuscripcion()">⚙️ Gestionar / cancelar suscripción</button>':"");
   document.getElementById("planGrid").innerHTML=PLANES.map(p=>`
     <div class="stat" style="min-width:220px;display:flex;flex-direction:column">
       <span style="font-size:13px;font-weight:700;color:var(--txt)">${p.nombre}</span>
@@ -54,6 +57,11 @@ function renderPlanes(){
       ${p.id==="demo"?"":'<button class="btn sm pri" onclick="suscribir(\''+p.id+'\')">Suscribirme</button>'}
     </div>`).join("");
 }
+window.gestionarSuscripcion=()=>{
+  const email=sesionUser?sesionUser.email:"";
+  if(PORTAL_LINK){location.href=PORTAL_LINK+(PORTAL_LINK.includes("?")?"&":"?")+"prefilled_email="+encodeURIComponent(email);return}
+  location.href="mailto:contacto@talentdigitalconsulting.com?subject="+encodeURIComponent("Gestionar mi suscripción — EscribAI")+"&body="+encodeURIComponent("Hola, quiero gestionar o cancelar mi suscripción.\nMi cuenta: "+email);
+};
 window.suscribir=id=>{
   const link=PAY_LINKS[id];
   const email=sesionUser?sesionUser.email:"";
