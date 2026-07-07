@@ -507,6 +507,7 @@ let audioCtx=null,analyser=null,micStream=null,mediaRec=null,audioChunks=[],audi
 let frames=[];                                   // {t,f0,cent,rms}
 let lastFinalTime=0;
 let currentSummary=null;
+let ultimoInterim="",lastEvento=0,watchInt=null,ultimoSpk=null;
 
 /* =====================================================================
    LICENCIAS PRO (verificación offline con firma ECDSA P-256)
@@ -578,6 +579,9 @@ function spectralCentroid(freqData,sr,fft){
 }
 const median=a=>{if(!a.length)return 0;const s=[...a].sort((x,y)=>x-y);return s[Math.floor(s.length/2)]};
 
+function distVoz(p,f0,cent){
+  return Math.abs(f0-p.f0)/Math.max(p.f0dev*2,18)+0.6*Math.abs(cent-p.cent)/Math.max((p.centDev||400)*2,300);
+}
 function classify(f0s,cents){
   if(!speakers.length)return null;
   if(speakers.length===1)return speakers[0].id;
@@ -586,10 +590,30 @@ function classify(f0s,cents){
   let bestId=null,bestD=Infinity;
   for(const p of speakers){
     if(!p.f0)continue;
-    const d=Math.abs(f0-p.f0)/Math.max(p.f0dev*2,18)+Math.abs(cent-p.cent)/600;
+    const d=distVoz(p,f0,cent);
     if(d<bestD){bestD=d;bestId=p.id}
   }
   return bestId;
+}
+/* Atribución de un segmento: cada frame de voz vota por el perfil más cercano
+   (ponderado por volumen). Si está reñido, se mantiene al hablante anterior. */
+function clasificaSegmento(fs){
+  if(!speakers.length)return null;
+  if(speakers.length===1){ultimoSpk=speakers[0].id;return ultimoSpk}
+  const perfiles=speakers.filter(p=>p.f0);
+  if(!perfiles.length||!fs.length)return ultimoSpk;
+  const votos={};
+  fs.forEach(f=>{
+    let mejor=null,md=1e9;
+    perfiles.forEach(p=>{const d=distVoz(p,f.f0,f.cent);if(d<md){md=d;mejor=p.id}});
+    if(mejor!=null)votos[mejor]=(votos[mejor]||0)+Math.max(f.rms,0.01);
+  });
+  const orden=Object.entries(votos).sort((a,b)=>b[1]-a[1]);
+  if(!orden.length)return ultimoSpk;
+  const ganador=+orden[0][0];
+  if(orden.length>1&&ultimoSpk===+orden[1][0]&&orden[1][1]>orden[0][1]*0.8)return ultimoSpk;
+  ultimoSpk=ganador;
+  return ganador;
 }
 
 /* =====================================================================
@@ -672,29 +696,43 @@ function startRecognition(){
   rec=new SR();
   rec.lang=settings.lang;rec.continuous=true;rec.interimResults=true;
   rec.onresult=e=>{
+    lastEvento=Date.now();
     let interim="";
     for(let i=e.resultIndex;i<e.results.length;i++){
       const r=e.results[i],txt=r[0].transcript.trim();
       if(!txt)continue;
-      if(r.isFinal){
-        const t1=(Date.now()-recStart)/1000;
-        const t0=lastFinalTime;lastFinalTime=t1;
-        const fs=frames.filter(f=>f.t>=t0-0.3&&f.t<=t1&&f.f0>0);
-        const spk=classify(fs.map(f=>f.f0),fs.map(f=>f.cent));
-        addSegment({t0,t1,text:capitalize(txt),spk});
-      }else interim+=txt+" ";
+      if(r.isFinal){ultimoInterim="";commitFinal(txt)}
+      else interim+=txt+" ";
     }
+    ultimoInterim=interim;
     renderInterim(interim.trim());
   };
   rec.onerror=e=>{
     if(e.error==="not-allowed"){toast("🎙️ Permiso de micrófono denegado");stopSession()}
     else if(e.error!=="no-speech"&&e.error!=="aborted")console.warn("SR error:",e.error);
   };
-  rec.onend=()=>{if(recording&&!paused){try{rec.start()}catch(e){}}};
+  rec.onend=()=>{
+    if(recording&&!paused){
+      rescatarInterim(); // lo provisional no se pierde al reiniciar el motor
+      setTimeout(()=>{try{rec.start()}catch(e){}},250);
+    }
+  };
   try{rec.start()}catch(e){}
   return true;
 }
 const capitalize=t=>t.charAt(0).toUpperCase()+t.slice(1);
+function commitFinal(txt){
+  if(!txt)return;
+  const t1=(Date.now()-recStart)/1000;
+  const t0=lastFinalTime;lastFinalTime=t1;
+  const fs=frames.filter(f=>f.t>=t0-0.3&&f.t<=t1&&f.f0>0&&f.rms>0.018);
+  addSegment({t0,t1,text:capitalize(txt),spk:clasificaSegmento(fs)});
+}
+function rescatarInterim(){
+  const t=ultimoInterim.trim();
+  ultimoInterim="";renderInterim("");
+  if(t&&t.split(/\s+/).length>=2)commitFinal(t);
+}
 
 /* =====================================================================
    SESIÓN: iniciar / pausar / detener
@@ -709,6 +747,12 @@ async function startSession(){
   startRecognition();
   frameLoop();
   timerInt=setInterval(()=>{if(!paused){elapsed=(Date.now()-recStart)/1000;$("#timer").textContent=fmtT(elapsed)}},250);
+  lastEvento=Date.now();
+  clearInterval(watchInt);
+  watchInt=setInterval(()=>{ // si el motor se queda mudo >9s, se fuerza su reinicio
+    if(!recording||paused)return;
+    if(Date.now()-lastEvento>9000){lastEvento=Date.now();try{rec.stop()}catch(e){}}
+  },4000);
   $("#btnMic").classList.add("rec");
   $("#micIcon").innerHTML='<path d="M6 6h12v12H6z"/>';
   $("#btnPause").disabled=false;
@@ -718,7 +762,9 @@ async function startSession(){
   toast("🎙️ Grabación iniciada");
 }
 function stopSession(){
+  rescatarInterim(); // lo que quedaba en provisional entra en la transcripción
   recording=false;paused=false;
+  clearInterval(watchInt);
   if(rec){rec.onend=null;try{rec.stop()}catch(e){}}
   stopAudio();clearInterval(timerInt);
   $("#btnMic").classList.remove("rec");
@@ -906,7 +952,9 @@ function finishCal(f0s,cents){
   }
   const f0=median(f0s);
   const dev=median(f0s.map(x=>Math.abs(x-f0)));
-  calTarget.f0=f0;calTarget.f0dev=Math.max(dev,8);calTarget.cent=median(cents);
+  const medc=median(cents);
+  calTarget.f0=f0;calTarget.f0dev=Math.max(dev,8);calTarget.cent=medc;
+  calTarget.centDev=Math.max(median(cents.map(x=>Math.abs(x-medc))),150);
   speakers.push(calTarget);LS.set("vs_profiles",speakers);
   renderSpeakers();
   guardarVocesEnOrg();
@@ -920,13 +968,23 @@ function finishCal(f0s,cents){
 ===================================================================== */
 const STOP=new Set("de la que el en y a los del se las por un para con no una su al lo como más pero sus le ya o este sí porque esta entre cuando muy sin sobre también me hasta hay donde quien desde todo nos durante todos uno les ni contra otros ese eso ante ellos e esto mí antes algunos qué unos yo otro otras otra él tanto esa estos mucho quienes nada muchos cual poco ella estar estas algunas algo nosotros mi mis tú te ti tu tus ellas nosotras vosotros vosotras os mío mía míos mías tuyo tuya tuyos tuyas suyo suya suyos suyas nuestro nuestra nuestros nuestras vuestro vuestra vuestros vuestras esos esas estoy estás está estamos estáis están esté estés estemos estéis estén estaré estarás estará estaremos estaréis estarán es son era eras éramos eran sea seas seamos sean seré serás será seremos seréis serán he has ha hemos habéis han haya hayas hayamos hayan tengo tienes tiene tenemos tenéis tienen bueno vale pues entonces bien ahora aquí así claro creo vamos ver decir hacer puede pueden hace cosa cosas tema parte".split(" "));
 const RX={
-  decision:/\b(decidimos|hemos decidido|se decide|acordamos|hemos acordado|queda acordado|se acuerda|aprobamos|queda aprobado|se aprueba|confirmamos|queda confirmado|vamos a proceder|lo dejamos así|de acuerdo entonces|trato hecho|cerramos el tema)\b/i,
-  task:/\b(hay que|tienes que|tenéis que|tenemos que|se encarga|me encargo|te encargas|encargará|queda pendiente|pendiente de|habrá que|se compromete|encárgate|deberíamos|debemos|debes|deben)\b/i,
+  decision:/\b(decidimos|hemos decidido|se decide|acordamos|hemos acordado|queda acordado|se acuerda|aprobamos|queda aprobado|se aprueba|confirmamos|queda confirmado|vamos a proceder|lo dejamos así|de acuerdo entonces|trato hecho|cerramos el tema|lo hacemos así|entonces lo hacemos|nos quedamos con|elegimos|lo editamos con|usaremos|utilizaremos|queda decidido|hemos quedado|quedamos en|perfecto entonces|decidido entonces|va a ser con|mejor lo hacemos)\b/i,
+  task:/\b(hay que|tienes que|tenéis que|tenemos que|se encarga|me encargo|te encargas|encargará|queda pendiente|pendiente de|habrá que|se compromete|encárgate|deberíamos|debemos|debes|deben|te toca|me toca|yo (?:me )?(?:ocupo|encargo)|búscalo|prepara|descarga|revisa|envía|manda|\w{2,}(?:aremos|eremos|iremos))\b/i,
   date:/\b(lunes|martes|miércoles|jueves|viernes|sábado|domingo|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|mañana|pasado mañana|la semana que viene|la próxima semana|el mes que viene|fin de mes|a final de|\d{1,2}\s+de\s+\w+|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?|\d{1,2}:\d{2})\b/i,
   question:/\?\s*$/,
   important:/\b(importante|urgente|clave|crítico|crítica|fundamental|prioridad|imprescindible|ojo con|atención|riesgo|problema grave|bloqueante)\b/i
 };
-function splitSentences(t){return t.split(/(?<=[.!?…])\s+|\n+/).map(s=>s.trim()).filter(s=>s.length>8)}
+function splitSentences(t){
+  const out=[];
+  t.split(/(?<=[.!?…])\s+|\n+/).forEach(p=>{
+    p=p.trim();if(!p)return;
+    if(p.length>160){ // el dictado no puntúa: partir por conectores del habla
+      p.split(/\s+(?=(?:entonces|vale|bueno|pues|mira|luego|además|después|por otro lado|respecto a|otra cosa|siguiente punto|primero|segundo|por último)\b)/i)
+       .forEach(x=>{x=x.trim();if(x.length>8)out.push(x)});
+    }else if(p.length>8)out.push(p);
+  });
+  return out;
+}
 function generateSummary(){
   if(!segments.length){toast("No hay transcripción que resumir");return null}
   const sum={decisiones:[],tareas:[],fechas:[],preguntas:[],destacadas:[],temas:[],stats:[]};
