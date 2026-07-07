@@ -507,7 +507,7 @@ let audioCtx=null,analyser=null,micStream=null,mediaRec=null,audioChunks=[],audi
 let frames=[];                                   // {t,f0,cent,rms}
 let lastFinalTime=0;
 let currentSummary=null;
-let ultimoInterim="",lastEvento=0,watchInt=null,ultimoSpk=null;
+let ultimoInterim="",lastEvento=0,watchInt=null,ultimoSpk=null,ultimaRotacion=0;
 
 /* =====================================================================
    LICENCIAS PRO (verificación offline con firma ECDSA P-256)
@@ -711,10 +711,12 @@ function startRecognition(){
     if(e.error==="not-allowed"){toast("🎙️ Permiso de micrófono denegado");stopSession()}
     else if(e.error!=="no-speech"&&e.error!=="aborted")console.warn("SR error:",e.error);
   };
+  rec.onstart=()=>{if(recording&&!paused)$("#recSub").textContent="🟢 Escuchando… habla con naturalidad"};
   rec.onend=()=>{
     if(recording&&!paused){
       rescatarInterim(); // lo provisional no se pierde al reiniciar el motor
-      setTimeout(()=>{try{rec.start()}catch(e){}},250);
+      $("#recSub").textContent="🟠 Reconectando el motor de voz…";
+      setTimeout(()=>{try{rec.start();ultimaRotacion=Date.now()}catch(e){}},250);
     }
   };
   try{rec.start()}catch(e){}
@@ -749,9 +751,14 @@ async function startSession(){
   timerInt=setInterval(()=>{if(!paused){elapsed=(Date.now()-recStart)/1000;$("#timer").textContent=fmtT(elapsed)}},250);
   lastEvento=Date.now();
   clearInterval(watchInt);
-  watchInt=setInterval(()=>{ // si el motor se queda mudo >9s, se fuerza su reinicio
+  ultimaRotacion=Date.now();
+  watchInt=setInterval(()=>{
     if(!recording||paused)return;
-    if(Date.now()-lastEvento>9000){lastEvento=Date.now();try{rec.stop()}catch(e){}}
+    if(Date.now()-lastEvento>9000){ // motor mudo: reinicio forzoso
+      lastEvento=Date.now();try{rec.stop()}catch(e){}
+    }else if(Date.now()-ultimaRotacion>45000&&!ultimoInterim.trim()){ // rotación preventiva en un hueco sin habla
+      ultimaRotacion=Date.now();try{rec.stop()}catch(e){}
+    }
   },4000);
   $("#btnMic").classList.add("rec");
   $("#micIcon").innerHTML='<path d="M6 6h12v12H6z"/>';
