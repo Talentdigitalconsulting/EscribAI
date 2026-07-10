@@ -324,6 +324,14 @@ body.conAnuncios .adrail{display:none}
       <p>La identificación local usa el timbre y tono (frecuencia fundamental y brillo espectral) calibrados de cada voz.</p>
     </div>
     <div class="setrow">
+      <label>Motor de transcripción en vivo</label>
+      <select id="setMotor">
+        <option value="navegador">Navegador (gratis) — dictado y reuniones tranquilas</option>
+        <option value="deepgram">🟣 Profesional Deepgram (Pro) — máxima precisión y voces en tiempo real</option>
+      </select>
+      <p>El motor profesional transcribe en la nube de Deepgram con puntuación y separación de voces reales, mientras se habla. Requiere plan Pro y tu API key de Deepgram (configúrala abajo, proveedor Deepgram). Coste aproximado: 0,40€ por hora de reunión.</p>
+    </div>
+    <div class="setrow">
       <label>Diarización profesional con IA (opcional)</label>
       <div class="inline">
         <select id="setProv" style="max-width:180px">
@@ -507,7 +515,7 @@ let audioCtx=null,analyser=null,micStream=null,mediaRec=null,audioChunks=[],audi
 let frames=[];                                   // {t,f0,cent,rms}
 let lastFinalTime=0;
 let currentSummary=null;
-let ultimoInterim="",lastEvento=0,watchInt=null,ultimoSpk=null,ultimaRotacion=0;
+let ultimoInterim="",lastEvento=0,watchInt=null,ultimoSpk=null,ultimaRotacion=0,dgWS=null;
 
 /* =====================================================================
    LICENCIAS PRO (verificación offline con firma ECDSA P-256)
@@ -628,7 +636,10 @@ async function initAudio(){
   src.connect(analyser);
   micStream.getAudioTracks().forEach(t=>{t.onended=()=>setTimeout(()=>{if(typeof recuperarMic==="function")recuperarMic()},800)});
   mediaRec=new MediaRecorder(micStream);
-  mediaRec.ondataavailable=e=>{if(e.data.size)audioChunks.push(e.data)};
+  mediaRec.ondataavailable=e=>{
+    if(e.data.size)audioChunks.push(e.data);
+    if(dgWS&&dgWS.readyState===1&&e.data.size)dgWS.send(e.data);
+  };
   mediaRec.onstop=()=>{
     audioBlob=new Blob(audioChunks,{type:mediaRec.mimeType||"audio/webm"});
     $("#btnAudio").disabled=false;
@@ -746,14 +757,15 @@ async function startSession(){
   recording=true;paused=false;recStart=Date.now()-elapsed*1000;lastFinalTime=elapsed;frames=[];
   audioChunks=[];audioBlob=null;
   try{mediaRec.start(1000)}catch(e){}
-  startRecognition();
+  if(settings.motorVivo==="deepgram"&&!usarDGVivo())toast("⚠️ Motor profesional no disponible (requiere Pro + API key de Deepgram): usando el del navegador");
+  if(usarDGVivo())iniciarDGStream();else startRecognition();
   frameLoop();
   timerInt=setInterval(()=>{if(!paused){elapsed=(Date.now()-recStart)/1000;$("#timer").textContent=fmtT(elapsed)}},250);
   lastEvento=Date.now();
   clearInterval(watchInt);
   ultimaRotacion=Date.now();
   watchInt=setInterval(()=>{
-    if(!recording||paused)return;
+    if(!recording||paused||dgWS)return;
     if(Date.now()-lastEvento>9000){ // motor mudo: reinicio forzoso
       lastEvento=Date.now();try{rec.stop()}catch(e){}
     }else if(Date.now()-ultimaRotacion>45000&&!ultimoInterim.trim()){ // rotación preventiva en un hueco sin habla
@@ -770,6 +782,7 @@ async function startSession(){
 }
 function stopSession(){
   rescatarInterim(); // lo que quedaba en provisional entra en la transcripción
+  if(dgWS){try{dgWS.send('{"type":"CloseStream"}')}catch(e){}try{dgWS.close()}catch(e){}dgWS=null}
   recording=false;paused=false;
   clearInterval(watchInt);
   if(rec){rec.onend=null;try{rec.stop()}catch(e){}}
@@ -786,13 +799,18 @@ function stopSession(){
 $("#btnPause").onclick=()=>{
   paused=!paused;
   if(paused){
+    if(dgWS){try{dgWS.send('{"type":"CloseStream"}')}catch(e){}try{dgWS.close()}catch(e){}dgWS=null}
     try{rec.stop()}catch(e){}
     if(mediaRec&&mediaRec.state==="recording")mediaRec.pause();
     $("#statusTxt").textContent="En pausa";$("#statusDot").className="dot";
   }else{
     recStart=Date.now()-elapsed*1000;
-    try{rec.start()}catch(e){}
-    if(mediaRec&&mediaRec.state==="paused")mediaRec.resume();
+    if(usarDGVivo()){
+      (async()=>{try{stopAudio()}catch(e){};try{await initAudio();mediaRec.start(1000);iniciarDGStream()}catch(e){toast("❌ "+e.message)}})();
+    }else{
+      try{rec.start()}catch(e){}
+      if(mediaRec&&mediaRec.state==="paused")mediaRec.resume();
+    }
     $("#statusTxt").textContent="Grabando…";$("#statusDot").className="dot rec";
   }
   $("#btnPause").style.opacity=paused?".6":"1";
@@ -1324,6 +1342,7 @@ function loadSettings(){
   $("#setProv").value=settings.prov;$("#setKey").value=settings.key;
   $("#setLic").value=settings.license||"";
   $("#setAudioAuto").checked=settings.audioAuto!==false;
+  $("#setMotor").value=settings.motorVivo||"navegador";
   renderPlantillasSel();
 }
 $("#setPlantilla").onchange=()=>{
@@ -1332,7 +1351,7 @@ $("#setPlantilla").onchange=()=>{
   settings.plantilla=v;LS.set("vs_settings",settings);
 };
 $("#btnSaveSet").onclick=async()=>{
-  settings={lang:$("#setLang").value,sens:$("#setSens").value,prov:$("#setProv").value,key:$("#setKey").value.trim(),license:$("#setLic").value.trim(),plantilla:$("#setPlantilla").value,audioAuto:$("#setAudioAuto").checked,misPlantillas:settings.misPlantillas||[]};
+  settings={lang:$("#setLang").value,sens:$("#setSens").value,prov:$("#setProv").value,key:$("#setKey").value.trim(),license:$("#setLic").value.trim(),plantilla:$("#setPlantilla").value,audioAuto:$("#setAudioAuto").checked,motorVivo:$("#setMotor").value,misPlantillas:settings.misPlantillas||[]};
   LS.set("vs_settings",settings);
   const prev=!!pro;
   pro=await verifyLicense(settings.license);
@@ -1545,6 +1564,54 @@ $("#wmInput").onchange=e=>{
   };
   r.readAsArrayBuffer(f);
 };
+
+/* =====================================================================
+   MOTOR PROFESIONAL EN VIVO (Deepgram streaming, Pro)
+===================================================================== */
+const DG_WS_URL="wss://api.deepgram.com/v1/listen?model=nova-2&language=es&punctuate=true&smart_format=true&interim_results=true&diarize=true";
+function usarDGVivo(){return settings.motorVivo==="deepgram"&&!!pro&&!!settings.key&&settings.prov==="deepgram"}
+function dgSegmento(c){
+  addSegment({t0:c.t0,t1:c.t1,text:capitalize(c.text),spk:mapAISpeaker(c.sp)});
+}
+function iniciarDGStream(){
+  try{dgWS=new WebSocket(DG_WS_URL,["token",settings.key])}
+  catch(e){toast("❌ No se pudo abrir el motor profesional: "+e.message);startRecognition();return}
+  dgWS.onopen=()=>{
+    lastEvento=Date.now();
+    $("#recSub").textContent="🟣 Motor profesional en vivo (Deepgram) — escuchando";
+  };
+  dgWS.onmessage=ev=>{
+    let j;try{j=JSON.parse(ev.data)}catch(e){return}
+    if(j.type!=="Results"||!j.channel)return;
+    lastEvento=Date.now();
+    const alt=j.channel.alternatives&&j.channel.alternatives[0];
+    if(!alt)return;
+    if(j.is_final){
+      if(alt.transcript){
+        const ws=alt.words||[];
+        if(ws.length){
+          let cur=null;
+          ws.forEach(w=>{
+            const sp=(w.speaker==null)?0:w.speaker;
+            const word=w.punctuated_word||w.word;
+            if(cur&&cur.sp===sp){cur.text+=" "+word;cur.t1=w.end}
+            else{if(cur)dgSegmento(cur);cur={sp,text:word,t0:w.start,t1:w.end}}
+          });
+          if(cur)dgSegmento(cur);
+        }else addSegment({t0:elapsed,t1:elapsed,text:capitalize(alt.transcript),spk:ultimoSpk});
+      }
+      renderInterim("");
+    }else if(alt.transcript)renderInterim(alt.transcript);
+  };
+  dgWS.onclose=dgWS.onerror=()=>{
+    if(!dgWS)return;
+    dgWS=null;
+    if(recording&&!paused){
+      toast("⚠️ Motor profesional desconectado: cambiando al motor del navegador");
+      startRecognition();
+    }
+  };
+}
 
 /* =====================================================================
    TUTORIAL POR CAPÍTULOS (reabrible con ❓)
