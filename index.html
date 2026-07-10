@@ -330,6 +330,7 @@ body.conAnuncios .adrail{display:none}
         <option value="deepgram">🟣 Profesional Deepgram (Pro) — máxima precisión y voces en tiempo real</option>
       </select>
       <p>El motor profesional transcribe en la nube de Deepgram con puntuación y separación de voces reales, mientras se habla. Requiere plan Pro y tu API key de Deepgram (configúrala abajo, proveedor Deepgram). Coste aproximado: 0,40€ por hora de reunión.</p>
+      <button class="btn sm pri" id="btnGuiaDG" style="margin-top:8px">🎁 Cómo conseguir tu clave gratis (200 $ de regalo)</button>
     </div>
     <div class="setrow">
       <label>Diarización profesional con IA (opcional)</label>
@@ -488,6 +489,28 @@ body.conAnuncios .adrail{display:none}
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: conectar Deepgram ============ -->
+<div class="overlay hide" id="dgOverlay">
+  <div class="modal" style="max-width:560px">
+    <h2>🟣 Activa la máxima precisión</h2>
+    <p class="sub">EscribAI puede usar <b>Deepgram</b>, un motor de voz profesional en la nube: transcripción casi perfecta, puntuación automática y separación de voces real, en directo. Se configura una sola vez, en 3 minutos.</p>
+    <div style="background:linear-gradient(135deg,rgba(99,102,241,.18),rgba(34,211,238,.1));border:1px solid var(--acc);border-radius:12px;padding:12px 16px;margin-bottom:14px">
+      🎁 <b>Deepgram regala unos 200&nbsp;$ de crédito al registrarte</b> (sin tarjeta): equivalen a unas <b>500 horas de reuniones gratis</b>. Después, cuesta aprox. 0,40&nbsp;€ por hora, que pagas directamente a Deepgram.
+    </div>
+    <p style="font-size:13.5px;line-height:1.8;color:#c6cde0">
+      <b>1.</b> Crea tu cuenta gratis en <a href="https://console.deepgram.com/signup" target="_blank" rel="noopener" style="color:var(--acc2)">console.deepgram.com/signup</a> (vale con Google).<br>
+      <b>2.</b> Dentro del panel, pulsa <b>«Create API Key»</b> y copia la clave que te da.<br>
+      <b>3.</b> Pégala aquí abajo y pulsa activar. Nada más: EscribAI hará el resto.
+    </p>
+    <input id="dgKeyInput" type="password" placeholder="Pega aquí tu API key de Deepgram" style="margin-top:8px">
+    <div class="foot">
+      <button class="btn" id="dgCerrar">Ahora no</button>
+      <button class="btn pri" id="dgActivar">⚡ Guardar y activar el motor profesional</button>
+    </div>
+    <p class="sub" style="margin-top:10px">Tu clave se guarda solo en tu dispositivo y en tu cuenta cifrada. Podrás cambiarla o quitarla en Ajustes.</p>
   </div>
 </div>
 
@@ -1281,7 +1304,7 @@ function cargarUtterances(utts){
 }
 $("#btnFile").onclick=()=>{
   if(!pro){upsell("Transcribir archivos es una función Pro");return}
-  if(!settings.key||settings.prov!=="deepgram"){toast("⚙️ Configura tu API key de Deepgram en Ajustes (proveedor: Deepgram)");return}
+  if(!settings.key||settings.prov!=="deepgram"){abrirGuiaDG();return}
   $("#fileInput").click();
 };
 $("#fileInput").onchange=async e=>{
@@ -1303,7 +1326,7 @@ $("#fileInput").onchange=async e=>{
 };
 $("#btnAI").onclick=async()=>{
   if(!pro){upsell("El modo IA es una función Pro");return}
-  if(!settings.key){toast("⚙️ Configura una API key en Ajustes para usar la IA");return}
+  if(!settings.key){abrirGuiaDG();return}
   if(!audioBlob){toast("Primero graba una sesión (el audio se procesa al detener)");return}
   $("#btnAI").disabled=true;$("#btnAI").textContent="🤖 Procesando…";
   try{
@@ -1614,6 +1637,25 @@ function iniciarDGStream(){
 }
 
 /* =====================================================================
+   ASISTENTE PARA CONECTAR DEEPGRAM (autoservicio del cliente)
+===================================================================== */
+function abrirGuiaDG(){
+  $("#dgKeyInput").value=settings.key||"";
+  $("#dgOverlay").classList.remove("hide");
+}
+$("#btnGuiaDG").onclick=abrirGuiaDG;
+$("#dgCerrar").onclick=()=>$("#dgOverlay").classList.add("hide");
+$("#dgActivar").onclick=async()=>{
+  const k=$("#dgKeyInput").value.trim();
+  if(k.length<20){toast("Esa clave parece incompleta: cópiala entera desde Deepgram");return}
+  settings.key=k;settings.prov="deepgram";settings.motorVivo="deepgram";
+  LS.set("vs_settings",settings);loadSettings();
+  if(typeof syncNube==="function")syncNube();
+  $("#dgOverlay").classList.add("hide");
+  toast("🟣 ¡Motor profesional activado! Tu próxima grabación usará Deepgram");
+};
+
+/* =====================================================================
    TUTORIAL POR CAPÍTULOS (reabrible con ❓)
 ===================================================================== */
 const TUTORIAL=[
@@ -1646,7 +1688,8 @@ const TUTORIAL=[
   ["Sube tu modelo","En «Mis plantillas» → «Modelo Word propio», sube el .docx que usas siempre, con tu membrete, logo y estilos. Donde quieras cada dato escribe un marcador: {{ACUERDOS}}, {{TAREAS}}, {{FECHA}}, {{PARTICIPANTES}}, {{TRANSCRIPCION}}…"],
   ["Rellenado automático","Desde entonces, el botón «⬇ Word» te devuelve TU documento con la reunión volcada dentro y el formato intacto. Consejo: escribe cada marcador de una sola vez, sin cambiar de fuente o formato a mitad de palabra."]]},
  {i:"📂",t:"Archivos y modo IA (Pro)",p:[
-  ["Transcribir audios ya grabados","«📂 Transcribir archivo» acepta audios y vídeos: la reunión grabada con el móvil, un audio de WhatsApp, una entrevista. Los transcribe identificando las voces. Requiere tu clave de Deepgram en Ajustes (cuesta céntimos por hora de audio)."],
+  ["El motor profesional","Para máxima precisión, conecta Deepgram: transcripción casi perfecta, puntuación automática y separación de voces real, en directo. Deepgram regala unos 200 $ de crédito al registrarte (≈ 500 horas de reuniones gratis). En Ajustes tienes la guía «🎁 Cómo conseguir tu clave gratis»: son 3 minutos y una sola vez."],
+  ["Transcribir audios ya grabados","«📂 Transcribir archivo» acepta audios y vídeos: la reunión grabada con el móvil, un audio de WhatsApp, una entrevista. Los transcribe identificando las voces con el mismo motor profesional."],
   ["Mejorar con IA","«🤖 Mejorar con IA» reprocesa el audio de la sesión recién grabada con diarización profesional en la nube. Útil cuando hay muchas voces, se pisan al hablar o necesitas máxima precisión."]]},
  {i:"📧",t:"Guardar y exportar",p:[
   ["Guardar sesiones","«💾 Guardar sesión» archiva la reunión con su nombre y su organización (Pro). La recuperas en la pestaña Historial y, con tu cuenta, también desde cualquier otro dispositivo."],
