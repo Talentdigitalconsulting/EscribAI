@@ -140,7 +140,7 @@ document.getElementById("authAccion").onclick=async()=>{
       const apellidos=document.getElementById("regApellidos").value.trim();
       const telefono=document.getElementById("regTelefono").value.trim();
       if(!nombre){toast("Escribe tu nombre");btn.disabled=false;return}
-      const{data,error}=await sb.auth.signUp({email,password:pass,options:{data:{nombre,apellidos,telefono}}});
+      const{data,error}=await sb.auth.signUp({email,password:pass,options:{data:{nombre,apellidos,telefono},emailRedirectTo:location.origin+location.pathname}});
       if(error)throw error;
       if(data.session)toast("🎉 Cuenta creada, ¡bienvenido!");
       else toast("📬 Cuenta creada. Revisa tu correo y confirma para entrar.");
