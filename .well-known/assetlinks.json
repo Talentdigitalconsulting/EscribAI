@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.escribai.app",
+        "sha256_cert_fingerprints": ["2C:28:1E:A1:F0:CF:0B:B4:07:30:7C:59:4E:2E:90:AC:B5:31:F7:A2:4B:D0:B0:EF:30:CC:5A:26:AD:0F:49:43"]
+      }
+    }]
