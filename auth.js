@@ -179,9 +179,23 @@ function recalcPro(){
   pro=licPayload||(planNube()?{email:perfil.email||sesionUser.email,plan:perfil.plan}:null);
   updateProUI();
 }
+function limpiarDatosLocales(){
+  ["vs_orgs","vs_profiles","vs_sessions","vs_org_actual","vs_wordmodelo","vs_settings"].forEach(k=>localStorage.removeItem(k));
+  orgs=[];speakers=[];segments=[];currentOrg=null;currentSummary=null;licPayload=null;
+  settings={lang:"es-ES",sens:"media",prov:"deepgram",key:"",license:"",plantilla:"general",audioAuto:true,motorVivo:"navegador",misPlantillas:[]};
+  LS.set("vs_settings",settings);
+  elapsed=0;document.getElementById("timer").textContent="00:00";
+  renderOrgs();renderSpeakers();renderTranscript();loadSettings();
+}
 async function cargarPerfil(){
   perfil=null;
   if(sesionUser){
+    const uidPrev=LS.get("vs_uid",null);
+    if(uidPrev&&uidPrev!==sesionUser.id){
+      limpiarDatosLocales();
+      toast("👤 Cuenta distinta detectada: espacio de trabajo limpio y privado");
+    }
+    LS.set("vs_uid",sesionUser.id);
     const{data}=await sb.from("perfiles").select("*").eq("id",sesionUser.id).maybeSingle();
     perfil=data||null;
     if(!perfil){ // auto-reparación: crea el perfil si el registro fue anterior a las tablas
