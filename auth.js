@@ -249,6 +249,21 @@ async function subirActa(s){
   bg.onclick=()=>{bgOrig();const s=LS.get("vs_sessions",[])[0];if(s)subirActa(s)};
 })();
 
+/* ---------- eliminación de cuenta (requisito Google Play) ---------- */
+const btnBC=document.getElementById("btnBorrarCuenta");
+if(btnBC)btnBC.onclick=async()=>{
+  if(!sesionUser){toast("Entra en tu cuenta primero");return}
+  if(!confirm("Esto elimina tu cuenta y TODOS tus datos (perfil, organizaciones, actas en la nube) de forma permanente. ¿Seguro?"))return;
+  if(!confirm("Última confirmación: ¿eliminar definitivamente la cuenta "+sesionUser.email+"?"))return;
+  try{
+    const{error}=await sb.functions.invoke("borrar-cuenta");
+    if(error)throw error;
+    localStorage.clear();
+    toast("Cuenta eliminada. Gracias por probar EscribAI.");
+    setTimeout(()=>location.reload(),1600);
+  }catch(e){toast("❌ No se pudo eliminar ("+(e.message||e)+"). Escríbenos a contact@talentdigitalconsulting.com y la eliminamos en 72 h.")}
+};
+
 /* ---------- arranque ---------- */
 (async()=>{
   if(!window.supabase){toast("⚠️ Sin conexión con el servidor de cuentas");return}
