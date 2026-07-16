@@ -539,7 +539,7 @@ let audioCtx=null,analyser=null,micStream=null,mediaRec=null,audioChunks=[],audi
 let frames=[];                                   // {t,f0,cent,rms}
 let lastFinalTime=0;
 let currentSummary=null;
-let ultimoInterim="",lastEvento=0,watchInt=null,ultimoSpk=null,ultimaRotacion=0,dgWS=null;
+let ultimoInterim="",lastEvento=0,watchInt=null,ultimoSpk=null,ultimaRotacion=0,dgWS=null,srSinResultados=0,srAvisado={};
 
 /* =====================================================================
    LICENCIAS PRO (verificación offline con firma ECDSA P-256)
@@ -732,6 +732,7 @@ function startRecognition(){
   rec.lang=settings.lang;rec.continuous=true;rec.interimResults=true;
   rec.onresult=e=>{
     lastEvento=Date.now();
+    srSinResultados=0;
     let interim="";
     for(let i=e.resultIndex;i<e.results.length;i++){
       const r=e.results[i],txt=r[0].transcript.trim();
@@ -743,13 +744,28 @@ function startRecognition(){
     renderInterim(interim.trim());
   };
   rec.onerror=e=>{
-    if(e.error==="not-allowed"){toast("🎙️ Permiso de micrófono denegado");stopSession()}
-    else if(e.error!=="no-speech"&&e.error!=="aborted")console.warn("SR error:",e.error);
+    if(e.error==="not-allowed"){toast("🎙️ Permiso de micrófono denegado");stopSession();return}
+    if(e.error==="no-speech"||e.error==="aborted")return;
+    console.warn("SR error:",e.error);
+    if(!srAvisado[e.error]){
+      srAvisado[e.error]=1;
+      const msgs={
+        "network":"El servicio de dictado de Google no responde en este dispositivo. Solución: activa el 🟣 motor profesional en Ajustes.",
+        "service-not-allowed":"Este dispositivo bloquea el dictado del navegador. Solución: activa el 🟣 motor profesional en Ajustes.",
+        "language-not-available":"El idioma de dictado no está disponible en este dispositivo.",
+        "audio-capture":"El motor de dictado no pudo capturar el micrófono."
+      };
+      toast("⚠️ "+(msgs[e.error]||("Motor de dictado: error «"+e.error+"»")));
+    }
   };
   rec.onstart=()=>{if(recording&&!paused)$("#recSub").textContent="🟢 Escuchando… habla con naturalidad"};
   rec.onend=()=>{
     if(recording&&!paused){
       rescatarInterim(); // lo provisional no se pierde al reiniciar el motor
+      srSinResultados++;
+      if(srSinResultados===4&&!segments.length){
+        toast("⚠️ El dictado del navegador no devuelve texto en este dispositivo. Activa el 🟣 motor profesional en Ajustes (guía 🎁 con crédito gratis incluida)");
+      }
       $("#recSub").textContent="🟠 Reconectando el motor de voz…";
       setTimeout(()=>{try{rec.start();ultimaRotacion=Date.now()}catch(e){}},250);
     }
@@ -779,6 +795,7 @@ async function startSession(){
   if(!SR){toast("⚠️ Usa Google Chrome o Microsoft Edge para el reconocimiento de voz");return}
   try{await initAudio()}catch(e){toast("🎙️ No se pudo acceder al micrófono: "+e.message);return}
   recording=true;paused=false;recStart=Date.now()-elapsed*1000;lastFinalTime=elapsed;frames=[];
+  srSinResultados=0;srAvisado={};
   audioChunks=[];audioBlob=null;
   try{mediaRec.start(1000)}catch(e){}
   if(settings.motorVivo==="deepgram"&&!usarDGVivo())toast("⚠️ Motor profesional no disponible (requiere Pro + API key de Deepgram): usando el del navegador");
