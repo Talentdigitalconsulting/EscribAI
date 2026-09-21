@@ -60,13 +60,13 @@ function renderPlanes(){
 window.gestionarSuscripcion=()=>{
   const email=sesionUser?sesionUser.email:"";
   if(PORTAL_LINK){location.href=PORTAL_LINK+(PORTAL_LINK.includes("?")?"&":"?")+"prefilled_email="+encodeURIComponent(email);return}
-  location.href="mailto:contacto@talentdigitalconsulting.com?subject="+encodeURIComponent("Gestionar mi suscripción — EscribAI")+"&body="+encodeURIComponent("Hola, quiero gestionar o cancelar mi suscripción.\nMi cuenta: "+email);
+  location.href="mailto:contact@talentdigitalconsulting.com?subject="+encodeURIComponent("Gestionar mi suscripción — EscribAI")+"&body="+encodeURIComponent("Hola, quiero gestionar o cancelar mi suscripción.\nMi cuenta: "+email);
 };
 window.suscribir=id=>{
   const link=PAY_LINKS[id];
   const email=sesionUser?sesionUser.email:"";
   if(link){location.href=link+(link.includes("?")?"&":"?")+"prefilled_email="+encodeURIComponent(email);return}
-  location.href="mailto:ecommercepgventas@gmail.com?subject="+encodeURIComponent("Suscripción "+id+" — EscribAI")+"&body="+encodeURIComponent("Hola, quiero suscribirme al plan "+id+".\nMi cuenta: "+email);
+  location.href="mailto:contact@talentdigitalconsulting.com?subject="+encodeURIComponent("Suscripción "+id+" — EscribAI")+"&body="+encodeURIComponent("Hola, quiero suscribirme al plan "+id+".\nMi cuenta: "+email);
 };
 
 /* ---------- UI: modal de acceso ---------- */
@@ -93,6 +93,7 @@ document.body.insertAdjacentHTML("beforeend",`
       <input type="checkbox" id="authRecordar" style="width:auto"> Recordar mi correo en este dispositivo
     </label>
     <button class="btn pri" id="authAccion" style="width:100%;justify-content:center;margin-top:14px">Entrar</button>
+    <p style="font-size:11px;color:var(--mut);margin:10px 0 0;text-align:center">Al continuar aceptas las <a href="condiciones.html" target="_blank" style="color:var(--acc2)">Condiciones de uso</a> y la <a href="privacidad.html" target="_blank" style="color:var(--acc2)">Política de privacidad</a>.</p>
     <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:12.5px">
       <a href="#" id="authOlvido" style="color:var(--acc2)">¿Has olvidado tu contraseña?</a>
       <a href="#" id="authCambio" style="color:var(--acc2)">Crear cuenta nueva</a>

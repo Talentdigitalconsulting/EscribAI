@@ -1,12 +1,12 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>EscribAI — Transcribe reuniones. Identifica voces. Resume solo.</title>
-<meta name="description" content="La app de transcripción de reuniones en español: identifica quién habla, transcribe en tiempo real y genera el acta automáticamente. Privada, sin servidores.">
-<meta property="og:title" content="EscribAI — Transcripción inteligente de reuniones">
-<meta property="og:description" content="Identifica quién habla, transcribe en tiempo real y genera el acta automáticamente.">
+<title>EscribAI â€” Transcribe reuniones. Identifica voces. Resume solo.</title>
+<meta name="description" content="La app de transcripciÃ³n de reuniones en espaÃ±ol: identifica quiÃ©n habla, transcribe en tiempo real y genera el acta automÃ¡ticamente. Privada, sin servidores.">
+<meta property="og:title" content="EscribAI â€” TranscripciÃ³n inteligente de reuniones">
+<meta property="og:description" content="Identifica quiÃ©n habla, transcribe en tiempo real y genera el acta automÃ¡ticamente.">
 <link rel="icon" href="icons/icon-192.png">
 <style>
 :root{--bg:#0a0e1a;--panel:#111827;--panel2:#182036;--line:#232d47;--txt:#e5eaf5;--mut:#8b96b3;
@@ -65,8 +65,8 @@ font-size:12px;font-weight:700;padding:5px 16px;border-radius:99px}
 .plan .price small{font-size:15px;color:var(--mut);font-weight:400}
 .plan ul{list-style:none;margin:22px 0 26px;display:flex;flex-direction:column;gap:11px;flex:1}
 .plan li{font-size:14px;padding-left:26px;position:relative;color:#c6cde0}
-.plan li::before{content:"✓";position:absolute;left:0;color:#34d399;font-weight:700}
-.plan li.no{opacity:.45}.plan li.no::before{content:"—";color:var(--mut)}
+.plan li::before{content:"âœ“";position:absolute;left:0;color:#34d399;font-weight:700}
+.plan li.no{opacity:.45}.plan li.no::before{content:"â€”";color:var(--mut)}
 .faq{max-width:720px;margin:40px auto 0}
 details{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin-bottom:12px}
 summary{font-weight:600;cursor:pointer;font-size:15px}
@@ -80,40 +80,40 @@ footer{border-top:1px solid var(--line);padding:26px 0;color:var(--mut);font-siz
   <header>
     <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 15a4 4 0 0 0 4-4V6a4 4 0 1 0-8 0v5a4 4 0 0 0 4 4zm6-4a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.94V22h2v-3.06A8 8 0 0 0 20 11h-2z"/></svg></div>
     <b>Escrib<span style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">AI</span></b>
-    <div class="cta"><a class="btn sm pri" href="index.html">Probar gratis →</a></div>
+    <div class="cta"><a class="btn sm pri" href="index.html">Probar gratis â†’</a></div>
   </header>
 
   <div class="hero">
     <img src="icons/logo.png" alt="EscribAI" style="width:170px;max-width:45vw;border-radius:24px;margin-bottom:22px;box-shadow:0 20px 50px rgba(99,102,241,.35)" onerror="this.style.display='none'">
-    <div class="pill"><i></i> Privado por diseño · Sin servidores · En español</div>
-    <h1>Transcribe reuniones.<br><span class="g">Identifica quién habla.</span><br>El acta se escribe sola.</h1>
-    <p>EscribAI escucha tu reunión, distingue a cada participante por su voz (timbre y tono), transcribe en tiempo real con acentos de toda España y te entrega el acta con decisiones, tareas y plazos. Sin subir nada a ningún servidor.</p>
+    <div class="pill"><i></i> Privado por diseÃ±o Â· Sin servidores Â· En espaÃ±ol</div>
+    <h1>Transcribe reuniones.<br><span class="g">Identifica quiÃ©n habla.</span><br>El acta se escribe sola.</h1>
+    <p>EscribAI escucha tu reuniÃ³n, distingue a cada participante por su voz (timbre y tono), transcribe en tiempo real con acentos de toda EspaÃ±a y te entrega el acta con decisiones, tareas y plazos. Sin subir nada a ningÃºn servidor.</p>
     <div class="btns">
-      <a class="btn pri" href="index.html">🎙️ Probar gratis ahora</a>
+      <a class="btn pri" href="index.html">ðŸŽ™ï¸ Probar gratis ahora</a>
       <a class="btn" href="#precios">Ver precios</a>
     </div>
-    <div class="trust">Funciona en Chrome y Edge · Instalable en móvil y PC · Tus datos nunca salen de tu dispositivo</div>
+    <div class="trust">Funciona en Chrome y Edge Â· Instalable en mÃ³vil y PC Â· Tus datos nunca salen de tu dispositivo</div>
 
     <div class="mock">
       <div class="bar"><i></i><i></i><i></i></div>
-      <div class="mline"><div class="mava" style="background:#6366f1">M</div><div class="mbub"><b style="color:#6366f1">María · 00:12</b>Entonces quedamos en que el presupuesto se aprueba esta semana.</div></div>
-      <div class="mline"><div class="mava" style="background:#22d3ee">J</div><div class="mbub"><b style="color:#22d3ee">Jesús · 00:19</b>Perfecto. Yo me encargo de enviar la propuesta al cliente el viernes.</div></div>
-      <div class="mline"><div class="mava" style="background:#34d399">C</div><div class="mbub"><b style="color:#34d399">Carlos · 00:26</b>Importante: hay que revisar el contrato antes del 15 de julio.</div></div>
-      <div class="mline"><div class="mava" style="background:var(--panel2);border:1px solid var(--line)">✨</div><div class="mbub" style="border-color:#6366f1"><b style="color:#a5b4fc">Resumen automático</b>✅ Presupuesto aprobado esta semana · 📌 Jesús envía propuesta el viernes · 📅 Revisar contrato antes del 15/07</div></div>
+      <div class="mline"><div class="mava" style="background:#6366f1">M</div><div class="mbub"><b style="color:#6366f1">MarÃ­a Â· 00:12</b>Entonces quedamos en que el presupuesto se aprueba esta semana.</div></div>
+      <div class="mline"><div class="mava" style="background:#22d3ee">J</div><div class="mbub"><b style="color:#22d3ee">JesÃºs Â· 00:19</b>Perfecto. Yo me encargo de enviar la propuesta al cliente el viernes.</div></div>
+      <div class="mline"><div class="mava" style="background:#34d399">C</div><div class="mbub"><b style="color:#34d399">Carlos Â· 00:26</b>Importante: hay que revisar el contrato antes del 15 de julio.</div></div>
+      <div class="mline"><div class="mava" style="background:var(--panel2);border:1px solid var(--line)">âœ¨</div><div class="mbub" style="border-color:#6366f1"><b style="color:#a5b4fc">Resumen automÃ¡tico</b>âœ… Presupuesto aprobado esta semana Â· ðŸ“Œ JesÃºs envÃ­a propuesta el viernes Â· ðŸ“… Revisar contrato antes del 15/07</div></div>
     </div>
   </div>
 
   <section>
     <div class="kicker">Funciones</div>
-    <h2>Todo lo que necesita una reunión, en una app</h2>
-    <p class="lead">Diseñada para reuniones, entrevistas, consultas y clases en español.</p>
+    <h2>Todo lo que necesita una reuniÃ³n, en una app</h2>
+    <p class="lead">DiseÃ±ada para reuniones, entrevistas, consultas y clases en espaÃ±ol.</p>
     <div class="grid">
-      <div class="feat"><div class="ic">🗣️</div><h3>Identificación de voces</h3><p>Calibra la voz de cada participante en 6 segundos. La app reconoce quién habla por su timbre y tono, y colorea cada intervención.</p></div>
-      <div class="feat"><div class="ic">⚡</div><h3>Transcripción en tiempo real</h3><p>Ves el texto mientras se habla. Motor optimizado para todos los acentos de España: andaluz, canario, gallego, catalán, madrileño…</p></div>
-      <div class="feat"><div class="ic">✨</div><h3>Acta automática</h3><p>Un clic y tienes decisiones, tareas asignadas, fechas y plazos, preguntas abiertas, temas tratados y participación de cada asistente.</p></div>
-      <div class="feat"><div class="ic">🔒</div><h3>Privacidad total</h3><p>Todo se procesa y guarda en tu dispositivo. Nada se sube a servidores. Ideal para reuniones confidenciales, sanitarias o legales.</p></div>
-      <div class="feat"><div class="ic">📤</div><h3>Exporta a todo</h3><p>Acta en Markdown, transcripción en TXT, datos en JSON y el audio de la reunión en un archivo descargable.</p></div>
-      <div class="feat"><div class="ic">🤖</div><h3>Modo IA profesional</h3><p>¿Máxima precisión? Conecta tu clave de Deepgram y reprocesa el audio con diarización profesional de nivel empresarial.</p></div>
+      <div class="feat"><div class="ic">ðŸ—£ï¸</div><h3>IdentificaciÃ³n de voces</h3><p>Calibra la voz de cada participante en 6 segundos. La app reconoce quiÃ©n habla por su timbre y tono, y colorea cada intervenciÃ³n.</p></div>
+      <div class="feat"><div class="ic">âš¡</div><h3>TranscripciÃ³n en tiempo real</h3><p>Ves el texto mientras se habla. Motor optimizado para todos los acentos de EspaÃ±a: andaluz, canario, gallego, catalÃ¡n, madrileÃ±oâ€¦</p></div>
+      <div class="feat"><div class="ic">âœ¨</div><h3>Acta automÃ¡tica</h3><p>Un clic y tienes decisiones, tareas asignadas, fechas y plazos, preguntas abiertas, temas tratados y participaciÃ³n de cada asistente.</p></div>
+      <div class="feat"><div class="ic">ðŸ”’</div><h3>Privacidad total</h3><p>Todo se procesa y guarda en tu dispositivo. Nada se sube a servidores. Ideal para reuniones confidenciales, sanitarias o legales.</p></div>
+      <div class="feat"><div class="ic">ðŸ“¤</div><h3>Exporta a todo</h3><p>Acta en Markdown, transcripciÃ³n en TXT, datos en JSON y el audio de la reuniÃ³n en un archivo descargable.</p></div>
+      <div class="feat"><div class="ic">ðŸ¤–</div><h3>Modo IA profesional</h3><p>Â¿MÃ¡xima precisiÃ³n? Conecta tu clave de Deepgram y reprocesa el audio con diarizaciÃ³n profesional de nivel empresarial.</p></div>
     </div>
   </section>
 
@@ -122,44 +122,44 @@ footer{border-top:1px solid var(--line);padding:26px 0;color:var(--mut);font-siz
     <h2>Empieza gratis. Crece cuando quieras.</h2>
     <div class="pricing">
       <div class="plan">
-        <h3>Básico</h3>
-        <div class="price">0€<small> /siempre</small></div>
+        <h3>BÃ¡sico</h3>
+        <div class="price">0â‚¬<small> /siempre</small></div>
         <ul>
-          <li>Transcripción en tiempo real ilimitada</li>
+          <li>TranscripciÃ³n en tiempo real ilimitada</li>
           <li>2 perfiles de voz</li>
-          <li>Resumen automático</li>
-          <li>Exportación TXT</li>
+          <li>Resumen automÃ¡tico</li>
+          <li>ExportaciÃ³n TXT</li>
           <li class="no">Acta Markdown y JSON</li>
           <li class="no">Historial de sesiones</li>
         </ul>
         <a class="btn" href="index.html">Empezar gratis</a>
       </div>
       <div class="plan hot">
-        <div class="tag">MÁS POPULAR</div>
+        <div class="tag">MÃS POPULAR</div>
         <h3>Pro</h3>
-        <div class="price">9,99€<small> /mes</small></div>
+        <div class="price">9,99â‚¬<small> /mes</small></div>
         <ul>
-          <li>Todo lo del plan Básico</li>
+          <li>Todo lo del plan BÃ¡sico</li>
           <li>Perfiles de voz ilimitados</li>
-          <li>Acta automática completa (MD, JSON)</li>
+          <li>Acta automÃ¡tica completa (MD, JSON)</li>
           <li>Historial de sesiones ilimitado</li>
-          <li>Grabación de audio descargable</li>
+          <li>GrabaciÃ³n de audio descargable</li>
           <li>Soporte prioritario</li>
         </ul>
-        <a class="btn pri" href="mailto:ecommercepgventas@gmail.com?subject=Quiero%20EscribAI%20Pro&body=Hola%2C%20quiero%20la%20licencia%20Pro%20de%20EscribAI.">Conseguir licencia Pro</a>
-        <p style="font-size:12px;color:var(--mut);margin-top:10px;text-align:center">Tras el pago recibirás tu clave de licencia por email. Se activa en Ajustes en 10 segundos.</p>
+        <a class="btn pri" href="mailto:contact@talentdigitalconsulting.com?subject=Quiero%20EscribAI%20Pro&body=Hola%2C%20quiero%20la%20licencia%20Pro%20de%20EscribAI.">Conseguir licencia Pro</a>
+        <p style="font-size:12px;color:var(--mut);margin-top:10px;text-align:center">Tras el pago recibirÃ¡s tu clave de licencia por email. Se activa en Ajustes en 10 segundos.</p>
       </div>
       <div class="plan">
         <h3>Empresas</h3>
-        <div class="price">29€<small> /mes por equipo</small></div>
+        <div class="price">29â‚¬<small> /mes por equipo</small></div>
         <ul>
           <li>Todo lo del plan Pro</li>
-          <li>Modo IA con diarización profesional incluido</li>
-          <li>Instalación en dominio propio de la empresa</li>
-          <li>Personalización con tu marca</li>
-          <li>Formación y soporte dedicado</li>
+          <li>Modo IA con diarizaciÃ³n profesional incluido</li>
+          <li>InstalaciÃ³n en dominio propio de la empresa</li>
+          <li>PersonalizaciÃ³n con tu marca</li>
+          <li>FormaciÃ³n y soporte dedicado</li>
         </ul>
-        <a class="btn" href="mailto:ecommercepgventas@gmail.com?subject=EscribAI%20Empresas">Contactar</a>
+        <a class="btn" href="mailto:contact@talentdigitalconsulting.com?subject=EscribAI%20Empresas">Contactar</a>
       </div>
     </div>
   </section>
@@ -168,23 +168,23 @@ footer{border-top:1px solid var(--line);padding:26px 0;color:var(--mut);font-siz
     <div class="kicker">FAQ</div>
     <h2 style="text-align:center">Preguntas frecuentes</h2>
     <div class="faq">
-      <details><summary>¿Necesito instalar algo?</summary><p>No. Funciona directamente en Chrome o Edge. Si quieres, puedes instalarla como app en el móvil ("Añadir a pantalla de inicio") o abrirla en el PC con su lanzador de escritorio.</p></details>
-      <details><summary>¿Entiende mi acento?</summary><p>Sí. El motor de reconocimiento es-ES está entrenado con hablantes de toda España. También hay modos para catalán, gallego, euskera y español de América.</p></details>
-      <details><summary>¿Cómo distingue quién habla?</summary><p>Al añadir cada participante, la app analiza 6 segundos de su voz y crea un perfil acústico (frecuencia fundamental y brillo del timbre). Durante la reunión compara la voz activa con los perfiles. Para máxima precisión existe el modo IA con diarización profesional.</p></details>
-      <details><summary>¿Dónde se guardan mis reuniones?</summary><p>Solo en tu dispositivo. EscribAI no tiene servidores propios: nada se sube a internet salvo que actives voluntariamente el modo IA.</p></details>
-      <details><summary>¿Funciona sin conexión?</summary><p>La interfaz y tus datos sí. El reconocimiento de voz en vivo usa el motor del navegador, que requiere conexión en la mayoría de dispositivos.</p></details>
+      <details><summary>Â¿Necesito instalar algo?</summary><p>No. Funciona directamente en Chrome o Edge. Si quieres, puedes instalarla como app en el mÃ³vil ("AÃ±adir a pantalla de inicio") o abrirla en el PC con su lanzador de escritorio.</p></details>
+      <details><summary>Â¿Entiende mi acento?</summary><p>SÃ­. El motor de reconocimiento es-ES estÃ¡ entrenado con hablantes de toda EspaÃ±a. TambiÃ©n hay modos para catalÃ¡n, gallego, euskera y espaÃ±ol de AmÃ©rica.</p></details>
+      <details><summary>Â¿CÃ³mo distingue quiÃ©n habla?</summary><p>Al aÃ±adir cada participante, la app analiza 6 segundos de su voz y crea un perfil acÃºstico (frecuencia fundamental y brillo del timbre). Durante la reuniÃ³n compara la voz activa con los perfiles. Para mÃ¡xima precisiÃ³n existe el modo IA con diarizaciÃ³n profesional.</p></details>
+      <details><summary>Â¿DÃ³nde se guardan mis reuniones?</summary><p>Solo en tu dispositivo. EscribAI no tiene servidores propios: nada se sube a internet salvo que actives voluntariamente el modo IA.</p></details>
+      <details><summary>Â¿Funciona sin conexiÃ³n?</summary><p>La interfaz y tus datos sÃ­. El reconocimiento de voz en vivo usa el motor del navegador, que requiere conexiÃ³n en la mayorÃ­a de dispositivos.</p></details>
     </div>
   </section>
 
   <div class="final">
-    <h2>Tu próxima reunión se documenta sola</h2>
-    <p class="lead" style="margin:0 auto 30px">Pruébala gratis ahora mismo. Sin registro, sin tarjeta.</p>
-    <a class="btn pri" href="index.html">🎙️ Abrir EscribAI</a>
+    <h2>Tu prÃ³xima reuniÃ³n se documenta sola</h2>
+    <p class="lead" style="margin:0 auto 30px">PruÃ©bala gratis ahora mismo. Sin registro, sin tarjeta.</p>
+    <a class="btn pri" href="index.html">ðŸŽ™ï¸ Abrir EscribAI</a>
   </div>
 
   <footer>
-    <span>© 2026 EscribAI</span>
-    <span>ecommercepgventas@gmail.com</span>
+    <span>Â© 2026 EscribAI</span>
+    <span>contact@talentdigitalconsulting.com</span>
   </footer>
 </div>
 </body>
