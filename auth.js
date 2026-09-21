@@ -118,7 +118,8 @@ document.getElementById("authOlvido").onclick=async e=>{
   if(error){
     console.error("reset:",error);
     let msg=error.message&&error.message!=="{}"?error.message:"";
-    if(error.status===429)msg="Límite de correos alcanzado: sube «Emails per hour» en Supabase → Rate Limits";
+    if(/Failed to fetch|NetworkError|Load failed|fetch failed/i.test(msg))msg="🔌 No hay conexión con el servidor. Comprueba tu internet y vuelve a intentarlo en unos minutos.";
+    else if(error.status===429)msg="Límite de correos alcanzado: sube «Emails per hour» en Supabase → Rate Limits";
     else if(error.status>=500||!msg)msg="El servidor de correo rechazó el envío. Revisa en Brevo que el remitente esté verificado (Senders → ✓) y que en Supabase → SMTP el Sender email coincida exactamente.";
     toast("❌ "+msg);
   }else toast("📬 Correo enviado a "+email+" — puede tardar 1-2 min; revisa también el spam");
@@ -152,7 +153,8 @@ document.getElementById("authAccion").onclick=async()=>{
   }catch(err){
     console.error("auth:",err);
     let m=err&&err.message&&err.message!=="{}"?err.message:"";
-    if(m==="Invalid login credentials")m="Correo o contraseña incorrectos";
+    if(/Failed to fetch|NetworkError|Load failed|fetch failed/i.test(m)||err instanceof TypeError)m="🔌 No hay conexión con el servidor de EscribAI. Comprueba tu internet y vuelve a intentarlo en unos minutos. Si el problema continúa, escríbenos a contact@talentdigitalconsulting.com";
+    else if(m==="Invalid login credentials")m="Correo o contraseña incorrectos";
     else if(m==="User already registered")m="Ese correo ya tiene cuenta: usa «Entrar» o recupera la contraseña";
     else if(!m||err.status>=500)m="No se pudo enviar el correo de verificación (fallo del SMTP). Arreglo: en Supabase → SMTP pon un remitente verificado en Brevo, o desactiva «Confirm email» en Authentication → Providers.";
     toast("❌ "+m);
