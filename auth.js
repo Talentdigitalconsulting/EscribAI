@@ -5,19 +5,22 @@
 const SB_URL="https://tbaliejmtaeniffmqgif.supabase.co";
 const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRiYWxpZWptdGFlbmlmZm1xZ2lmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNzI5MDQsImV4cCI6MjA5ODg0ODkwNH0.6deb7nWjNS7Y1EyKPI-ADEnwut0b6ZzIQLg6KPFrBZ8";
 /* Enlaces de pago (Stripe Payment Links). Vacío = contacto por email */
+/* PRECIOS NUEVOS (19 / 190 / 49). Pega aquí los Payment Links creados en Stripe
+   con esos importes. Mientras estén vacíos, el botón abre un correo de contacto
+   en vez de cobrar un importe distinto al anunciado. */
 const PAY_LINKS={
-  pro_mes:"https://buy.stripe.com/3cI8wQ6pG2uTcMobMH9k402",
-  pro_anyo:"https://buy.stripe.com/28E9AUaFW1qPbIk1839k401",
-  empresas:"https://buy.stripe.com/28E8wQ7tK7PdfYA03Z9k400"
+  pro_mes:"",
+  pro_anyo:"",
+  empresas:""
 };
 const GOOGLE_ACTIVO=false; // ponlo en true cuando el proveedor Google esté configurado en Supabase
 /* Portal de clientes de Stripe (gestionar/cancelar suscripción). Actívalo en Stripe → Settings → Billing → Customer portal */
 const PORTAL_LINK="https://billing.stripe.com/p/login/28E8wQ7tK7PdfYA03Z9k400";
 const PLANES=[
-  {id:"demo",nombre:"Demo",precio:"0€",per:"para siempre",puntos:["Transcripción en tiempo real ilimitada","2 perfiles de voz","1 organización","Resumen automático","Exportación TXT"]},
-  {id:"pro_mes",nombre:"Pro Mensual",precio:"9,99€",per:"/mes",puntos:["Todo lo de la Demo","Hablantes y organizaciones ilimitados","8 plantillas de acta y envío por email","Historial en la nube","Transcripción de archivos y modo IA"]},
-  {id:"pro_anyo",nombre:"Pro Anual",precio:"79€",per:"/año (2 meses gratis)",puntos:["Todo lo del Pro Mensual","Precio bloqueado para siempre","Soporte prioritario"]},
-  {id:"empresas",nombre:"Empresas",precio:"29€",per:"/mes por equipo",puntos:["Todo lo del Pro","Diarización profesional IA incluida (sin API key propia)","Marca propia y dominio de empresa","Formación y soporte dedicado"]}
+  {id:"demo",nombre:"Gratis",precio:"0€",per:"para siempre",puntos:["Transcripción en tiempo real","2 perfiles de voz","1 comunidad u organización","Resumen automático","Exportación a texto"]},
+  {id:"pro_mes",nombre:"Pro",precio:"19€",per:"/mes",puntos:["Todo lo del plan gratuito","Comunidades y voces ilimitadas","Tu plantilla de Word propia","Los 8 modelos de acta y envío por correo","Historial guardado en la nube","Transcripción de audios grabados"]},
+  {id:"pro_anyo",nombre:"Pro anual",precio:"190€",per:"/año (2 meses gratis)",puntos:["Todo lo del plan Pro","Ahorras 38 € al año","Precio bloqueado mientras sigas","Soporte prioritario"]},
+  {id:"empresas",nombre:"Despachos",precio:"49€",per:"/mes",puntos:["Todo lo del plan Pro","Transcripción profesional incluida","Varios usuarios en el despacho","Plantillas con tu marca","Formación y soporte dedicado"]}
 ];
 
 let sb=null,sesionUser=null,perfil=null,licPayload=null;

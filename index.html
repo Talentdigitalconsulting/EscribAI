@@ -200,6 +200,18 @@ body.conAnuncios .adrail{display:none}
   <button class="btn sm" id="btnTut" title="Ver el tutorial">❓</button>
   <div class="status"><span class="dot" id="statusDot"></span><span id="statusTxt">Listo</span></div>
 </header>
+<div id="avisoNav" class="hide" style="max-width:1100px;margin:12px auto 0;padding:14px 16px;border-radius:14px;display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
+  <span id="avisoNavIco" style="font-size:20px;line-height:1.2">⚠️</span>
+  <div style="flex:1;min-width:230px">
+    <b id="avisoNavTit" style="display:block;font-size:14px;margin-bottom:4px"></b>
+    <span id="avisoNavTxt" style="font-size:13px;color:#c2cbe2;line-height:1.55"></span>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:11px">
+      <button class="btn sm" id="avisoNavCopiar">🔗 Copiar enlace para Chrome</button>
+      <button class="btn sm" id="avisoNavArchivo">📂 Transcribir un audio grabado</button>
+    </div>
+  </div>
+  <button class="btn sm" id="avisoNavCerrar" title="Ocultar este aviso" style="flex:none">✕</button>
+</div>
 <div class="adrail" id="adL"></div>
 <div class="adrail" id="adR"></div>
 
@@ -1787,7 +1799,65 @@ verifyLicense(settings.license).then(p=>{pro=p;updateProUI()});
 if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0){
   navigator.serviceWorker.register("sw.js").catch(function(){});
 }
-if(!SR)$("#recSub").textContent="⚠️ Este navegador no soporta dictado. Abre la app en Chrome o Edge.";
+/* ---------- aviso de compatibilidad del navegador ---------- */
+function infoNavegador(){
+  const ua=navigator.userAgent;
+  const esEdge=/Edg\//.test(ua);
+  const esOpera=/OPR\//.test(ua);
+  const esFirefox=/Firefox\/|FxiOS/.test(ua);
+  const esiOS=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+  const esChrome=/Chrome\//.test(ua)&&!esEdge&&!esOpera;
+  const esSafari=/Safari\//.test(ua)&&!/Chrome\/|Chromium|Edg\/|OPR\//.test(ua);
+  return {esEdge,esOpera,esFirefox,esiOS,esChrome,esSafari};
+}
+function avisoNavegador(){
+  const caja=$("#avisoNav");if(!caja)return;
+  if(LS.get("vs_aviso_nav_ok",0))return;
+  const n=infoNavegador();
+  let nivel=null,tit="",txt="";
+
+  if(n.esFirefox){
+    nivel="alto";
+    tit="Firefox no puede dictar en directo";
+    txt="Firefox es el único navegador que no incorpora el motor de dictado, así que aquí no verás el texto mientras se habla. Tienes dos salidas: abrir EscribAI en Chrome o Edge, o grabar la reunión con cualquier grabadora y subir después el audio para transcribirlo. Todo lo demás (actas, plantillas, historial) funciona con normalidad.";
+  }else if(n.esiOS){
+    nivel="medio";
+    tit="En iPhone y iPad el dictado en directo se interrumpe";
+    txt="Apple obliga a todos los navegadores del iPhone y el iPad a usar su propio motor, que corta el dictado cada pocos segundos. Para una junta entera, lo fiable es grabar con la app de notas de voz y subir luego el audio a EscribAI. Desde un ordenador con Chrome o Edge sí funciona en directo.";
+  }else if(n.esSafari){
+    nivel="medio";
+    tit="En Safari el dictado en directo puede fallar";
+    txt="Safari admite el dictado a medias y suele cortarse en reuniones largas. Si es una junta importante, ábrela en Chrome o Edge, o graba el audio y súbelo después para transcribirlo.";
+  }else if(!SR){
+    nivel="alto";
+    tit="Este navegador no admite el dictado en directo";
+    txt="No hemos encontrado el motor de voz en tu navegador. Abre EscribAI en Chrome o en Edge, o sube un audio ya grabado para transcribirlo.";
+  }
+  if(!nivel)return;
+
+  const alto=nivel==="alto";
+  caja.style.background=alto?"rgba(239,107,107,.10)":"rgba(246,196,83,.10)";
+  caja.style.border="1px solid "+(alto?"rgba(239,107,107,.38)":"rgba(246,196,83,.38)");
+  $("#avisoNavIco").textContent=alto?"⛔":"⚠️";
+  $("#avisoNavTit").textContent=tit;
+  $("#avisoNavTit").style.color=alto?"#ff9b9b":"#f6c453";
+  $("#avisoNavTxt").textContent=txt;
+  caja.classList.remove("hide");
+
+  $("#avisoNavCopiar").onclick=async()=>{
+    try{await navigator.clipboard.writeText(location.href);toast("🔗 Enlace copiado: pégalo en Chrome o Edge");}
+    catch(e){toast("Copia esta dirección y ábrela en Chrome: "+location.href);}
+  };
+  $("#avisoNavArchivo").onclick=()=>{
+    document.querySelector('nav button[data-tab="record"]').click();
+    $("#btnFile").scrollIntoView({behavior:"smooth",block:"center"});
+    setTimeout(()=>$("#btnFile").click(),420);
+  };
+  $("#avisoNavCerrar").onclick=()=>{caja.classList.add("hide");LS.set("vs_aviso_nav_ok",1);};
+
+  if(!SR)$("#recSub").textContent="⚠️ Este navegador no dicta en directo. Usa «📂 Transcribir archivo» o abre la app en Chrome o Edge.";
+}
+avisoNavegador();
 </script>
 <footer id="firmaTDC" style="max-width:1100px;margin:36px auto 16px;padding:20px 16px 6px;border-top:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
   <img src="icons/logo-tdc.png" alt="Talent &amp; Digital Consulting" style="height:58px;width:auto;border-radius:8px;opacity:.96">
