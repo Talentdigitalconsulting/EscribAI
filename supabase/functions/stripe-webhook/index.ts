@@ -11,7 +11,7 @@ function planPorImporte(cents: number): { plan: string; dias: number | null } | 
   // Precios vigentes (desde septiembre de 2026)
   if (cents === 1900) return { plan: "pro_mes", dias: 32 };
   if (cents === 19000) return { plan: "pro_anyo", dias: 367 };
-  if (cents === 4900) return { plan: "empresas", dias: 32 };
+  if (cents === 4500) return { plan: "empresas", dias: 32 };
   // Precios antiguos: se mantienen para que los clientes que ya pagan sigan renovando
   if (cents === 999) return { plan: "pro_mes", dias: 32 };
   if (cents === 7900) return { plan: "pro_anyo", dias: 367 };

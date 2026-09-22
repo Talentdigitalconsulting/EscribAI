@@ -4,14 +4,13 @@
 "use strict";
 const SB_URL="https://tbaliejmtaeniffmqgif.supabase.co";
 const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRiYWxpZWptdGFlbmlmZm1xZ2lmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNzI5MDQsImV4cCI6MjA5ODg0ODkwNH0.6deb7nWjNS7Y1EyKPI-ADEnwut0b6ZzIQLg6KPFrBZ8";
-/* Enlaces de pago (Stripe Payment Links). Vacío = contacto por email */
-/* PRECIOS NUEVOS (19 / 190 / 49). Pega aquí los Payment Links creados en Stripe
-   con esos importes. Mientras estén vacíos, el botón abre un correo de contacto
-   en vez de cobrar un importe distinto al anunciado. */
+/* Enlaces de pago de Stripe (19 € / 190 € / 45 €, IVA incluido).
+   Si alguno se deja vacío, ese botón abre un correo de contacto en lugar de cobrar.
+   Al cambiar un precio hay que actualizar también planPorImporte en el webhook. */
 const PAY_LINKS={
-  pro_mes:"",
-  pro_anyo:"",
-  empresas:""
+  pro_mes:"https://buy.stripe.com/aFacN6aFW5H5fYAbMH9k403",
+  pro_anyo:"https://buy.stripe.com/dRmcN6bK0glJ13GeYT9k404",
+  empresas:"https://buy.stripe.com/8x2eVeeWc0mL13G3gb9k405"
 };
 const GOOGLE_ACTIVO=false; // ponlo en true cuando el proveedor Google esté configurado en Supabase
 /* Portal de clientes de Stripe (gestionar/cancelar suscripción). Actívalo en Stripe → Settings → Billing → Customer portal */
@@ -20,7 +19,7 @@ const PLANES=[
   {id:"demo",nombre:"Gratis",precio:"0€",per:"para siempre",puntos:["Transcripción en tiempo real","2 perfiles de voz","1 comunidad u organización","Resumen automático","Exportación a texto"]},
   {id:"pro_mes",nombre:"Pro",precio:"19€",per:"/mes",puntos:["Todo lo del plan gratuito","Comunidades y voces ilimitadas","Tu plantilla de Word propia","Los 8 modelos de acta y envío por correo","Historial guardado en la nube","Transcripción de audios grabados"]},
   {id:"pro_anyo",nombre:"Pro anual",precio:"190€",per:"/año (2 meses gratis)",puntos:["Todo lo del plan Pro","Ahorras 38 € al año","Precio bloqueado mientras sigas","Soporte prioritario"]},
-  {id:"empresas",nombre:"Despachos",precio:"49€",per:"/mes",puntos:["Todo lo del plan Pro","Transcripción profesional incluida","Varios usuarios en el despacho","Plantillas con tu marca","Formación y soporte dedicado"]}
+  {id:"empresas",nombre:"Despachos y empresas",precio:"45€",per:"/mes (IVA incl.)",puntos:["Todo lo del plan Pro","Transcripción profesional incluida","Varios usuarios en el despacho","Plantillas con tu marca","Formación y soporte dedicado"]}
 ];
 
 let sb=null,sesionUser=null,perfil=null,licPayload=null;
