@@ -8,10 +8,12 @@ const supa = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_
 
 // Mapeo por importe en céntimos (mantener sincronizado con los precios de Stripe)
 function planPorImporte(cents: number): { plan: string; dias: number | null } | null {
-  // Precios vigentes (desde septiembre de 2026)
-  if (cents === 1900) return { plan: "pro_mes", dias: 32 };
-  if (cents === 19000) return { plan: "pro_anyo", dias: 367 };
-  if (cents === 4500) return { plan: "empresas", dias: 32 };
+  // Precios vigentes con IVA incluido. Se aceptan dos valores por plan porque, según
+  // cómo calcule Stripe el impuesto en cada compra, puede llegar el importe con IVA
+  // (19,00 €) o la base imponible (15,70 €). Así el plan se activa en ambos casos.
+  if (cents === 1900 || cents === 1570) return { plan: "pro_mes", dias: 32 };
+  if (cents === 19000 || cents === 15702) return { plan: "pro_anyo", dias: 367 };
+  if (cents === 4500 || cents === 3719) return { plan: "empresas", dias: 32 };
   // Precios antiguos: se mantienen para que los clientes que ya pagan sigan renovando
   if (cents === 999) return { plan: "pro_mes", dias: 32 };
   if (cents === 7900) return { plan: "pro_anyo", dias: 367 };
