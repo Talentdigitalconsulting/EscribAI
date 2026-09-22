@@ -508,22 +508,28 @@ body.conAnuncios .adrail{display:none}
 <!-- ============ MODAL: conectar Deepgram ============ -->
 <div class="overlay hide" id="dgOverlay">
   <div class="modal" style="max-width:560px">
-    <h2>🟣 Activa la máxima precisión</h2>
-    <p class="sub">EscribAI puede usar <b>Deepgram</b>, un motor de voz profesional en la nube: transcripción casi perfecta, puntuación automática y separación de voces real, en directo. Se configura una sola vez, en 3 minutos.</p>
+    <h2>🟣 Transcripción profesional</h2>
+    <p class="sub">Para los audios ya grabados, EscribAI usa un motor de voz profesional que transcribe con mucha más precisión y separa las voces de verdad. <b>Está incluido en el plan Pro y no tienes que configurar nada.</b></p>
     <div style="background:linear-gradient(135deg,rgba(99,102,241,.18),rgba(34,211,238,.1));border:1px solid var(--acc);border-radius:12px;padding:12px 16px;margin-bottom:14px">
-      🎁 <b>Deepgram regala unos 200&nbsp;$ de crédito al registrarte</b> (sin tarjeta): equivalen a unas <b>500 horas de reuniones gratis</b>. Después, cuesta aprox. 0,40&nbsp;€ por hora, que pagas directamente a Deepgram.
+      ✅ Tu plan incluye <b>10 horas de transcripción profesional al mes</b>, que se renuevan el día 1. Pulsa «📂 Transcribir archivo» o «🤖 Mejorar con IA» y funciona directamente.
     </div>
     <p style="font-size:13.5px;line-height:1.8;color:#c6cde0">
-      <b>1.</b> Crea tu cuenta gratis en <a href="https://console.deepgram.com/signup" target="_blank" rel="noopener" style="color:var(--acc2)">console.deepgram.com/signup</a> (vale con Google).<br>
-      <b>2.</b> Dentro del panel, pulsa <b>«Create API Key»</b> y copia la clave que te da.<br>
-      <b>3.</b> Pégala aquí abajo y pulsa activar. Nada más: EscribAI hará el resto.
+      Tu audio <b>no pasa por nuestros servidores</b>: el navegador recibe un permiso temporal de diez minutos y envía el archivo directamente al motor de transcripción.
     </p>
-    <input id="dgKeyInput" type="password" placeholder="Pega aquí tu API key de Deepgram" style="margin-top:8px">
+    <details style="margin-top:10px">
+      <summary style="cursor:pointer;font-size:13px;color:var(--mut)">Uso avanzado: quiero poner mi propia clave de Deepgram</summary>
+      <p style="font-size:13px;line-height:1.7;color:#c6cde0;margin-top:8px">
+        Si prefieres facturar el consumo en tu propia cuenta de Deepgram, crea una clave en
+        <a href="https://console.deepgram.com/signup" target="_blank" rel="noopener" style="color:var(--acc2)">console.deepgram.com</a>
+        y pégala aquí. Sustituirá a las horas incluidas en tu plan.
+      </p>
+      <input id="dgKeyInput" type="password" placeholder="API key propia de Deepgram (opcional)" style="margin-top:8px">
+    </details>
     <div class="foot">
-      <button class="btn" id="dgCerrar">Ahora no</button>
-      <button class="btn pri" id="dgActivar">⚡ Guardar y activar el motor profesional</button>
+      <button class="btn" id="dgCerrar">Entendido</button>
+      <button class="btn pri" id="dgActivar">⚡ Guardar clave propia</button>
     </div>
-    <p class="sub" style="margin-top:10px">Tu clave se guarda solo en tu dispositivo y en tu cuenta cifrada. Podrás cambiarla o quitarla en Ajustes.</p>
+    <p class="sub" style="margin-top:10px">Si guardas una clave propia, se queda en tu dispositivo y en tu cuenta cifrada. Puedes quitarla en Ajustes cuando quieras.</p>
   </div>
 </div>
 
@@ -1327,14 +1333,52 @@ function renderHistory(){
    MEJORAR CON IA (Deepgram diarización / OpenAI Whisper)
 ===================================================================== */
 const DG_URL="https://api.deepgram.com/v1/listen?model=nova-2&language=es&diarize=true&punctuate=true&utterances=true";
+
+/* ---------- Transcripción profesional incluida en el plan ----------
+   El servidor entrega un token de 10 minutos; el audio va directo del
+   navegador a Deepgram, sin pasar por nuestros servidores.           */
+let dgSaldo=null;
+async function dgLlamada(accion,extra){
+  if(typeof window.tokenSesion!=="function")return null;
+  const tok=await window.tokenSesion();
+  if(!tok)return null;
+  const r=await fetch(SB_URL+"/functions/v1/dg-token",{
+    method:"POST",
+    headers:{Authorization:"Bearer "+tok,apikey:SB_KEY,"Content-Type":"application/json"},
+    body:JSON.stringify(Object.assign({accion:accion},extra||{}))
+  });
+  const j=await r.json().catch(()=>({}));
+  if(typeof j.restante_min==="number")dgSaldo=j.restante_min;
+  if(!r.ok){
+    const msgs={
+      plan_insuficiente:"La transcripción profesional está incluida en el plan Pro. Actualiza tu plan para usarla.",
+      cuota_agotada:"Has agotado las "+Math.round((j.cuota_min||600)/60)+" horas de transcripción profesional de este mes. Se renueva el día 1.",
+      deepgram_no_disponible:"El servicio de transcripción no responde ahora mismo. Inténtalo en unos minutos.",
+      sin_sesion:"Entra en tu cuenta para usar la transcripción profesional."
+    };
+    throw new Error(msgs[j.error]||"No se pudo iniciar la transcripción profesional");
+  }
+  return j;
+}
+/* Devuelve la cabecera de autorización a usar contra Deepgram:
+   token del plan si lo hay, o la clave propia del usuario (modo avanzado). */
+async function dgAutorizacion(){
+  if(settings.key&&settings.prov==="deepgram")return {auth:"Token "+settings.key,propia:true};
+  const j=await dgLlamada("token");
+  if(!j||!j.access_token)throw new Error("Entra en tu cuenta para usar la transcripción profesional.");
+  return {auth:"Bearer "+j.access_token,propia:false,restante:j.restante_min};
+}
+async function dgApuntarUso(segundos,origen){
+  try{await dgLlamada("uso",{segundos:segundos,origen:origen})}catch(e){console.warn("uso",e)}
+}
+function dgPuedeUsar(){ return pro||!!(settings.key&&settings.prov==="deepgram"); }
 function cargarUtterances(utts){
   segments=utts.map(u=>({t0:u.start,t1:u.end,text:capitalize(u.transcript),spk:mapAISpeaker(u.speaker)}));
   elapsed=utts[utts.length-1].end;$("#timer").textContent=fmtT(elapsed);
   renderTranscript();
 }
 $("#btnFile").onclick=()=>{
-  if(!pro){upsell("Transcribir archivos es una función Pro");return}
-  if(!settings.key||settings.prov!=="deepgram"){abrirGuiaDG();return}
+  if(!dgPuedeUsar()){upsell("Transcribir archivos es una función Pro");return}
   $("#fileInput").click();
 };
 $("#fileInput").onchange=async e=>{
@@ -1343,30 +1387,36 @@ $("#fileInput").onchange=async e=>{
   toast("📂 Transcribiendo «"+f.name+"»… puede tardar un poco");
   $("#btnFile").disabled=true;$("#btnFile").textContent="📂 Procesando…";
   try{
-    const r=await fetch(DG_URL,{method:"POST",headers:{Authorization:"Token "+settings.key,"Content-Type":f.type||"audio/mpeg"},body:f});
+    const cred=await dgAutorizacion();
+    const r=await fetch(DG_URL,{method:"POST",headers:{Authorization:cred.auth,"Content-Type":f.type||"audio/mpeg"},body:f});
     if(!r.ok)throw new Error("Deepgram: "+r.status+" "+(await r.text()).slice(0,120));
     const j=await r.json();
     const utts=(j.results&&j.results.utterances)||[];
     if(!utts.length)throw new Error("No se detectó voz en el archivo");
     cargarUtterances(utts);
     audioBlob=f;$("#btnAudio").disabled=false;
-    toast("✅ Archivo transcrito: "+new Set(utts.map(u=>u.speaker)).size+" voces detectadas");
+    const dur=(j.metadata&&j.metadata.duration)||0;
+    if(!cred.propia&&dur)dgApuntarUso(dur,"archivo");
+    toast("✅ Archivo transcrito: "+new Set(utts.map(u=>u.speaker)).size+" voces detectadas"+
+      (cred.propia||dgSaldo===null?"":" · te quedan "+Math.floor(dgSaldo/60)+" h "+(dgSaldo%60)+" min este mes"));
   }catch(err){toast("❌ "+err.message)}
   $("#btnFile").disabled=false;$("#btnFile").textContent="📂 Transcribir archivo";
 };
 $("#btnAI").onclick=async()=>{
-  if(!pro){upsell("El modo IA es una función Pro");return}
-  if(!settings.key){abrirGuiaDG();return}
+  if(!dgPuedeUsar()){upsell("El modo IA es una función Pro");return}
   if(!audioBlob){toast("Primero graba una sesión (el audio se procesa al detener)");return}
   $("#btnAI").disabled=true;$("#btnAI").textContent="🤖 Procesando…";
   try{
-    if(settings.prov==="deepgram"){
+    if(settings.prov!=="openai"||!settings.key){
+      const cred=await dgAutorizacion();
       const r=await fetch(DG_URL,{
-        method:"POST",headers:{Authorization:"Token "+settings.key,"Content-Type":audioBlob.type||"audio/webm"},body:audioBlob});
+        method:"POST",headers:{Authorization:cred.auth,"Content-Type":audioBlob.type||"audio/webm"},body:audioBlob});
       if(!r.ok)throw new Error("Deepgram: "+r.status+" "+(await r.text()).slice(0,120));
       const j=await r.json();
       const utts=(j.results&&j.results.utterances)||[];
       if(!utts.length)throw new Error("Sin resultados de diarización");
+      const dur=(j.metadata&&j.metadata.duration)||0;
+      if(!cred.propia&&dur)dgApuntarUso(dur,"mejorar");
       cargarUtterances(utts);toast("✅ Rediarizado con IA: "+new Set(utts.map(u=>u.speaker)).size+" voces detectadas");
     }else{
       const fd=new FormData();

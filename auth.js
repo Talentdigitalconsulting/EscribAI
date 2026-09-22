@@ -24,6 +24,16 @@ const PLANES=[
 
 let sb=null,sesionUser=null,perfil=null,licPayload=null;
 
+/* Token de la sesión actual: lo usa la app para pedir al servidor
+   un permiso temporal de transcripción profesional. */
+window.tokenSesion=async function(){
+  try{
+    if(!sb)return null;
+    const {data}=await sb.auth.getSession();
+    return data&&data.session?data.session.access_token:null;
+  }catch(e){return null}
+};
+
 /* ---------- UI: botón de usuario en cabecera ---------- */
 document.querySelector("header").insertBefore((()=>{
   const b=document.createElement("button");b.className="btn sm";b.id="btnUser";b.textContent="👤 Entrar";b.style.marginLeft="auto";
