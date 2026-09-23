@@ -35,12 +35,13 @@ a{color:#22d3ee}
 <h2>3. Qué sale de tu dispositivo</h2>
 <ul>
 <li><b>Reconocimiento de voz en vivo</b>: usa el motor de dictado del navegador (Google Chrome / Microsoft Edge). El navegador puede enviar el audio a los servidores de su proveedor para convertirlo en texto, conforme a la política de privacidad de Google/Microsoft.</li>
-<li><b>Motor profesional opcional (Deepgram)</b>: solo si tú lo activas con tu propia clave, el audio se envía a Deepgram bajo sus términos. Está desactivado por defecto.</li>
+<li><b>Transcripción profesional (Deepgram)</b>: al usar «Transcribir archivo» o «Mejorar con IA», tu navegador envía ese audio directamente a Deepgram, nuestro proveedor de reconocimiento de voz, con un permiso temporal que caduca en diez minutos. El audio <b>no pasa por nuestros servidores</b>: viaja de tu dispositivo a Deepgram. Estas funciones solo se activan cuando tú pulsas esos botones.</li>
+<li><b>Corrección del texto (OpenAI)</b>: al usar «Pulir texto», el texto ya transcrito —no el audio— se envía a OpenAI para corregir ortografía, puntuación y palabras mal reconocidas. Nuestros proveedores tratan estos datos únicamente para prestarnos el servicio y no los utilizan para entrenar sus modelos.</li>
 <li><b>Cuenta y sincronización</b>: los datos de los apartados anteriores se almacenan en la infraestructura de <b>Supabase</b>, nuestro encargado de tratamiento de base de datos y autenticación.</li>
 </ul>
 
 <h2>4. Encargados de tratamiento y destinatarios</h2>
-<p>Trabajamos con proveedores que tratan datos por cuenta de TDC con las garantías del art. 28 RGPD: <b>Supabase</b> (base de datos y autenticación), <b>Stripe</b> (pagos), <b>Brevo</b> (envío de correos transaccionales), <b>GitHub Pages</b> (alojamiento web) y, solo si tú lo activas, <b>Deepgram</b> (transcripción). Algunos proveedores pueden estar ubicados fuera del EEE; en ese caso las transferencias se amparan en Cláusulas Contractuales Tipo o decisiones de adecuación (p. ej. el Marco de Privacidad de Datos UE-EE. UU.). No vendemos tus datos ni los cedemos a terceros con fines comerciales.</p>
+<p>Trabajamos con proveedores que tratan datos por cuenta de TDC con las garantías del art. 28 RGPD: <b>Supabase</b> (base de datos y autenticación), <b>Stripe</b> (pagos), <b>Brevo</b> (envío de correos transaccionales), <b>GitHub Pages</b> (alojamiento web), <b>Deepgram</b> (reconocimiento de voz) y <b>OpenAI</b> (corrección del texto transcrito). Algunos proveedores pueden estar ubicados fuera del EEE; en ese caso las transferencias se amparan en Cláusulas Contractuales Tipo o decisiones de adecuación (p. ej. el Marco de Privacidad de Datos UE-EE. UU.). No vendemos tus datos ni los cedemos a terceros con fines comerciales.</p>
 
 <h2>5. Publicidad</h2>
 <p>El plan gratuito puede mostrar espacios publicitarios. Si en algún momento se sirviera publicidad mediante terceros que utilicen cookies o identificadores, se solicitará tu consentimiento previamente conforme a la normativa aplicable.</p>
