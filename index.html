@@ -1369,7 +1369,50 @@ function renderHistory(){
 /* =====================================================================
    MEJORAR CON IA (Deepgram diarización / OpenAI Whisper)
 ===================================================================== */
-const DG_URL="https://api.deepgram.com/v1/listen?model=nova-2&language=es&diarize=true&punctuate=true&utterances=true";
+const DG_BASE="https://api.deepgram.com/v1/listen?model=nova-3&language=es&diarize=true&punctuate=true&smart_format=true&utterances=true";
+
+/* ---------- Vocabulario propio de cada reunión ----------
+   Nova-3 admite «keyterm»: términos que el motor debe reconocer sí o sí.
+   No se le pide nada al usuario: se deducen de lo que ya tiene puesto
+   (hablantes calibrados, organización y tipo de acta elegido).       */
+const VOCAB_SECTOR={
+  junta:["derrama","derrama extraordinaria","coeficiente de participación","cuota de participación","fondo de reserva","orden del día","junta ordinaria","junta extraordinaria","comunidad de propietarios","administrador de fincas","presidente de la comunidad","acuerdo por unanimidad","mayoría simple","impugnación","morosidad","propietario","ascensor","portal","ITE","Ley de Propiedad Horizontal"],
+  asociacion:["asamblea general","junta directiva","socio","cuota de socio","estatutos","tesorero","secretario","memoria anual","subvención","orden del día","votación","moción"],
+  pleno:["pleno","concejal","alcalde","moción","dictamen","comisión informativa","enmienda","grupo municipal","expediente","ordenanza","presupuesto municipal","abstención"],
+  comercial:["presupuesto","propuesta","plazo de entrega","condiciones","descuento","facturación","pedido","contrato","objeción"],
+  clinica:["paciente","diagnóstico","tratamiento","pauta","historia clínica","derivación","seguimiento","sesión"],
+  formacion:["temario","evaluación","módulo","práctica","ejercicio","examen","alumnado"],
+  entrevista:["candidato","puesto","incorporación","experiencia","referencias","salario"],
+  general:["acuerdo","tarea","plazo","responsable","seguimiento","próxima reunión"]
+};
+function keytermsActuales(){
+  const t=[];
+  speakers.forEach(s=>{ if(s.name && !/^hablante/i.test(s.name)) t.push(s.name) });
+  const o=orgOf(currentOrg);
+  if(o){
+    if(o.nombre)t.push(o.nombre);
+    if(o.pres)t.push(o.pres);
+    if(o.sec)t.push(o.sec);
+  }
+  const tipo=(settings.plantilla||"general").replace(/^u:.*/,"general");
+  (VOCAB_SECTOR[tipo]||VOCAB_SECTOR.general).forEach(v=>t.push(v));
+  (settings.correcciones||[]).forEach(c=>{ if(c&&c.a)t.push(c.a) });
+  t.push("EscribAI","acta","borrador");
+  const vistos=new Set(),out=[];
+  t.forEach(x=>{
+    const v=String(x||"").trim();
+    if(v.length<3||v.length>40)return;
+    const k=v.toLowerCase();
+    if(vistos.has(k))return;
+    vistos.add(k);out.push(v);
+  });
+  return out.slice(0,45); // el límite de Deepgram son 500 tokens
+}
+function urlDeepgram(){
+  const kt=keytermsActuales().map(t=>"&keyterm="+encodeURIComponent(t)).join("");
+  return DG_BASE+kt;
+}
+const DG_URL=DG_BASE; // compatibilidad con el motor en vivo
 
 /* ---------- Transcripción profesional incluida en el plan ----------
    El servidor entrega un token de 10 minutos; el audio va directo del
@@ -1425,7 +1468,7 @@ $("#fileInput").onchange=async e=>{
   $("#btnFile").disabled=true;$("#btnFile").textContent="📂 Procesando…";
   try{
     const cred=await dgAutorizacion();
-    const r=await fetch(DG_URL,{method:"POST",headers:{Authorization:cred.auth,"Content-Type":f.type||"audio/mpeg"},body:f});
+    const r=await fetch(urlDeepgram(),{method:"POST",headers:{Authorization:cred.auth,"Content-Type":f.type||"audio/mpeg"},body:f});
     if(!r.ok)throw new Error("Deepgram: "+r.status+" "+(await r.text()).slice(0,120));
     const j=await r.json();
     const utts=(j.results&&j.results.utterances)||[];
@@ -1446,7 +1489,7 @@ $("#btnAI").onclick=async()=>{
   try{
     if(settings.prov!=="openai"||!settings.key){
       const cred=await dgAutorizacion();
-      const r=await fetch(DG_URL,{
+      const r=await fetch(urlDeepgram(),{
         method:"POST",headers:{Authorization:cred.auth,"Content-Type":audioBlob.type||"audio/webm"},body:audioBlob});
       if(!r.ok)throw new Error("Deepgram: "+r.status+" "+(await r.text()).slice(0,120));
       const j=await r.json();
