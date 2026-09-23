@@ -343,6 +343,12 @@ body.conAnuncios .adrail{display:none}
       <button class="btn sm" id="btnGuiaDG" style="margin-top:8px">ℹ️ Cómo funciona</button>
     </div>
     <div class="setrow">
+      <label>Palabras que el dictado confunde</label>
+      <p>Apunta aquí los nombres y términos que siempre salen mal: apellidos de vecinos, el nombre de la comunidad, tecnicismos. La app los corrige sobre la marcha y además se los avisa al motor profesional para que los acierte.</p>
+      <div id="corrLista" style="display:flex;flex-direction:column;gap:8px;margin-top:10px"></div>
+      <button class="btn sm" id="btnCorrAdd" style="margin-top:10px">＋ Añadir palabra</button>
+    </div>
+    <div class="setrow">
       <label>Licencia EscribAI</label>
       <input type="text" id="setLic" placeholder="Pega aquí tu clave de licencia Pro">
       <p id="licEstado"></p>
@@ -1557,15 +1563,56 @@ function loadSettings(){
   $("#setLic").value=settings.license||"";
   $("#setAudioAuto").checked=settings.audioAuto!==false;
   renderPlantillasSel();
+  if(typeof renderCorrecciones==="function")renderCorrecciones();
 }
+/* ---------- Diccionario propio de correcciones ---------- */
+function renderCorrecciones(){
+  const caja=$("#corrLista");if(!caja)return;
+  const lista=settings.correcciones||[];
+  caja.innerHTML=lista.length?"":'<p style="font-size:12.5px;color:var(--mut);margin:0">Todavía no has añadido ninguna. Ejemplo: escribe «bordas» en la primera casilla y «Bordas» en la segunda.</p>';
+  lista.forEach((c,i)=>{
+    const fila=document.createElement("div");
+    fila.className="inline";
+    fila.innerHTML='<input placeholder="lo que se oye" value="'+String(c.de||"").replace(/"/g,"&quot;")+'" data-i="'+i+'" data-campo="de">'+
+      '<span style="color:var(--mut);align-self:center">→</span>'+
+      '<input placeholder="cómo debe escribirse" value="'+String(c.a||"").replace(/"/g,"&quot;")+'" data-i="'+i+'" data-campo="a">'+
+      '<button class="btn sm" data-borrar="'+i+'" title="Quitar">✕</button>';
+    caja.appendChild(fila);
+  });
+  caja.querySelectorAll("input").forEach(inp=>{
+    inp.oninput=()=>{
+      const i=+inp.dataset.i;
+      settings.correcciones[i][inp.dataset.campo]=inp.value;
+    };
+  });
+  caja.querySelectorAll("[data-borrar]").forEach(b=>{
+    b.onclick=()=>{
+      settings.correcciones.splice(+b.dataset.borrar,1);
+      LS.set("vs_settings",settings);renderCorrecciones();
+      if(typeof syncNube==="function")syncNube();
+    };
+  });
+}
+$("#btnCorrAdd").onclick=()=>{
+  settings.correcciones=settings.correcciones||[];
+  if(settings.correcciones.length>=60){toast("Máximo 60 palabras");return}
+  settings.correcciones.push({de:"",a:""});
+  renderCorrecciones();
+  const inputs=$("#corrLista").querySelectorAll("input");
+  if(inputs.length)inputs[inputs.length-2].focus();
+};
 $("#setPlantilla").onchange=()=>{
   const v=$("#setPlantilla").value;
   if(v==="__gestionar"){$("#setPlantilla").value=settings.plantilla||"general";abrirPt();return}
   settings.plantilla=v;LS.set("vs_settings",settings);
 };
 $("#btnSaveSet").onclick=async()=>{
-  settings={lang:$("#setLang").value,sens:$("#setSens").value,prov:"deepgram",key:"",license:$("#setLic").value.trim(),plantilla:$("#setPlantilla").value,audioAuto:$("#setAudioAuto").checked,motorVivo:"navegador",misPlantillas:settings.misPlantillas||[],correcciones:settings.correcciones||[]};
+  const corr=(settings.correcciones||[])
+    .map(c=>({de:String(c.de||"").trim(),a:String(c.a||"").trim()}))
+    .filter(c=>c.de&&c.a);
+  settings={lang:$("#setLang").value,sens:$("#setSens").value,prov:"deepgram",key:"",license:$("#setLic").value.trim(),plantilla:$("#setPlantilla").value,audioAuto:$("#setAudioAuto").checked,motorVivo:"navegador",misPlantillas:settings.misPlantillas||[],correcciones:corr};
   LS.set("vs_settings",settings);
+  renderCorrecciones();
   const prev=!!pro;
   pro=await verifyLicense(settings.license);
   updateProUI();
