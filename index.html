@@ -1448,6 +1448,26 @@ async function dgAutorizacion(){
   if(!j||!j.access_token)throw new Error("Entra en tu cuenta para usar la transcripción profesional.");
   return {auth:"Bearer "+j.access_token,propia:false,restante:j.restante_min};
 }
+/* Llama a Deepgram y, si la clave propia del usuario ya no vale, reintenta
+   automáticamente con la transcripción incluida en su plan. */
+async function dgFetch(cuerpo,tipoContenido){
+  let cred=await dgAutorizacion();
+  let r=await fetch(urlDeepgram(),{method:"POST",headers:{Authorization:cred.auth,"Content-Type":tipoContenido},body:cuerpo});
+  if((r.status===401||r.status===403)&&cred.propia){
+    toast("⚠️ Tu clave propia de Deepgram ya no es válida. Usando la transcripción incluida en tu plan.");
+    settings.key="";settings.prov="deepgram";LS.set("vs_settings",settings);
+    try{$("#setKey").value="";$("#dgKeyInput").value=""}catch(e){}
+    cred=await dgAutorizacion();
+    if(cred.propia)throw new Error("No se pudo usar la transcripción del plan. Entra en tu cuenta e inténtalo de nuevo.");
+    r=await fetch(urlDeepgram(),{method:"POST",headers:{Authorization:cred.auth,"Content-Type":tipoContenido},body:cuerpo});
+  }
+  if(!r.ok){
+    const t=(await r.text()).slice(0,140);
+    if(r.status===401||r.status===403)throw new Error("El servicio de transcripción rechazó las credenciales. Avísanos si se repite.");
+    throw new Error("Deepgram: "+r.status+" "+t);
+  }
+  return {json:await r.json(),cred:cred};
+}
 async function dgApuntarUso(segundos,origen){
   try{await dgLlamada("uso",{segundos:segundos,origen:origen})}catch(e){console.warn("uso",e)}
 }
@@ -1467,10 +1487,8 @@ $("#fileInput").onchange=async e=>{
   toast("📂 Transcribiendo «"+f.name+"»… puede tardar un poco");
   $("#btnFile").disabled=true;$("#btnFile").textContent="📂 Procesando…";
   try{
-    const cred=await dgAutorizacion();
-    const r=await fetch(urlDeepgram(),{method:"POST",headers:{Authorization:cred.auth,"Content-Type":f.type||"audio/mpeg"},body:f});
-    if(!r.ok)throw new Error("Deepgram: "+r.status+" "+(await r.text()).slice(0,120));
-    const j=await r.json();
+    const res=await dgFetch(f,f.type||"audio/mpeg");
+    const j=res.json,cred=res.cred;
     const utts=(j.results&&j.results.utterances)||[];
     if(!utts.length)throw new Error("No se detectó voz en el archivo");
     cargarUtterances(utts);
@@ -1488,11 +1506,8 @@ $("#btnAI").onclick=async()=>{
   $("#btnAI").disabled=true;$("#btnAI").textContent="🤖 Procesando…";
   try{
     if(settings.prov!=="openai"||!settings.key){
-      const cred=await dgAutorizacion();
-      const r=await fetch(urlDeepgram(),{
-        method:"POST",headers:{Authorization:cred.auth,"Content-Type":audioBlob.type||"audio/webm"},body:audioBlob});
-      if(!r.ok)throw new Error("Deepgram: "+r.status+" "+(await r.text()).slice(0,120));
-      const j=await r.json();
+      const res=await dgFetch(audioBlob,audioBlob.type||"audio/webm");
+      const j=res.json,cred=res.cred;
       const utts=(j.results&&j.results.utterances)||[];
       if(!utts.length)throw new Error("Sin resultados de diarización");
       const dur=(j.metadata&&j.metadata.duration)||0;
