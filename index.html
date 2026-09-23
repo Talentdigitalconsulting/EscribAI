@@ -274,6 +274,7 @@ body.conAnuncios .adrail{display:none}
       <button class="btn sm" id="btnWord">⬇ Word</button>
       <button class="btn sm" id="btnJson">⬇ JSON</button>
       <button class="btn sm" id="btnAudio" disabled>🔊 Audio</button>
+      <button class="btn sm" id="btnPulir" title="Corrige ortografía, puntuación y palabras mal entendidas usando el contexto (incluido en Pro)">🪄 Pulir texto</button>
       <button class="btn sm" id="btnAI" title="Reprocesa la reunión grabada con transcripción profesional y separación real de voces (incluido en Pro)">🤖 Mejorar con IA</button>
       <button class="btn sm" id="btnFile" title="Transcribe un audio ya grabado con separación real de voces (incluido en Pro)">📂 Transcribir archivo</button>
       <input type="file" id="fileInput" accept="audio/*,video/*" class="hide">
@@ -1481,6 +1482,64 @@ $("#btnAI").onclick=async()=>{
       (dgSaldo===null?"":" · te quedan "+Math.floor(dgSaldo/60)+" h "+(dgSaldo%60)+" min este mes"));
   }catch(e){toast("❌ "+e.message)}
   $("#btnAI").disabled=false;$("#btnAI").textContent="🤖 Mejorar con IA";
+};
+/* =====================================================================
+   PULIR TEXTO — corrección por contexto (incluida en el plan Pro)
+   Va por bloques para poder mostrar progreso y no agotar el tiempo
+   de la función en actas largas.
+===================================================================== */
+const PULIR_BLOQUE=35;
+function contextoActa(){
+  const t=plantillaActual();
+  const o=orgOf(currentOrg);
+  return {
+    tipo:(t&&t.titulo)?t.titulo.replace(/^[^\wÁÉÍÓÚÑ]+/,""):"una reunión",
+    organizacion:o?o.nombre:"",
+    nombres:keytermsActuales().slice(0,25)
+  };
+}
+$("#btnPulir").onclick=async()=>{
+  if(!segments.length){toast("Primero graba o transcribe algo que pulir");return}
+  const btn=$("#btnPulir");
+  const total=Math.ceil(segments.length/PULIR_BLOQUE);
+  btn.disabled=true;
+  let corregidos=0;
+  try{
+    const tok=(typeof window.tokenSesion==="function")?await window.tokenSesion():null;
+    if(!tok)throw new Error("Entra en tu cuenta para usar el pulido de texto.");
+    const ctx=contextoActa();
+    for(let b=0;b<total;b++){
+      btn.textContent="🪄 Puliendo… "+(b+1)+"/"+total;
+      const desde=b*PULIR_BLOQUE;
+      const bloque=segments.slice(desde,desde+PULIR_BLOQUE)
+        .map((s,k)=>({i:desde+k,text:s.text}))
+        .filter(x=>x.text&&x.text.trim());
+      if(!bloque.length)continue;
+      const r=await fetch(SB_URL+"/functions/v1/pulir-acta",{
+        method:"POST",
+        headers:{Authorization:"Bearer "+tok,apikey:SB_KEY,"Content-Type":"application/json"},
+        body:JSON.stringify({bloque:bloque,contexto:ctx})
+      });
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok){
+        const msgs={
+          plan_insuficiente:"El pulido de texto está incluido en el plan Pro.",
+          cuota_agotada:"Has agotado el pulido de texto de este mes. Se renueva el día 1.",
+          ia_no_disponible:"El corrector no responde ahora mismo. Inténtalo en unos minutos.",
+          sin_sesion:"Entra en tu cuenta para usar el pulido de texto."
+        };
+        throw new Error(msgs[j.error]||"No se pudo pulir el texto");
+      }
+      (j.textos||[]).forEach(x=>{
+        const s=segments[x.i];
+        if(s&&x.text&&String(x.text).trim()){s.text=String(x.text).trim();corregidos++}
+      });
+      renderTranscript();
+    }
+    currentSummary=null;
+    toast("✨ Texto pulido: "+corregidos+" intervenciones revisadas. Vuelve a generar el resumen para el acta.");
+  }catch(e){toast("❌ "+e.message)}
+  btn.disabled=false;btn.textContent="🪄 Pulir texto";
 };
 function mapAISpeaker(n){
   if(speakers[n])return speakers[n].id;
