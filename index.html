@@ -792,8 +792,45 @@ function startRecognition(){
   return true;
 }
 const capitalize=t=>t.charAt(0).toUpperCase()+t.slice(1);
+/* Evita que una misma frase entre dos veces cuando el motor de voz se
+   reinicia: al parar, Chrome puede darnos como definitivo un texto que
+   ya habíamos rescatado como provisional. */
+let ultimoCommitTxt="",ultimoCommitT=0;
+function normTxt(t){return t.toLowerCase().replace(/[.,;:!?¿¡"'()\[\]-]/g," ").replace(/\s+/g," ").trim()}
+function esRepetido(txt){
+  const n=normTxt(txt);
+  if(!n||!ultimoCommitTxt)return false;
+  if(n.split(" ").length<4)return false;              // frases cortas sí pueden repetirse de verdad
+  if(Date.now()-ultimoCommitT>8000)return false;      // solo dentro de la ventana del reinicio
+  return n===ultimoCommitTxt||ultimoCommitTxt.endsWith(n)||n.endsWith(ultimoCommitTxt);
+}
+/* Diccionario de correcciones: arregla los términos que el dictado
+   siempre confunde (nombres propios, tecnicismos, la propia marca).
+   El usuario puede añadir los suyos en Ajustes. */
+const CORRECCIONES_BASE=[
+  ["escriba y escribáis","EscribAI"],["escriba i","EscribAI"],["escribe ay","EscribAI"],
+  ["escriba ai","EscribAI"],["escribay","EscribAI"],["escriba y","EscribAI"],
+  ["entreacriciones","y transcripciones"],["entre acriciones","y transcripciones"],
+  ["acta entre","acta"],["derrama","derrama"],["l p h","LPH"],
+  ["orden del dia","orden del día"],["por unanimidad","por unanimidad"]
+];
+function correccionesUsuario(){
+  return (settings.correcciones||[]).filter(c=>c&&c.de&&c.a).map(c=>[c.de,c.a]);
+}
+function aplicarCorrecciones(txt){
+  let t=txt;
+  CORRECCIONES_BASE.concat(correccionesUsuario()).forEach(([de,a])=>{
+    if(!de)return;
+    const esc=de.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+    t=t.replace(new RegExp("\\b"+esc+"\\b","gi"),a);
+  });
+  return t;
+}
 function commitFinal(txt){
   if(!txt)return;
+  txt=aplicarCorrecciones(txt);
+  if(esRepetido(txt))return;
+  ultimoCommitTxt=normTxt(txt);ultimoCommitT=Date.now();
   const t1=(Date.now()-recStart)/1000;
   const t0=lastFinalTime;lastFinalTime=t1;
   const fs=frames.filter(f=>f.t>=t0-0.3&&f.t<=t1&&f.f0>0&&f.rms>0.018);
