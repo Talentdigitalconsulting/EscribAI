@@ -194,6 +194,110 @@ body.conAnuncios .adrail{display:none}
   .timer{font-size:27px}
   .micbtn{width:68px;height:68px}
 }
+
+/* =====================================================================
+   TEMA v2 — barra lateral, paleta sobria y tipografía de documento.
+   Se aplica ENCIMA del estilo anterior: todas las clases antiguas siguen
+   existiendo, así que nada se queda sin estilo si algo se me escapa.
+
+   Las fuentes son de sistema a propósito: pedirlas a Google enviaría la
+   IP de cada visitante a un tercero y la política de privacidad dice
+   justo lo contrario.
+===================================================================== */
+:root{
+  --bg:#0a0e1a; --panel:#0f1426; --panel2:#0d1222; --line:#1c2338;
+  --txt:#e9ecf5; --mut:#8b93ab; --acc:#3d7bff; --acc2:#9db8ff;
+  --ok:#2dd4bf; --warn:#d8b46a; --err:#ff5b5b;
+  --grad:linear-gradient(135deg,#3d7bff,#5a8fff);
+  --side:#080b15; --r:14px; --sh:0 10px 30px rgba(0,0,0,.35);
+  --serif:"Instrument Serif",Georgia,"Times New Roman",serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono","Segoe UI Mono",Menlo,monospace;
+}
+body{background:var(--bg)!important;font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+
+/* ---------- armazón ---------- */
+#appShell{display:flex;min-height:100dvh;align-items:stretch}
+#appMain{flex:1;min-width:0;display:flex;flex-direction:column}
+
+#appSide{width:252px;flex:none;position:sticky;top:0;height:100dvh;overflow-y:auto;
+  display:flex;flex-direction:column;background:var(--side);border-right:1px solid #161c2e;padding:20px 14px 16px}
+#sideBrand{display:flex;align-items:center;gap:11px;padding:0 6px 22px}
+#sideBrand .marca{display:flex;flex-direction:column;gap:1px;min-width:0}
+#sideBrand .nom{font-family:var(--serif);font-size:26px;line-height:1;letter-spacing:-.01em}
+#sideBrand .sub{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#6f7894}
+#sideBrand .logo{width:36px;height:36px;border-radius:10px;box-shadow:none}
+
+/* la navegación pasa de pestañas a lista vertical */
+#appSide nav{display:flex;flex-direction:column;gap:2px;padding:0;margin:0;max-width:none;width:auto}
+#appSide nav button{width:100%;height:40px;padding:0 12px;border-radius:9px;border:0;
+  display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:500;color:var(--mut);text-align:left}
+#appSide nav button:hover{background:#121829;color:var(--txt)}
+#appSide nav button.act{background:#151d33;color:var(--txt);border:0}
+
+#sideFill{flex:1}
+#sideAyuda{margin-top:8px;height:36px;padding:0 10px;border-radius:9px;display:flex;align-items:center;
+  gap:9px;font-size:12.5px;color:var(--mut);width:100%}
+#sideAyuda:hover{background:#121829;color:var(--txt)}
+
+/* ---------- cabecera y título de página ---------- */
+header{background:transparent!important;border-bottom:0!important;backdrop-filter:none!important;
+  padding:20px 30px 0!important;position:static!important}
+#appShell header .logo,#appShell header .brand{display:none}
+header .status{margin-left:auto}
+#pageHead{padding:14px 30px 20px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px}
+#pageHead .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#6f7894}
+#pageHead h1{font-family:var(--serif);font-weight:400;font-size:38px;line-height:1.05;letter-spacing:-.015em;margin-top:5px}
+
+main{max-width:none!important;margin:0!important;padding:0 30px 34px!important}
+.tabpane{padding-top:0}
+
+/* ---------- superficies ---------- */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:none}
+.sumcard h3,.set h3{font-size:14px;font-weight:600}
+input,select,textarea{background:#0a0e1a;border:1px solid var(--line);border-radius:9px}
+input:focus,select:focus,textarea:focus{border-color:#35406a}
+
+/* ---------- botones ---------- */
+.btn{border-radius:9px;font-weight:500;background:#141a2e;border:1px solid #242c45;transition:.15s}
+.btn:hover{border-color:#35406a;transform:none}
+.btn.pri{background:var(--acc);border:1px solid var(--acc);color:#fff;box-shadow:none;font-weight:600}
+.btn.pri:hover{background:#5a8fff;border-color:#5a8fff;filter:none}
+.btn.sm{border-radius:8px}
+.expitem{border:0;background:none}
+.expitem:hover:not(:disabled){background:#1a2139}
+
+/* ---------- grabador ---------- */
+.timer{font-family:var(--mono);font-weight:400;font-size:56px;letter-spacing:-.03em}
+.micbtn{background:var(--acc);box-shadow:0 8px 26px rgba(61,123,255,.38)}
+.roundbtn{background:#0a0e1a;border:1px solid var(--line)}
+.chip{background:#0d1222;border:1px solid var(--line);font-weight:500}
+#cuotaBox{max-width:none!important;margin:0!important;background:#0d1222!important;border:1px solid var(--line)!important}
+
+/* ---------- números y datos ---------- */
+.stat b,.topic b,.who{font-family:var(--mono)}
+.who{font-weight:500}
+
+/* ---------- barra inferior en móvil ---------- */
+#navMovil{display:none;position:fixed;left:0;right:0;bottom:0;z-index:45;
+  justify-content:space-around;padding:6px 6px calc(6px + env(safe-area-inset-bottom));
+  background:var(--side);border-top:1px solid #161c2e}
+#navMovil button{flex:1;height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;font-size:10.5px;color:var(--mut)}
+#navMovil button span{width:20px;height:3px;border-radius:2px;background:transparent}
+#navMovil button.act{color:var(--txt)}
+#navMovil button.act span{background:var(--acc)}
+
+@media(max-width:900px){
+  #appSide{display:none}
+  #navMovil{display:flex}
+  #appShell header .logo,#appShell header .brand{display:block}
+  header{padding:14px 18px 0!important}
+  #pageHead{padding:10px 18px 16px}
+  #pageHead h1{font-size:29px}
+  main{padding:0 18px 90px!important}
+  #firmaTDC{margin-bottom:64px}
+}
+
 </style>
 </head>
 <body>
@@ -2670,6 +2774,93 @@ avisoNavegador();
   <div style="font-size:12px;color:#8b93a7;line-height:1.6">© 2026 <strong style="color:#c9d1e3">Talent &amp; Digital Consulting</strong> · Todos los derechos reservados.<br>EscribAI es un producto desarrollado y propiedad de Talent &amp; Digital Consulting.</div>
   <div style="font-size:12px"><a href="privacidad.html" style="color:#7aa2ff;text-decoration:none">Política de privacidad</a><span style="color:#4a5268"> · </span><a href="condiciones.html" style="color:#7aa2ff;text-decoration:none">Condiciones de uso</a><span style="color:#4a5268"> · </span><a href="aviso-legal.html" style="color:#7aa2ff;text-decoration:none">Aviso legal</a><span style="color:#4a5268"> · </span><a href="mailto:contact@talentdigitalconsulting.com" style="color:#7aa2ff;text-decoration:none">Contacto</a></div>
 </footer>
+<script>
+
+/* =====================================================================
+   ARMAZÓN v2
+   Mueve los bloques que ya existen a una barra lateral y una zona de
+   contenido. No se recrea nada: los mismos nodos cambian de sitio, así
+   que todos los identificadores y todas las acciones siguen intactos.
+   Se ejecuta antes de auth.js, que busca header, nav y main y los
+   encontrará igual en su nueva posición.
+===================================================================== */
+(function(){
+  "use strict";
+  const cab=document.querySelector("header"),
+        navi=document.querySelector("nav"),
+        cuerpo=document.querySelector("main"),
+        pie=document.getElementById("firmaTDC"),
+        aviso=document.getElementById("avisoNav"),
+        cuota=document.getElementById("cuotaBox");
+  if(!cab||!navi||!cuerpo)return;
+
+  const shell=document.createElement("div");shell.id="appShell";
+  const lado=document.createElement("aside");lado.id="appSide";
+  const zona=document.createElement("div");zona.id="appMain";
+
+  // Marca: se reaprovecha el logotipo que ya estaba en la cabecera.
+  const marca=document.createElement("div");marca.id="sideBrand";
+  const logo=cab.querySelector(".logo");
+  if(logo)marca.appendChild(logo.cloneNode(true));
+  marca.insertAdjacentHTML("beforeend",
+    '<div class="marca"><span class="nom">Escrib<span style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">AI</span></span>'+
+    '<span class="sub">Escucha · Transcribe · Acta</span></div>');
+  lado.appendChild(marca);
+  lado.appendChild(navi);                       // la navegación se vuelve vertical
+  const relleno=document.createElement("div");relleno.id="sideFill";
+  lado.appendChild(relleno);
+  if(cuota)lado.appendChild(cuota);             // el medidor de cuota, siempre a la vista
+  const ayuda=document.createElement("button");
+  ayuda.id="sideAyuda";ayuda.innerHTML="❓ Cómo funciona";
+  ayuda.onclick=()=>{if(typeof abrirTutorial==="function")abrirTutorial(0)};
+  lado.appendChild(ayuda);
+
+  // Título de la página, al estilo del rediseño.
+  const titulo=document.createElement("div");titulo.id="pageHead";
+  titulo.innerHTML='<div style="min-width:0"><div class="eyebrow" id="pageEyebrow"></div><h1 id="pageTitle"></h1></div>';
+
+  shell.appendChild(lado);shell.appendChild(zona);
+  document.body.insertBefore(shell,document.body.firstChild);
+  if(aviso)zona.appendChild(aviso);
+  zona.appendChild(cab);
+  zona.appendChild(titulo);
+  zona.appendChild(cuerpo);
+  if(pie)zona.appendChild(pie);
+
+  /* --- Rótulos de cada sección --- */
+  const ROTULOS={
+    record:["Reunión en curso","Graba y transcribe"],
+    summary:["Documento","Resumen y acta"],
+    history:["Archivo","Biblioteca de actas"],
+    settings:["Configuración","Ajustes"],
+    planes:["Suscripción","Planes"]
+  };
+  function pintarTitulo(){
+    const act=document.querySelector("nav button.act");
+    const k=act?act.dataset.tab:"record";
+    const r=ROTULOS[k]||["",act?act.textContent.trim():""];
+    const e=document.getElementById("pageEyebrow"),t=document.getElementById("pageTitle");
+    if(e)e.textContent=r[0];
+    if(t)t.textContent=r[1];
+    document.querySelectorAll("#navMovil button").forEach(b=>b.classList.toggle("act",b.dataset.ir===k));
+  }
+  navi.addEventListener("click",()=>setTimeout(pintarTitulo,0));
+
+  /* --- Barra inferior para móvil: reutiliza las mismas pestañas --- */
+  const movil=document.createElement("nav");movil.id="navMovil";
+  [["record","🎙️","Grabar"],["summary","✨","Acta"],["history","📚","Biblioteca"],["settings","⚙️","Ajustes"]]
+    .forEach(([k,ic,txt])=>{
+      const b=document.createElement("button");
+      b.dataset.ir=k;b.innerHTML="<span></span>"+ic+" "+txt;
+      b.onclick=()=>{const d=document.querySelector('nav button[data-tab="'+k+'"]');if(d)d.click()};
+      movil.appendChild(b);
+    });
+  document.body.appendChild(movil);
+
+  pintarTitulo();
+})();
+
+</script>
 <script src="auth.js"></script>
 <script src="analitica.js"></script>
 </body>
