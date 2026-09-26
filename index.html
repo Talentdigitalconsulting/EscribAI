@@ -311,6 +311,107 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
   #firmaTDC{margin-bottom:64px}
 }
 
+
+/* =====================================================================
+   TEMA v3 — fidelidad con la maqueta
+   Dos columnas en Grabar, panel de transcripción con cabecera y pie,
+   secciones numeradas en el acta y filas de biblioteca con la fecha
+   en grande. Todo por estilos y recolocación: ni un identificador
+   cambia de nombre.
+===================================================================== */
+
+/* ---------- Grabar: dos columnas ---------- */
+#filaGrabar{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+#colIzq{flex:1 1 340px;max-width:440px;min-width:0;display:flex;flex-direction:column;gap:20px}
+#colDer{flex:999 1 460px;min-width:0}
+#colIzq>.card,#colDer>.card{margin:0!important}
+
+/* ---------- tarjeta del grabador ---------- */
+.recwrap{padding:22px 22px 24px!important;text-align:center}
+#wave{height:56px;border-radius:0;background:transparent;opacity:.9}
+.timer{margin:20px 0 14px!important;font-size:58px!important}
+.sub{font-size:12.5px;color:var(--mut)}
+.controls{gap:22px;margin-top:22px}
+.micbtn{width:84px;height:84px}
+.roundbtn{width:46px;height:46px}
+.roundbtn svg{width:17px;height:17px}
+#cuotaBox{padding:12px 14px!important}
+
+/* ---------- hablantes ---------- */
+.spkbar{padding:16px 18px;gap:9px}
+.chip{padding:8px 13px;border-radius:99px;font-size:12.5px}
+
+/* ---------- panel de transcripción ---------- */
+#colDer>.card{display:flex;flex-direction:column;overflow:hidden}
+#colDer .transcript{flex:1;min-height:320px;max-height:60vh;overflow:auto;
+  padding:6px 22px 16px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+#colDer .actions{padding:13px 15px;gap:9px;border:0}
+.actions{align-items:center}
+
+/* la fila de acciones se parte en dos: herramientas y acciones finales */
+#btnSave{margin-right:auto}
+
+/* ---------- burbujas de la transcripción ---------- */
+.bubble,.transcript>div{border-radius:0}
+
+/* ---------- burbujas: de globo de chat a renglón de acta ---------- */
+.seg{gap:16px;padding:13px 0;border-bottom:1px solid #151b2e;align-items:flex-start}
+.seg .avatar{width:26px;height:26px;border-radius:50%;font-size:11px;font-weight:600;flex:none;
+  display:grid;place-items:center;color:#0a0e1a}
+.seg .bubble{border-left:0!important;background:transparent!important;border:0!important;
+  padding:0!important;flex:1;min-width:0}
+.seg .meta{display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:12px;font-weight:500}
+.seg .meta span{font-family:var(--mono);font-size:11px;color:#6f7894}
+.seg .txt{font-size:15.5px;line-height:1.65;color:#dce0ec}
+.seg .tools{opacity:0;transition:.15s}
+.seg:hover .tools{opacity:1}
+.interim .txt{color:#9aa2ba}
+
+/* ---------- acta: secciones numeradas ---------- */
+#tab-summary .sumcard{padding:24px 26px!important;counter-increment:acta}
+#tab-summary .sumcard h3{display:flex;align-items:baseline;gap:14px;font-size:15px;font-weight:600;margin-bottom:12px}
+#tab-summary .sumcard h3::before{content:"0" counter(acta);font-family:var(--serif);font-size:27px;
+  font-weight:400;color:#6f7894;line-height:1}
+#tab-summary{counter-reset:acta}
+#tab-summary .sumcard ul{list-style:none;margin:0;padding:0}
+#tab-summary .sumcard li{display:flex;gap:12px;padding:13px 0;border-top:1px solid #1a2033;
+  font-size:14.5px;line-height:1.55}
+#tab-summary .sumcard li:first-child{border-top:0}
+.who{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:99px;
+  font-size:11px;color:#0a0e1a;flex:none}
+.topic{display:inline-block;padding:5px 11px;border:1px solid #242c45;border-radius:99px;
+  background:transparent;font-size:12.5px;color:#c7ccdc;margin:0 5px 5px 0}
+.stat{background:transparent;border:0;padding:7px 0}
+.bar{height:3px;border-radius:2px;background:#1c2338}
+
+/* ---------- biblioteca: la fecha manda ---------- */
+#histList{padding:0;overflow:hidden}
+.hitem{display:flex;align-items:center;gap:18px;padding:15px 20px;border-bottom:1px solid #1a2033;
+  border-radius:0;background:transparent}
+.hitem:hover{background:#121831}
+.hitem .ic{width:46px;flex:none;display:flex;flex-direction:column;align-items:center;gap:0;
+  background:transparent;font-size:inherit}
+.hitem .dia{font-family:var(--serif);font-size:29px;line-height:1}
+.hitem .mes{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#8b93ab}
+.hitem .inf{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.hitem .inf b{font-size:14.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hitem .inf span{font-size:12.5px;color:#8b93ab}
+.hitem .dur{font-family:var(--mono);font-size:12px;color:#b9c0d4;flex:none}
+
+/* ---------- ajustes: etiqueta a la izquierda, control a la derecha ---------- */
+.set{padding:0!important}
+.setrow{display:flex;flex-wrap:wrap;gap:12px 40px;padding:24px 26px;border-bottom:1px solid var(--line);margin:0}
+.setrow:last-child{border-bottom:0}
+.setrow>label{flex:1 1 240px;max-width:300px;font-size:14px;font-weight:600;margin:0}
+.setrow>select,.setrow>input,.setrow>textarea,.setrow>div{flex:1 1 320px;min-width:0}
+.setrow>p{flex-basis:100%;font-size:12.5px;color:var(--mut);line-height:1.55;margin:0}
+
+/* ---------- pie ---------- */
+#firmaTDC{border-top:1px solid #161c2e;padding:24px 30px 18px!important;margin:0!important;
+  align-items:center!important;flex-direction:row!important;flex-wrap:wrap;justify-content:space-between;
+  gap:16px 28px;text-align:left!important;max-width:none!important}
+#firmaTDC img{height:38px}
+
 </style>
 </head>
 <body>
@@ -2873,6 +2974,80 @@ avisoNavegador();
   document.body.appendChild(movil);
 
   pintarTitulo();
+})();
+
+</script>
+<script>
+
+/* =====================================================================
+   DOS COLUMNAS EN «GRABAR»
+   La maqueta pone el grabador y los hablantes a la izquierda y la
+   transcripción a la derecha. Se mueven las tarjetas que ya existen:
+   ningún identificador cambia, ninguna acción se vuelve a enganchar.
+===================================================================== */
+(function(){
+  "use strict";
+  const pane=document.getElementById("tab-record");
+  if(!pane||document.getElementById("filaGrabar"))return;
+
+  const rec=pane.querySelector(".recwrap");
+  const trans=document.getElementById("transcript");
+  if(!rec||!trans)return;
+  const tarjetaTrans=trans.closest(".card");
+  const tarjetas=[...pane.children].filter(n=>n.classList&&n.classList.contains("card"));
+  // La primera tarjeta es la barra de organización: se queda arriba, a lo ancho.
+  const orgCard=tarjetas[0];
+  const hablantes=tarjetas.find(c=>c!==orgCard&&c!==rec&&c!==tarjetaTrans);
+
+  const fila=document.createElement("div");fila.id="filaGrabar";
+  const izq=document.createElement("div");izq.id="colIzq";
+  const der=document.createElement("div");der.id="colDer";
+  fila.appendChild(izq);fila.appendChild(der);
+  pane.appendChild(fila);
+
+  izq.appendChild(rec);
+  if(hablantes)izq.appendChild(hablantes);
+  if(tarjetaTrans)der.appendChild(tarjetaTrans);
+})();
+
+/* =====================================================================
+   BIBLIOTECA: la fecha en grande, al estilo de la maqueta
+   Se reescribe solo la parte visual de cada fila; abrir, descargar y
+   borrar siguen siendo los mismos botones con las mismas acciones.
+===================================================================== */
+(function(){
+  "use strict";
+  if(typeof renderHistory!=="function")return;
+  const MESES=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+  const original=renderHistory;
+  window.renderHistory=renderHistory=function(){
+    original.apply(this,arguments);
+    document.querySelectorAll("#histList .hitem").forEach(fila=>{
+      if(fila.dataset.remozada)return;
+      const inf=fila.querySelector(".inf");
+      const ic=fila.querySelector(".ic");
+      if(!inf||!ic)return;
+      const titulo=inf.querySelector("b"),detalle=inf.querySelector("span");
+      if(!titulo)return;
+      // El título viene como «2026-09-20 · Junta ordinaria»
+      const m=titulo.textContent.match(/^(\d{4})-(\d{2})-(\d{2})\s*·\s*(.*)$/);
+      if(m){
+        ic.innerHTML='<span class="dia">'+Number(m[3])+'</span><span class="mes">'+MESES[Number(m[2])-1]+" "+m[1].slice(2)+"</span>";
+        titulo.textContent=m[4];
+      }
+      // La duración se saca del detalle y se lleva a su propia columna
+      if(detalle){
+        const d=detalle.textContent.split("·").map(x=>x.trim());
+        if(d.length>=3){
+          detalle.textContent=d[0]+" · "+d[2];
+          const dur=document.createElement("span");
+          dur.className="dur";dur.textContent=d[1];
+          fila.insertBefore(dur,fila.querySelector('[data-a="open"]'));
+        }
+      }
+      fila.dataset.remozada="1";
+    });
+  };
 })();
 
 </script>
