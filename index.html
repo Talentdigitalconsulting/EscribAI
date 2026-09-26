@@ -224,8 +224,14 @@ body{background:var(--bg)!important;font-family:"Inter",system-ui,-apple-system,
 #sideBrand{display:flex;align-items:center;gap:11px;padding:0 6px 22px}
 #sideBrand .marca{display:flex;flex-direction:column;gap:1px;min-width:0}
 #sideBrand .nom{font-family:var(--serif);font-size:26px;line-height:1;letter-spacing:-.01em}
-#sideBrand .sub{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#6f7894}
+#sideBrand .sub{font-family:var(--mono);font-size:8.5px;letter-spacing:.09em;text-transform:uppercase;
+  color:#6f7894;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #sideBrand .logo{width:36px;height:36px;border-radius:10px;box-shadow:none}
+
+/* El medidor de cuota, en tres líneas limpias en vez de partirse solo */
+#cuotaBox>div:first-child{flex-direction:column!important;align-items:flex-start!important;gap:1px!important}
+#cuotaRenueva{font-size:10.5px!important}
+#cuotaTexto{font-family:var(--mono);font-size:10.5px!important;line-height:1.5}
 
 /* la navegación pasa de pestañas a lista vertical */
 #appSide nav{display:flex;flex-direction:column;gap:2px;padding:0;margin:0;max-width:none;width:auto}
@@ -241,9 +247,11 @@ body{background:var(--bg)!important;font-family:"Inter",system-ui,-apple-system,
 
 /* ---------- cabecera y título de página ---------- */
 header{background:transparent!important;border-bottom:0!important;backdrop-filter:none!important;
-  padding:20px 30px 0!important;position:static!important}
+  padding:20px 30px 0!important;position:static!important;justify-content:flex-end}
 #appShell header .logo,#appShell header .brand{display:none}
-header .status{margin-left:auto}
+/* el botón de ayuda vive en la barra lateral: en la cabecera sobraba */
+#appShell header #btnTut{display:none}
+header .status{margin-left:0}
 #pageHead{padding:14px 30px 20px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px}
 #pageHead .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#6f7894}
 #pageHead h1{font-family:var(--serif);font-weight:400;font-size:38px;line-height:1.05;letter-spacing:-.015em;margin-top:5px}
