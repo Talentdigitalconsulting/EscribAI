@@ -373,14 +373,17 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
 #actaLado{flex:1 1 300px;max-width:380px;min-width:0;display:flex;flex-direction:column;gap:20px}
 #actaDoc>.card,#actaLado>.card{margin:0!important}
 #tab-summary .sumgrid{display:contents}
-#tab-summary .sumcard{padding:24px 26px!important;counter-increment:acta}
+#tab-summary .sumcard{padding:24px 26px!important}
 #tab-summary .sumcard h3{display:flex;align-items:baseline;gap:14px;font-size:15px;font-weight:600;margin-bottom:12px}
-#tab-summary .sumcard h3::before{content:"0" counter(acta);font-family:var(--serif);font-size:27px;
+/* Solo se numeran las secciones del documento; el lateral son datos de apoyo */
+#actaDoc{counter-reset:acta}
+#actaDoc .sumcard{counter-increment:acta}
+#actaDoc .sumcard h3::before{content:"0" counter(acta);font-family:var(--serif);font-size:27px;
   font-weight:400;color:#6f7894;line-height:1}
-#tab-summary{counter-reset:acta}
 #tab-summary .sumcard ul{list-style:none;margin:0;padding:0}
 #tab-summary .sumcard li{display:flex;gap:12px;padding:13px 0;border-top:1px solid #1a2033;
-  font-size:14.5px;line-height:1.55}
+  font-size:14.5px;line-height:1.55;list-style:none}
+#tab-summary .sumcard li::marker{content:""}
 #tab-summary .sumcard li:first-child{border-top:0}
 .who{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:99px;
   font-size:11px;color:#0a0e1a;flex:none}
