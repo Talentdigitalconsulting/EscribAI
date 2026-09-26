@@ -218,7 +218,7 @@ body.conAnuncios .adrail{display:none}
 <nav>
   <button class="act" data-tab="record">🎙️ Grabar</button>
   <button data-tab="summary">✨ Resumen</button>
-  <button data-tab="history">📁 Historial</button>
+  <button data-tab="history">📚 Biblioteca</button>
   <button data-tab="settings">⚙️ Ajustes</button>
 </nav>
 
@@ -1322,44 +1322,198 @@ $("#btnEnviar").onclick=()=>{
 };
 
 /* =====================================================================
-   HISTORIAL
+   BIBLIOTECA
+   Cada organización tiene su carpeta; dentro, una reunión por fecha con
+   su acta, su transcripción y (en este equipo) su audio.
+
+   El texto viaja a la nube: pesa poco y es lo que hay que conservar.
+   El audio se queda SIEMPRE en el navegador de quien grabó, guardado en
+   IndexedDB. Así no custodiamos grabaciones de terceros ni se llena el
+   almacenamiento, y el cliente puede descargar la carpeta entera cuando
+   quiera. Si borra los datos del sitio, pierde el audio pero no las actas.
 ===================================================================== */
-$("#btnSave").onclick=()=>{
+const AUDIO_DB="escribai_audio",AUDIO_ALM="audios";
+function abrirAudioDB(){
+  return new Promise((ok,err)=>{
+    const p=indexedDB.open(AUDIO_DB,1);
+    p.onupgradeneeded=()=>{const db=p.result;if(!db.objectStoreNames.contains(AUDIO_ALM))db.createObjectStore(AUDIO_ALM)};
+    p.onsuccess=()=>ok(p.result);
+    p.onerror=()=>err(p.error);
+  });
+}
+async function guardarAudioLocal(id,blob){
+  if(!blob||!blob.size)return false;
+  try{
+    const db=await abrirAudioDB();
+    await new Promise((ok,err)=>{
+      const t=db.transaction(AUDIO_ALM,"readwrite");
+      t.objectStore(AUDIO_ALM).put(blob,String(id));
+      t.oncomplete=ok;t.onerror=()=>err(t.error);
+    });
+    return true;
+  }catch(e){console.warn("audio local:",e);return false}
+}
+async function leerAudioLocal(id){
+  try{
+    const db=await abrirAudioDB();
+    return await new Promise((ok,err)=>{
+      const t=db.transaction(AUDIO_ALM,"readonly");
+      const r=t.objectStore(AUDIO_ALM).get(String(id));
+      r.onsuccess=()=>ok(r.result||null);r.onerror=()=>err(r.error);
+    });
+  }catch(e){return null}
+}
+async function borrarAudioLocal(id){
+  try{
+    const db=await abrirAudioDB();
+    await new Promise(ok=>{
+      const t=db.transaction(AUDIO_ALM,"readwrite");
+      t.objectStore(AUDIO_ALM).delete(String(id));
+      t.oncomplete=ok;t.onerror=ok;
+    });
+  }catch(e){}
+}
+
+const limpiaNombre=s=>String(s||"").replace(/[\\/:*?"<>|]+/g,"-").trim()||"Sin nombre";
+const fechaCarpeta=d=>{
+  const x=new Date(d);
+  return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0");
+};
+
+$("#btnSave").onclick=async()=>{
   if(window.pruebaBloquea&&window.pruebaBloquea("Guardar la sesión"))return;
-  if(!pro){upsell("El historial de sesiones es una función Pro");return}
+  if(!pro){upsell("La biblioteca de actas es una función Pro");return}
   if(!segments.length){toast("Nada que guardar");return}
   const _o=orgOf(currentOrg);
-  const name=prompt("Nombre de la sesión:",(_o?_o.nombre+" — ":"Reunión ")+new Date().toLocaleDateString("es-ES")+" "+new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"}));
+  if(!_o&&!confirm("Esta reunión no tiene organización asignada, así que irá a «Sin organización».\n\n¿Guardar de todas formas?"))return;
+  const porDefecto=(_o?_o.nombre+" — ":"Reunión ")+new Date().toLocaleDateString("es-ES")+" "+new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+  const name=prompt("Nombre de la reunión:",porDefecto);
   if(name===null)return;
+
+  const id=Date.now();
+  const ficha={
+    id:id,
+    name:name||"Reunión",
+    date:new Date().toISOString(),
+    duration:elapsed,
+    orgId:_o?_o.id:null,
+    orgNombre:_o?_o.nombre:"Sin organización",
+    segments:segments,
+    summary:currentSummary,
+    acta:buildActa(),                 // el acta ya redactada, tal cual se guardó
+    speakers:speakers.map(s=>({id:s.id,name:s.name,color:s.color}))
+  };
   const list=LS.get("vs_sessions",[]);
-  list.unshift({id:Date.now(),name:name||"Sesión",date:new Date().toISOString(),duration:elapsed,segments:segments,summary:currentSummary,speakers:speakers.map(s=>({id:s.id,name:s.name,color:s.color}))});
-  LS.set("vs_sessions",list.slice(0,50));
-  toast("💾 Sesión guardada");
+  list.unshift(ficha);
+  LS.set("vs_sessions",list.slice(0,100));
+
+  const conAudio=await guardarAudioLocal(id,audioBlob);
+  toast(conAudio?"📚 Guardada en «"+ficha.orgNombre+"» con su audio":"📚 Guardada en «"+ficha.orgNombre+"»");
 };
+/* Descarga la carpeta completa de una reunión en un ZIP:
+   acta, transcripción y —si sigue en este equipo— el audio. */
+async function descargarCarpeta(s){
+  if(typeof JSZip!=="function"&&typeof JSZip!=="object"){toast("❌ No se pudo preparar el ZIP");return}
+  const zip=new JSZip();
+  const carpeta=limpiaNombre(s.orgNombre||"Sin organización")+"/"+fechaCarpeta(s.date)+" "+limpiaNombre(s.name);
+  const c=zip.folder(carpeta);
+  c.file("acta.md",s.acta||"(esta reunión se guardó antes de que el acta se archivara)");
+  c.file("transcripcion.txt",(s.segments||[]).map(x=>{
+    const h=(s.speakers||[]).find(p=>p.id===x.spk);
+    return "["+fmtT(x.t0)+"] "+(h?h.name:"Sin identificar")+": "+x.text;
+  }).join("\n"));
+  c.file("datos.json",JSON.stringify({
+    organizacion:s.orgNombre,reunion:s.name,fecha:s.date,
+    duracion_segundos:Math.round(s.duration||0),
+    participantes:(s.speakers||[]).map(p=>p.name),
+    intervenciones:(s.segments||[]).length
+  },null,2));
+  const audio=await leerAudioLocal(s.id);
+  if(audio)c.file("audio.webm",audio);
+  toast("📦 Preparando la carpeta…");
+  const blob=await zip.generateAsync({type:"blob"});
+  download(limpiaNombre(s.orgNombre)+" — "+fechaCarpeta(s.date)+".zip",blob);
+  toast(audio?"📦 Carpeta descargada con audio":"📦 Carpeta descargada (el audio ya no está en este equipo)");
+}
+
+function abrirReunion(s){
+  segments=s.segments;elapsed=s.duration;currentSummary=s.summary||null;
+  if(s.orgId&&orgOf(s.orgId)){currentOrg=s.orgId;LS.set("vs_org_actual",currentOrg);renderOrgs()}
+  $("#timer").textContent=fmtT(elapsed);
+  renderTranscript();
+  if(currentSummary)renderSummary(currentSummary);
+  document.querySelector('nav button[data-tab="record"]').click();
+  toast("Reunión cargada: "+s.name);
+}
+
 function renderHistory(){
   const list=LS.get("vs_sessions",[]);
   const box=$("#histList");
-  if(!list.length){box.innerHTML='<div class="empty">No hay sesiones guardadas todavía.</div>';return}
-  box.innerHTML="";
+  if(!list.length){
+    box.innerHTML='<div class="empty">Tu biblioteca está vacía.<br><br>Cada reunión que guardes se archivará automáticamente en la carpeta de su organización, con la fecha como título.</div>';
+    return;
+  }
+  // Agrupar: organización -> año -> reuniones
+  const arbol={};
   list.forEach(s=>{
-    const el=document.createElement("div");el.className="hitem";
-    el.innerHTML=`<div class="ic">🎙️</div>
-      <div class="inf"><b>${esc(s.name)}</b><span>${new Date(s.date).toLocaleString("es-ES")} · ${fmtT(s.duration)} · ${s.segments.length} intervenciones</span></div>
-      <button class="btn sm" data-a="open">Abrir</button>
-      <button class="btn sm danger" data-a="del">🗑</button>`;
-    el.querySelector('[data-a="open"]').onclick=()=>{
-      segments=s.segments;elapsed=s.duration;currentSummary=s.summary||null;
-      $("#timer").textContent=fmtT(elapsed);
-      renderTranscript();
-      if(currentSummary)renderSummary(currentSummary);
-      document.querySelector('nav button[data-tab="record"]').click();
-      toast("Sesión cargada: "+s.name);
+    const org=s.orgNombre||"Sin organización";
+    const anyo=new Date(s.date).getFullYear();
+    (arbol[org]=arbol[org]||{})[anyo]=(arbol[org][anyo]||[]).concat(s);
+  });
+  const abiertas=LS.get("vs_biblio_abiertas",{});
+  box.innerHTML="";
+  Object.keys(arbol).sort((a,b)=>a.localeCompare(b,"es")).forEach(org=>{
+    const total=Object.values(arbol[org]).reduce((n,a)=>n+a.length,0);
+    const cont=document.createElement("div");
+    cont.style.cssText="border:1px solid rgba(255,255,255,.08);border-radius:12px;margin-bottom:10px;overflow:hidden";
+
+    const cab=document.createElement("button");
+    cab.className="btn";
+    cab.style.cssText="width:100%;justify-content:flex-start;gap:10px;border:0;border-radius:0;padding:13px 16px;background:rgba(255,255,255,.03)";
+    const desplegada=abiertas[org]!==false;
+    cab.innerHTML='<span style="font-size:15px">'+(desplegada?"📂":"📁")+'</span><b style="flex:1;text-align:left">'+esc(org)+
+      '</b><span style="color:var(--mut);font-size:12px">'+total+(total===1?" reunión":" reuniones")+"</span>";
+    cont.appendChild(cab);
+
+    const cuerpo=document.createElement("div");
+    cuerpo.style.display=desplegada?"block":"none";
+    cab.onclick=()=>{
+      const v=cuerpo.style.display==="none";
+      cuerpo.style.display=v?"block":"none";
+      cab.querySelector("span").textContent=v?"📂":"📁";
+      const a=LS.get("vs_biblio_abiertas",{});a[org]=v;LS.set("vs_biblio_abiertas",a);
     };
-    el.querySelector('[data-a="del"]').onclick=()=>{
-      if(!confirm("¿Eliminar esta sesión?"))return;
-      LS.set("vs_sessions",LS.get("vs_sessions",[]).filter(x=>x.id!==s.id));renderHistory();
-    };
-    box.appendChild(el);
+
+    Object.keys(arbol[org]).sort((a,b)=>b-a).forEach(anyo=>{
+      const t=document.createElement("div");
+      t.style.cssText="padding:8px 16px 4px;font-size:11.5px;letter-spacing:.06em;color:var(--mut);text-transform:uppercase";
+      t.textContent=anyo;
+      cuerpo.appendChild(t);
+
+      arbol[org][anyo].sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(s=>{
+        const el=document.createElement("div");el.className="hitem";
+        el.innerHTML='<div class="ic">📄</div>'+
+          '<div class="inf"><b>'+esc(fechaCarpeta(s.date))+" · "+esc(s.name)+"</b><span>"+
+          new Date(s.date).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})+" · "+fmtT(s.duration)+
+          " · "+(s.segments||[]).length+' intervenciones</span></div>'+
+          '<button class="btn sm" data-a="open">Abrir</button>'+
+          '<button class="btn sm" data-a="zip" title="Descargar acta, transcripción y audio">📦</button>'+
+          '<button class="btn sm danger" data-a="del">🗑</button>';
+        el.querySelector('[data-a="open"]').onclick=()=>abrirReunion(s);
+        el.querySelector('[data-a="zip"]').onclick=()=>descargarCarpeta(s);
+        el.querySelector('[data-a="del"]').onclick=async()=>{
+          if(!confirm("¿Eliminar «"+s.name+"» de la biblioteca?\n\nSe borrará también su audio de este equipo. Esta acción no se puede deshacer."))return;
+          LS.set("vs_sessions",LS.get("vs_sessions",[]).filter(x=>x.id!==s.id));
+          await borrarAudioLocal(s.id);
+          if(typeof borrarActaNube==="function")borrarActaNube(s.id);
+          renderHistory();
+          toast("Reunión eliminada");
+        };
+        cuerpo.appendChild(el);
+      });
+    });
+    cont.appendChild(cuerpo);
+    box.appendChild(cont);
   });
 }
 
@@ -1917,7 +2071,7 @@ const TUTORIAL=[
  {i:"🚀",t:"Primeros pasos",p:[
   ["Qué es EscribAI","EscribAI escucha tus reuniones, identifica quién habla por su voz, transcribe en tiempo real y redacta el acta sola. Todo se procesa en tu dispositivo: tus conversaciones no se suben a ningún servidor."],
   ["Tu cuenta","Con la cuenta gratuita tienes transcripción ilimitada, 2 perfiles de voz, 1 organización y exportación en TXT. Tus ajustes, organizaciones y actas guardadas viajan con tu cuenta: entra con el mismo correo en el PC y en el móvil y lo tendrás todo."],
-  ["La pantalla principal","Arriba están las pestañas: Grabar (el trabajo del día a día), Resumen (el acta), Historial (sesiones guardadas), Ajustes y Planes. El botón ❓ de la cabecera reabre este tutorial cuando quieras: puedes elegir el capítulo que te interese en el menú de la izquierda."]]},
+  ["La pantalla principal","Arriba están las pestañas: Grabar (el trabajo del día a día), Resumen (el acta), Biblioteca (el archivo de todas tus reuniones), Ajustes y Planes. El botón ❓ de la cabecera reabre este tutorial cuando quieras: puedes elegir el capítulo que te interese en el menú de la izquierda."]]},
  {i:"🗣️",t:"Hablantes y calibración",p:[
   ["Añadir hablantes","Pulsa «＋ Añadir hablante» y escribe el nombre de cada participante (María, Cliente, Presidente…). Cada uno tiene un color, y sus intervenciones aparecerán pintadas con él."],
   ["Calibrar la voz","Cada persona lee una frase en voz alta durante 6 segundos. EscribAI aprende su tono y su timbre para reconocerla después cuando hable. Hazlo cerca del micrófono y con voz natural."],
@@ -1943,16 +2097,16 @@ const TUTORIAL=[
   ["Sube tu modelo","En «Mis plantillas» → «Modelo Word propio», sube el .docx que usas siempre, con tu membrete, logo y estilos. Donde quieras cada dato escribe un marcador: {{ACUERDOS}}, {{TAREAS}}, {{FECHA}}, {{PARTICIPANTES}}, {{TRANSCRIPCION}}…"],
   ["Rellenado automático","Desde entonces, el botón «⬇ Word» te devuelve TU documento con la reunión volcada dentro y el formato intacto. Consejo: escribe cada marcador de una sola vez, sin cambiar de fuente o formato a mitad de palabra."]]},
  {i:"📂",t:"Archivos y modo IA (Pro)",p:[
-  ["El motor profesional","Para máxima precisión, conecta Deepgram: transcripción casi perfecta, puntuación automática y separación de voces real, en directo. Deepgram regala unos 200 $ de crédito al registrarte (≈ 500 horas de reuniones gratis). En Ajustes tienes la guía «🎁 Cómo conseguir tu clave gratis»: son 3 minutos y una sola vez."],
+  ["El motor profesional","Tu plan Pro incluye 10 horas al mes de transcripción profesional, que se renuevan el día 1. No tienes que contratar nada aparte ni configurar ninguna clave: pulsas el botón y funciona."],
   ["Transcribir audios ya grabados","«📂 Transcribir archivo» acepta audios y vídeos: la reunión grabada con el móvil, un audio de WhatsApp, una entrevista. Los transcribe identificando las voces con el mismo motor profesional."],
   ["Mejorar con IA","«🤖 Mejorar con IA» reprocesa el audio de la sesión recién grabada con diarización profesional en la nube. Útil cuando hay muchas voces, se pisan al hablar o necesitas máxima precisión."]]},
  {i:"📧",t:"Guardar y exportar",p:[
-  ["Guardar sesiones","«💾 Guardar sesión» archiva la reunión con su nombre y su organización (Pro). La recuperas en la pestaña Historial y, con tu cuenta, también desde cualquier otro dispositivo."],
+  ["La biblioteca","«💾 Guardar sesión» archiva la reunión en la carpeta de su organización, con la fecha como título (Pro). En la pestaña Biblioteca tienes todas tus comunidades ordenadas por año: abres cualquier acta cuando quieras y, con el botón 📦, descargas la carpeta completa de esa reunión (acta, transcripción y audio) en un ZIP. El acta y la transcripción viajan con tu cuenta a cualquier dispositivo; el audio se queda en el equipo donde grabaste, porque no custodiamos grabaciones de tus vecinos."],
   ["Exportaciones","Tienes TXT (gratis), acta en Markdown, Word (con o sin tu modelo), JSON con todos los datos y el audio de la grabación. Y «📋 Copiar» para pegar la transcripción donde quieras."]]},
  {i:"👤",t:"Cuenta y planes",p:[
-  ["Tu plan","En ⭐ Planes ves tu plan actual y las opciones: Pro Mensual (9,99€), Pro Anual (79€, dos meses gratis) y Empresas (29€). El pago es seguro con Stripe y el plan se activa automáticamente en segundos."],
+  ["Tu plan","En ⭐ Planes ves tu plan actual y las opciones: Pro (19€/mes), Pro Anual (190€, dos meses gratis) y Despachos y empresas (45€/mes). Precios con IVA incluido. El pago es seguro con Stripe y el plan se activa automáticamente en segundos."],
   ["Gestionar la suscripción","Desde Planes → «⚙️ Gestionar / cancelar suscripción» entras en el portal seguro de pagos: cambiar la tarjeta, descargar facturas o cancelar cuando quieras. Al cancelar vuelves al plan gratis sin perder tus datos."],
-  ["Acceso y contraseña","Entra con tu correo y contraseña (marca «Recordar mi correo») o con Google. Si olvidas la contraseña, escribe tu correo en la pantalla de acceso y pulsa «¿Has olvidado tu contraseña?»: recibirás un enlace para crear una nueva."]]}
+  ["Acceso y contraseña","Entra con tu correo y contraseña (marca «Recordar mi correo»). Vale cualquier correo: no hace falta cuenta de Google ni de ninguna otra plataforma. Si olvidas la contraseña, escribe tu correo en la pantalla de acceso y pulsa «¿Has olvidado tu contraseña?»: recibirás un enlace para crear una nueva."]]}
 ];
 let tutC=0,tutP=0;
 function abrirTutorial(c){tutC=c||0;tutP=0;renderTutMenu();renderTutPaso();$("#tutOverlay").classList.remove("hide")}

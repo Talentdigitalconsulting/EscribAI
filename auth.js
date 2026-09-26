@@ -270,7 +270,9 @@ function recalcPro(){
   updateProUI();
 }
 function limpiarDatosLocales(){
-  ["vs_orgs","vs_profiles","vs_sessions","vs_org_actual","vs_wordmodelo","vs_settings"].forEach(k=>localStorage.removeItem(k));
+  ["vs_orgs","vs_profiles","vs_sessions","vs_org_actual","vs_wordmodelo","vs_settings","vs_biblio_abiertas"].forEach(k=>localStorage.removeItem(k));
+  // Los audios de la biblioteca son de la cuenta anterior: fuera también.
+  try{indexedDB.deleteDatabase("escribai_audio")}catch(e){}
   orgs=[];speakers=[];segments=[];currentOrg=null;currentSummary=null;licPayload=null;
   settings={lang:"es-ES",sens:"media",prov:"deepgram",key:"",license:"",plantilla:"general",audioAuto:true,motorVivo:"navegador",misPlantillas:[]};
   LS.set("vs_settings",settings);
@@ -313,7 +315,15 @@ async function cargarPerfil(){
     if(acts&&acts.length){
       const loc=LS.get("vs_sessions",[]);
       const ids=new Set(loc.map(s=>s.id));
-      acts.forEach(a=>{if(!ids.has(a.id))loc.push({id:a.id,name:a.nombre,date:a.fecha,duration:a.duracion,segments:a.contenido.segments||[],summary:a.contenido.summary||null,speakers:a.contenido.speakers||[]})});
+      acts.forEach(a=>{if(!ids.has(a.id))loc.push({
+        id:a.id,name:a.nombre,date:a.fecha,duration:a.duracion,
+        orgId:a.org_id||null,
+        orgNombre:a.org_nombre||"Sin organización",
+        segments:a.contenido.segments||[],
+        summary:a.contenido.summary||null,
+        acta:a.contenido.acta||null,
+        speakers:a.contenido.speakers||[]
+      })});
       loc.sort((a,b)=>new Date(b.date)-new Date(a.date));
       LS.set("vs_sessions",loc.slice(0,100));
     }
@@ -334,13 +344,25 @@ async function syncNube(){
       orgs:orgs,actualizado:new Date().toISOString()});
   }catch(e){console.warn("sync",e)}
 }
+/* A la nube viaja SOLO el texto (acta, transcripción y resumen).
+   El audio nunca sale del equipo donde se grabó: ver la sección
+   BIBLIOTECA en index.html. */
 async function subirActa(s){
   if(!sesionUser)return;
   try{
-    await sb.from("actas").upsert({id:s.id,user_id:sesionUser.id,nombre:s.name,fecha:s.date,duracion:s.duration,
-      contenido:{segments:s.segments,summary:s.summary,speakers:s.speakers}});
+    await sb.from("actas").upsert({
+      id:s.id,user_id:sesionUser.id,nombre:s.name,fecha:s.date,duracion:s.duration,
+      org_id:s.orgId?String(s.orgId):null,
+      org_nombre:s.orgNombre||"Sin organización",
+      contenido:{segments:s.segments,summary:s.summary,speakers:s.speakers,acta:s.acta||null}
+    });
   }catch(e){console.warn("acta",e)}
 }
+window.borrarActaNube=async function(id){
+  if(!sesionUser)return;
+  try{await sb.from("actas").delete().eq("id",id).eq("user_id",sesionUser.id)}
+  catch(e){console.warn("borrar acta",e)}
+};
 
 /* ---------- envolver acciones de la app para sincronizar ---------- */
 (()=>{
@@ -350,7 +372,9 @@ async function subirActa(s){
   const bs=document.getElementById("btnSaveSet"),bsOrig=bs.onclick;
   bs.onclick=async()=>{await bsOrig();licPayload=await verifyLicense(settings.license);recalcPro();syncNube()};
   const bg=document.getElementById("btnSave"),bgOrig=bg.onclick;
-  bg.onclick=()=>{bgOrig();const s=LS.get("vs_sessions",[])[0];if(s)subirActa(s)};
+  // bgOrig es asíncrono (guarda el audio en el equipo): hay que esperarlo
+  // antes de leer la ficha recién archivada, o se sube la anterior.
+  bg.onclick=async()=>{await bgOrig();const s=LS.get("vs_sessions",[])[0];if(s)await subirActa(s)};
 })();
 
 /* ---------- eliminación de cuenta (requisito Google Play) ---------- */
