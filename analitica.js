@@ -29,12 +29,21 @@
         disp: dispositivo()
       });
       // sendBeacon no bloquea la navegación ni retrasa la página.
+      // IMPORTANTE: el tipo tiene que ser text/plain. Con application/json
+      // el navegador exige una comprobación previa de CORS que sendBeacon
+      // no sabe hacer, y descarta el envío sin avisar. El servidor lee el
+      // cuerpo como JSON igualmente.
+      var enviado = false;
       if (navigator.sendBeacon) {
-        navigator.sendBeacon(URL_EVENTO, new Blob([datos], { type: "application/json" }));
-      } else {
+        enviado = navigator.sendBeacon(
+          URL_EVENTO,
+          new Blob([datos], { type: "text/plain;charset=UTF-8" })
+        );
+      }
+      if (!enviado) {
         fetch(URL_EVENTO, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "text/plain;charset=UTF-8" },
           body: datos,
           keepalive: true
         }).catch(function () {});
