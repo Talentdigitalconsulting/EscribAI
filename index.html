@@ -535,7 +535,7 @@ const esc=t=>t.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&qu
 let speakers=LS.get("vs_profiles",[]);          // {id,name,color,f0,f0dev,cent}
 let settings=LS.get("vs_settings",{lang:"es-ES",sens:"media",prov:"deepgram",key:""});
 let segments=[];                                 // {t0,t1,text,spk}
-let recording=false,paused=false,recStart=0,elapsed=0,timerInt=null;
+let recording=false,paused=false,recStart=0,elapsed=0,timerInt=null,avisoPrueba60=false;
 let audioCtx=null,analyser=null,micStream=null,mediaRec=null,audioChunks=[],audioBlob=null;
 let frames=[];                                   // {t,f0,cent,rms}
 let lastFinalTime=0;
@@ -831,6 +831,9 @@ function rescatarInterim(){
 $("#btnMic").onclick=()=>{if(recording)stopSession();else startSession()};
 async function startSession(){
   if(!SR){toast("⚠️ Usa Google Chrome o Microsoft Edge para el reconocimiento de voz");return}
+  if(window.pruebaActiva&&window.pruebaActiva()&&window.pruebaRestante()<=0){
+    window.pruebaMuro("Se han acabado los 5 minutos de prueba. Crea tu cuenta gratis para seguir dictando.");return;
+  }
   try{await initAudio()}catch(e){toast("🎙️ No se pudo acceder al micrófono: "+e.message);return}
   recording=true;paused=false;recStart=Date.now()-elapsed*1000;lastFinalTime=elapsed;frames=[];
   srSinResultados=0;srAvisado={};
@@ -839,7 +842,17 @@ async function startSession(){
   if(settings.motorVivo==="deepgram"&&!usarDGVivo())toast("⚠️ Motor profesional no disponible (requiere Pro + API key de Deepgram): usando el del navegador");
   if(usarDGVivo())iniciarDGStream();else startRecognition();
   frameLoop();
-  timerInt=setInterval(()=>{if(!paused){elapsed=(Date.now()-recStart)/1000;$("#timer").textContent=fmtT(elapsed)}},250);
+  let ultimoTick=Date.now();
+  timerInt=setInterval(()=>{
+    if(paused){ultimoTick=Date.now();return}
+    elapsed=(Date.now()-recStart)/1000;$("#timer").textContent=fmtT(elapsed);
+    if(window.pruebaActiva&&window.pruebaActiva()){
+      const delta=(Date.now()-ultimoTick)/1000;ultimoTick=Date.now();
+      const quedan=window.pruebaConsumir(delta);
+      if(quedan<=0){stopSession();window.pruebaMuro("Se han acabado los 5 minutos de prueba. Crea tu cuenta gratis y sigues con lo que ya has dictado.")}
+      else if(quedan<=60&&!avisoPrueba60){avisoPrueba60=true;toast("⏱️ Te queda 1 minuto de prueba")}
+    }else ultimoTick=Date.now();
+  },250);
   lastEvento=Date.now();
   clearInterval(watchInt);
   ultimaRotacion=Date.now();
@@ -1312,6 +1325,7 @@ $("#btnEnviar").onclick=()=>{
    HISTORIAL
 ===================================================================== */
 $("#btnSave").onclick=()=>{
+  if(window.pruebaBloquea&&window.pruebaBloquea("Guardar la sesión"))return;
   if(!pro){upsell("El historial de sesiones es una función Pro");return}
   if(!segments.length){toast("Nada que guardar");return}
   const _o=orgOf(currentOrg);
@@ -1450,6 +1464,7 @@ function cargarUtterances(utts){
   renderTranscript();
 }
 $("#btnFile").onclick=()=>{
+  if(window.pruebaBloquea&&window.pruebaBloquea("Transcribir un audio grabado"))return;
   if(!dgPuedeUsar()){upsell("Transcribir archivos es una función Pro");return}
   $("#fileInput").click();
 };
@@ -1506,6 +1521,7 @@ function contextoActa(){
 }
 $("#btnPulir").onclick=async()=>{
   if(!segments.length){toast("Primero graba o transcribe algo que pulir");return}
+  if(window.pruebaBloquea&&window.pruebaBloquea("Pulir el texto con IA"))return;
   const btn=$("#btnPulir");
   const total=Math.ceil(segments.length/PULIR_BLOQUE);
   btn.disabled=true;
@@ -2074,5 +2090,6 @@ avisoNavegador();
   <div style="font-size:12px"><a href="privacidad.html" style="color:#7aa2ff;text-decoration:none">Política de privacidad</a><span style="color:#4a5268"> · </span><a href="condiciones.html" style="color:#7aa2ff;text-decoration:none">Condiciones de uso</a><span style="color:#4a5268"> · </span><a href="aviso-legal.html" style="color:#7aa2ff;text-decoration:none">Aviso legal</a><span style="color:#4a5268"> · </span><a href="mailto:contact@talentdigitalconsulting.com" style="color:#7aa2ff;text-decoration:none">Contacto</a></div>
 </footer>
 <script src="auth.js"></script>
+<script src="analitica.js"></script>
 </body>
 </html>

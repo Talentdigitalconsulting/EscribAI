@@ -506,5 +506,12 @@ TAREAS PENDIENTES:<br>
   </div>
 </footer>
 
+<script src="analitica.js"></script>
+<script>
+/* Cuenta los clics hacia la app, para saber qué parte de la landing convierte. */
+document.querySelectorAll('a[href="index.html"]').forEach(function(a){
+  a.addEventListener("click",function(){ if(window.aEvento)window.aEvento("clic_probar"); });
+});
+</script>
 </body>
 </html>

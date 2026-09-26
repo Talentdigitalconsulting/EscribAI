@@ -74,6 +74,7 @@ window.gestionarSuscripcion=()=>{
   location.href="mailto:contact@talentdigitalconsulting.com?subject="+encodeURIComponent("Gestionar mi suscripción — EscribAI")+"&body="+encodeURIComponent("Hola, quiero gestionar o cancelar mi suscripción.\nMi cuenta: "+email);
 };
 window.suscribir=id=>{
+  if(window.aEvento)window.aEvento("clic_plan");
   const link=PAY_LINKS[id];
   const email=sesionUser?sesionUser.email:"";
   if(link){location.href=link+(link.includes("?")?"&":"?")+"prefilled_email="+encodeURIComponent(email);return}
@@ -104,6 +105,10 @@ document.body.insertAdjacentHTML("beforeend",`
     <button class="btn pri" id="authAccion" style="width:100%;justify-content:center;margin-top:14px">Entrar</button>
     <p style="font-size:11px;color:var(--mut);margin:10px 0 0;text-align:center">Al continuar aceptas las <a href="condiciones.html" target="_blank" style="color:var(--acc2)">Condiciones de uso</a> y la <a href="privacidad.html" target="_blank" style="color:var(--acc2)">Política de privacidad</a>.</p>
     <p style="font-size:11px;color:var(--mut);margin:6px 0 0;text-align:center">Usa el correo que quieras: no hace falta cuenta de Google ni de ninguna otra plataforma.</p>
+    <div id="authPrueba" style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08);text-align:center">
+      <button class="btn sm" id="btnPrueba" style="width:100%;justify-content:center">⏱️ Probar 5 minutos sin registrarme</button>
+      <p style="font-size:11px;color:var(--mut);margin:8px 0 0">Dicta y mira cómo queda el acta. No pedimos correo ni tarjeta.</p>
+    </div>
     <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:12.5px">
       <a href="#" id="authOlvido" style="color:var(--acc2)">¿Has olvidado tu contraseña?</a>
       <a href="#" id="authCambio" style="color:var(--acc2)">Crear cuenta nueva</a>
@@ -150,6 +155,7 @@ document.getElementById("authAccion").onclick=async()=>{
       if(!nombre){toast("Escribe tu nombre");btn.disabled=false;return}
       const{data,error}=await sb.auth.signUp({email,password:pass,options:{data:{nombre,apellidos,telefono},emailRedirectTo:location.origin+location.pathname}});
       if(error)throw error;
+      if(window.aEvento)window.aEvento("registro");
       if(data.session)toast("🎉 Cuenta creada, ¡bienvenido!");
       else toast("📬 Cuenta creada. Revisa tu correo y confirma para entrar.");
     }else{
@@ -179,6 +185,81 @@ document.getElementById("btnUser").onclick=async()=>{
   }else mostrarAuth(true);
 };
 function mostrarAuth(v){document.getElementById("authOverlay").classList.toggle("hide",!v)}
+
+/* =====================================================================
+   PRUEBA SIN REGISTRO
+   5 minutos de dictado real (no de reloj de pared) para que cualquiera
+   vea el acta antes de dar su correo. Solo usa el motor del navegador,
+   que es gratuito para nosotros: no consume cuota de Deepgram ni de IA.
+===================================================================== */
+const PRUEBA_SEG=300;
+let pruebaOn=false;
+
+function pruebaUsado(){return Math.max(0,Number(LS.get("vs_prueba_usado",0))||0)}
+function pruebaRestante(){return Math.max(0,PRUEBA_SEG-pruebaUsado())}
+window.pruebaActiva=()=>pruebaOn&&!sesionUser;
+window.pruebaRestante=pruebaRestante;
+
+/* La app llama a esto mientras graba. Devuelve los segundos que quedan. */
+window.pruebaConsumir=function(segundos){
+  if(!window.pruebaActiva())return PRUEBA_SEG;
+  const usado=Math.min(PRUEBA_SEG,pruebaUsado()+Math.max(0,segundos||0));
+  LS.set("vs_prueba_usado",usado);
+  pintarPrueba();
+  return Math.max(0,PRUEBA_SEG-usado);
+};
+
+/* Muro: corta la prueba y abre el registro explicando por qué. */
+window.pruebaMuro=function(motivo){
+  if(pruebaOn&&window.aEvento)window.aEvento("prueba_fin");
+  pruebaOn=false;
+  const b=document.getElementById("barraPrueba");if(b)b.remove();
+  modoRegistro=true;pintarModo();
+  document.getElementById("authSub").textContent=motivo||"Se han acabado los 5 minutos de prueba. Crea tu cuenta gratis para seguir: conservas lo que acabas de dictar.";
+  document.getElementById("authPrueba").classList.add("hide");
+  mostrarAuth(true);
+};
+
+/* Funciones que necesitan cuenta (nube, audios grabados, pulido con IA). */
+window.pruebaBloquea=function(queHaces){
+  if(!window.pruebaActiva())return false;
+  toast("🔒 "+(queHaces||"Esto")+" necesita una cuenta gratuita. Créala en 20 segundos y sigues donde estabas.");
+  setTimeout(()=>window.pruebaMuro("Para "+(queHaces||"esto").toLowerCase()+" necesitas una cuenta. Es gratis y conservas tu transcripción."),900);
+  return true;
+};
+
+function fmtPrueba(s){
+  const m=Math.floor(s/60),r=Math.floor(s%60);
+  return m+":"+String(r).padStart(2,"0");
+}
+function pintarPrueba(){
+  const b=document.getElementById("barraPrueba");
+  if(!b)return;
+  const r=pruebaRestante();
+  b.querySelector("#pruebaReloj").textContent=fmtPrueba(r);
+  b.style.borderColor=r<=60?"rgba(248,113,113,.45)":"rgba(255,255,255,.12)";
+}
+function arrancarPrueba(){
+  if(pruebaRestante()<=0){
+    window.pruebaMuro("Ya usaste tu prueba gratuita en este navegador. Crea una cuenta gratis para seguir usando EscribAI.");
+    return;
+  }
+  pruebaOn=true;
+  mostrarAuth(false);
+  if(!document.getElementById("barraPrueba")){
+    document.body.insertAdjacentHTML("beforeend",
+      '<div id="barraPrueba" style="position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:110;display:flex;gap:14px;align-items:center;'+
+      'background:#111827;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:10px 18px;box-shadow:0 8px 28px rgba(0,0,0,.45);font-size:13px">'+
+      '<span style="color:var(--mut)">Prueba gratuita · quedan <b id="pruebaReloj" style="color:var(--txt)">5:00</b></span>'+
+      '<button class="btn sm pri" id="pruebaCrear">Crear cuenta gratis</button></div>');
+    document.getElementById("pruebaCrear").onclick=()=>
+      window.pruebaMuro("Crea tu cuenta gratis: conservas lo que has dictado y desbloqueas audios grabados, actas en la nube y el pulido con IA.");
+  }
+  pintarPrueba();
+  if(window.aEvento)window.aEvento("prueba_inicio");
+  toast("⏱️ Tienes "+fmtPrueba(pruebaRestante())+" de dictado. Pulsa el micrófono y habla.");
+}
+document.getElementById("btnPrueba").onclick=arrancarPrueba;
 
 /* ---------- lógica de sesión, perfil y plan ---------- */
 function planNube(){
@@ -299,8 +380,12 @@ if(btnBC)btnBC.onclick=async()=>{
       if(np&&np.length>=6){const{error}=await sb.auth.updateUser({password:np});toast(error?"❌ "+error.message:"🔑 Contraseña actualizada")}
     }
     sesionUser=session?session.user:null;
+    if(sesionUser){ // al entrar de verdad, la prueba deja de tener sentido
+      pruebaOn=false;
+      const bp=document.getElementById("barraPrueba");if(bp)bp.remove();
+    }
     await cargarPerfil();
-    mostrarAuth(!sesionUser);
+    mostrarAuth(!sesionUser&&!pruebaOn);
     if(sesionUser&&!LS.get("vs_tutorial_visto",false)){
       LS.set("vs_tutorial_visto",true);
       if(typeof abrirTutorial==="function")setTimeout(()=>abrirTutorial(0),600);
