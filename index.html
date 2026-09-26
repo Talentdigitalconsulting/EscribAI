@@ -252,6 +252,9 @@ body.conAnuncios .adrail{display:none}
       <button class="roundbtn" id="btnPause" title="Pausar" disabled><svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg></button>
     </div>
     <div class="live-speaker" id="liveSpk"></div>
+    <div id="onlineBar" style="display:flex;justify-content:center;margin-top:14px">
+      <button class="btn sm" id="btnOnline" title="Transcribe una reunión por Zoom, Meet o Teams capturando el audio del ordenador">💻 Junta online (Zoom, Meet, Teams)</button>
+    </div>
   </div>
 
   <div class="card" style="margin-top:14px">
@@ -1641,6 +1644,191 @@ $("#fileInput").onchange=async e=>{
   }catch(err){toast("❌ "+err.message)}
   $("#btnFile").disabled=false;$("#btnFile").textContent="📂 Transcribir archivo";
 };
+
+/* =====================================================================
+   JUNTA ONLINE (Zoom, Meet, Teams…)
+   Captura el audio que suena en el ordenador y lo mezcla con el
+   micrófono, para que en el acta salgan tanto los asistentes remotos
+   como quien está delante del equipo.
+
+   Dos límites que conviene tener claros:
+   · El dictado del navegador solo sabe escuchar el micrófono, así que
+     esto va SIEMPRE por transcripción profesional y consume cuota.
+   · Solo funciona en Chrome o Edge de ordenador: compartir el audio del
+     sistema no existe en móvil ni en Firefox.
+===================================================================== */
+let onlineStream=null,onlineMic=null,onlineCtx=null,onlineRec=null,
+    onlineChunks=[],onlineT0=0,onlineInt=null,onlineActiva=false;
+
+function soportaJuntaOnline(){
+  return !!(navigator.mediaDevices&&navigator.mediaDevices.getDisplayMedia)&&
+         !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+function pintarBotonOnline(){
+  const b=$("#btnOnline");
+  if(!b)return;
+  if(onlineActiva){
+    b.textContent="⏹️ Terminar junta online";
+    b.classList.add("pri");
+  }else{
+    b.textContent="💻 Junta online (Zoom, Meet, Teams)";
+    b.classList.remove("pri");
+  }
+}
+
+const AYUDA_AUDIO=
+  "No has compartido el sonido, así que solo se oiría tu micrófono.\n\n"+
+  "Vuelve a pulsar «Junta online» y esta vez:\n\n"+
+  "1. Elige la pestaña de Zoom, Meet o Teams (o «Toda la pantalla»).\n"+
+  "2. Antes de aceptar, marca abajo la casilla:\n"+
+  "      «También compartir el audio de la pestaña»\n"+
+  "      (o «Compartir el audio del sistema»).\n"+
+  "3. Pulsa Compartir.\n\n"+
+  "Sin esa casilla el navegador no nos deja oír a los demás asistentes.";
+
+async function iniciarJuntaOnline(){
+  if(window.pruebaBloquea&&window.pruebaBloquea("Transcribir una junta online"))return;
+  if(!soportaJuntaOnline()){
+    alert("Las juntas online necesitan Google Chrome o Microsoft Edge en un ordenador.\n\n"+
+          "Desde el móvil no es posible: ningún navegador móvil deja capturar el sonido del sistema.");
+    return;
+  }
+  if(recording){toast("Primero detén la grabación por micrófono");return}
+
+  // ¿Le queda cuota? Mejor avisar antes que a mitad de la junta.
+  let saldo=null;
+  try{saldo=await dgLlamada("saldo")}catch(e){}
+  if(saldo){
+    if(saldo.cuota_min<=0){upsell("Las juntas online son una función Pro");return}
+    if(saldo.restante_min<=0){
+      alert("Se te ha agotado la transcripción profesional de este mes.\n\nSe renueva el día 1.");
+      return;
+    }
+    if(saldo.restante_min<30&&!confirm("Te quedan "+saldo.restante_min+" minutos de transcripción este mes.\n\n¿Empezamos igualmente?"))return;
+  }
+
+  let display;
+  try{
+    display=await navigator.mediaDevices.getDisplayMedia({
+      video:true,                       // obligatorio: no existe captura solo de audio
+      audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false},
+      systemAudio:"include",
+      selfBrowserSurface:"exclude"
+    });
+  }catch(e){
+    if(e&&e.name==="NotAllowedError")toast("Junta online cancelada");
+    else toast("❌ No se pudo capturar la pantalla: "+(e.message||e));
+    return;
+  }
+
+  if(!display.getAudioTracks().length){
+    display.getTracks().forEach(t=>t.stop());
+    alert(AYUDA_AUDIO);
+    return;
+  }
+
+  // Micrófono: si no lo da, seguimos solo con el audio de la reunión.
+  let mic=null;
+  try{mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}})}
+  catch(e){console.warn("sin micro:",e)}
+
+  try{
+    onlineCtx=new(window.AudioContext||window.webkitAudioContext)();
+    const destino=onlineCtx.createMediaStreamDestination();
+    onlineCtx.createMediaStreamSource(display).connect(destino);
+    if(mic)onlineCtx.createMediaStreamSource(mic).connect(destino);
+
+    onlineChunks=[];
+    onlineRec=new MediaRecorder(destino.stream);
+    onlineRec.ondataavailable=e=>{if(e.data.size)onlineChunks.push(e.data)};
+    onlineRec.start(1000);
+  }catch(e){
+    display.getTracks().forEach(t=>t.stop());
+    if(mic)mic.getTracks().forEach(t=>t.stop());
+    toast("❌ No se pudo preparar la grabación: "+(e.message||e));
+    return;
+  }
+
+  onlineStream=display;onlineMic=mic;onlineActiva=true;onlineT0=Date.now();
+  // Si cierra el compartir desde la barra del navegador, cerramos nosotros.
+  display.getVideoTracks().forEach(t=>{t.onended=()=>{if(onlineActiva)terminarJuntaOnline()}});
+
+  pintarBotonOnline();
+  $("#btnMic").disabled=true;
+  $("#statusDot").className="dot rec";$("#statusTxt").textContent="Junta online…";
+  $("#recSub").textContent="Capturando la reunión"+(mic?" y tu micrófono":" (sin micrófono)")+". El acta se redactará al terminar.";
+  onlineInt=setInterval(()=>{$("#timer").textContent=fmtT((Date.now()-onlineT0)/1000)},250);
+  if(typeof pedirWakeLock==="function")pedirWakeLock();
+  toast("💻 Junta online en marcha"+(mic?"":" — sin micrófono: solo se oirá a los demás"));
+}
+
+async function terminarJuntaOnline(){
+  if(!onlineActiva)return;
+  onlineActiva=false;
+  clearInterval(onlineInt);
+  if(typeof soltarWakeLock==="function")soltarWakeLock();
+
+  const grabado=await new Promise(ok=>{
+    if(!onlineRec||onlineRec.state==="inactive")return ok(null);
+    onlineRec.onstop=()=>ok(new Blob(onlineChunks,{type:onlineRec.mimeType||"audio/webm"}));
+    try{onlineRec.stop()}catch(e){ok(null)}
+  });
+
+  if(onlineStream){onlineStream.getTracks().forEach(t=>t.stop());onlineStream=null}
+  if(onlineMic){onlineMic.getTracks().forEach(t=>t.stop());onlineMic=null}
+  if(onlineCtx){try{onlineCtx.close()}catch(e){}onlineCtx=null}
+
+  pintarBotonOnline();
+  $("#btnMic").disabled=false;
+  $("#statusDot").className="dot on";
+
+  if(!grabado||grabado.size<2000){
+    $("#statusTxt").textContent="Junta finalizada";
+    $("#recSub").textContent="No se capturó audio suficiente.";
+    toast("⚠️ No se recogió audio de la reunión");
+    return;
+  }
+
+  audioBlob=grabado;$("#btnAudio").disabled=false;
+  $("#statusTxt").textContent="Transcribiendo…";
+  $("#recSub").textContent="Transcribiendo la junta. En reuniones largas puede tardar un par de minutos.";
+  toast("📝 Transcribiendo la junta…");
+  $("#btnOnline").disabled=true;$("#btnOnline").textContent="📝 Transcribiendo…";
+
+  try{
+    const res=await dgFetch(grabado,grabado.type||"audio/webm");
+    const utts=(res.json.results&&res.json.results.utterances)||[];
+    if(!utts.length)throw new Error("No se detectó voz en la reunión");
+    cargarUtterances(utts);
+    const dur=(res.json.metadata&&res.json.metadata.duration)||0;
+    if(dur)dgApuntarUso(dur,"online");
+    $("#statusTxt").textContent="Junta transcrita";
+    $("#recSub").textContent="Listo. Revisa quién es quién y genera el acta.";
+    toast("✅ Junta transcrita: "+new Set(utts.map(u=>u.speaker)).size+" voces detectadas");
+  }catch(err){
+    $("#statusTxt").textContent="Junta finalizada";
+    $("#recSub").textContent="La transcripción falló, pero el audio se conserva: pulsa «🤖 Mejorar con IA» para reintentarlo.";
+    toast("❌ "+err.message);
+  }
+  $("#btnOnline").disabled=false;
+  pintarBotonOnline();
+}
+
+$("#btnOnline").onclick=()=>{onlineActiva?terminarJuntaOnline():iniciarJuntaOnline()};
+
+// En móvil o en navegadores sin captura de sistema, el botón explica por qué.
+if(!soportaJuntaOnline()){
+  $("#btnOnline").style.opacity=".55";
+  $("#btnOnline").title="Solo disponible en Chrome o Edge de ordenador";
+}
+
+// Si cierra la pestaña a media junta, no dejamos el micro ni la captura abiertos.
+window.addEventListener("beforeunload",()=>{
+  if(onlineStream)onlineStream.getTracks().forEach(t=>t.stop());
+  if(onlineMic)onlineMic.getTracks().forEach(t=>t.stop());
+});
+
 $("#btnAI").onclick=async()=>{
   if(!dgPuedeUsar()){upsell("El modo IA es una función Pro");return}
   if(!audioBlob){toast("Primero graba una sesión (el audio se procesa al detener)");return}
@@ -2099,7 +2287,8 @@ const TUTORIAL=[
  {i:"📂",t:"Archivos y modo IA (Pro)",p:[
   ["El motor profesional","Tu plan Pro incluye 10 horas al mes de transcripción profesional, que se renuevan el día 1. No tienes que contratar nada aparte ni configurar ninguna clave: pulsas el botón y funciona."],
   ["Transcribir audios ya grabados","«📂 Transcribir archivo» acepta audios y vídeos: la reunión grabada con el móvil, un audio de WhatsApp, una entrevista. Los transcribe identificando las voces con el mismo motor profesional."],
-  ["Mejorar con IA","«🤖 Mejorar con IA» reprocesa el audio de la sesión recién grabada con diarización profesional en la nube. Útil cuando hay muchas voces, se pisan al hablar o necesitas máxima precisión."]]},
+  ["Mejorar con IA","«🤖 Mejorar con IA» reprocesa el audio de la sesión recién grabada con diarización profesional en la nube. Útil cuando hay muchas voces, se pisan al hablar o necesitas máxima precisión."],
+  ["Juntas online","Si la reunión es por Zoom, Meet o Teams, pulsa «💻 Junta online». El navegador te pedirá elegir qué compartir: selecciona la pestaña de la videollamada y —esto es lo importante— marca la casilla «También compartir el audio de la pestaña» antes de aceptar. EscribAI mezcla lo que suena en la reunión con tu micrófono, así que en el acta salen todos. Al terminar, pulsa «⏹️ Terminar junta online» y se transcribe sola. Necesita Chrome o Edge en ordenador y consume cuota de transcripción profesional, porque el dictado del navegador solo sabe oír el micrófono."]]},
  {i:"📧",t:"Guardar y exportar",p:[
   ["La biblioteca","«💾 Guardar sesión» archiva la reunión en la carpeta de su organización, con la fecha como título (Pro). En la pestaña Biblioteca tienes todas tus comunidades ordenadas por año: abres cualquier acta cuando quieras y, con el botón 📦, descargas la carpeta completa de esa reunión (acta, transcripción y audio) en un ZIP. El acta y la transcripción viajan con tu cuenta a cualquier dispositivo; el audio se queda en el equipo donde grabaste, porque no custodiamos grabaciones de tus vecinos."],
   ["Exportaciones","Tienes TXT (gratis), acta en Markdown, Word (con o sin tu modelo), JSON con todos los datos y el audio de la grabación. Y «📋 Copiar» para pegar la transcripción donde quieras."]]},
