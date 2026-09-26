@@ -412,6 +412,41 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
   gap:16px 28px;text-align:left!important;max-width:none!important}
 #firmaTDC img{height:38px}
 
+
+/* ---------- cabecera del panel de transcripción ---------- */
+#transHead{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px 14px 12px 20px;
+  border-bottom:1px solid var(--line)}
+#transHead .tit{font-size:13px;font-weight:600}
+#transHead .cuenta{font-family:var(--mono);font-size:11px;color:#6f7894}
+#transHead .hueco{flex:1;min-width:10px}
+#transHead .btn{height:32px;padding:0 11px;font-size:12.5px;background:none;border:0;color:#b9c0d4}
+#transHead .btn:hover{background:#151b31;color:var(--txt);border:0}
+#transHead #btnExportar{border:1px solid #242c45;background:#0a0e1a}
+#transHead select{width:auto;height:32px;padding:0 30px 0 10px;font-size:12.5px}
+#colDer .transcript{border-top:0;padding:4px 20px 14px}
+#colDer .actions{padding:12px 14px;border-top:1px solid var(--line);flex-wrap:wrap}
+#colDer .actions .hueco{flex:1;min-width:10px}
+#colDer .actions .btn{height:38px}
+#btnSave{margin-right:0}
+
+/* ---------- grabador: más aire, menos hueco muerto ---------- */
+#wave{height:48px;margin-bottom:2px}
+.recwrap .timer{margin:14px 0 10px!important}
+
+/* ---------- hablantes ---------- */
+#colIzq .spkbar{padding:16px 18px}
+
+/* ---------- pie ---------- */
+#firmaTDC img{height:44px;opacity:1}
+#firmaTDC>div:nth-child(2){font-size:12px;line-height:1.6;color:#8b93ab;text-align:left}
+#firmaTDC a{color:#8b93ab;font-size:12px}
+#firmaTDC a:hover{color:var(--txt)}
+
+@media(max-width:900px){
+  #transHead{padding:10px 12px}
+  #colIzq{max-width:none}
+}
+
 </style>
 </head>
 <body>
@@ -3048,6 +3083,60 @@ avisoNavegador();
       fila.dataset.remozada="1";
     });
   };
+})();
+
+</script>
+<script>
+
+/* =====================================================================
+   CABECERA DEL PANEL DE TRANSCRIPCIÓN
+   En la maqueta las herramientas van arriba del texto y abajo quedan
+   solo las dos acciones que cierran el trabajo. Se mueven los botones
+   que ya existen; ninguno se recrea.
+===================================================================== */
+(function(){
+  "use strict";
+  const trans=document.getElementById("transcript");
+  if(!trans||document.getElementById("transHead"))return;
+  const tarjeta=trans.closest(".card");
+  const acciones=tarjeta.querySelector(".actions");
+  if(!acciones)return;
+
+  const cab=document.createElement("div");
+  cab.id="transHead";
+  cab.innerHTML='<span class="tit">Transcripción</span><span class="cuenta" id="transPalabras">0 palabras</span><span class="hueco"></span>';
+  tarjeta.insertBefore(cab,trans);
+
+  // Herramientas: arriba. Cierre del trabajo: abajo.
+  ["setPlantilla","btnPulir","btnAI","btnFile"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)cab.appendChild(el);
+  });
+  const exporta=document.getElementById("btnExportar");
+  if(exporta&&exporta.parentElement)cab.appendChild(exporta.parentElement);
+
+  // El orden del pie: guardar a la izquierda, las dos grandes a la derecha.
+  const guardar=document.getElementById("btnSave");
+  const rapido=document.getElementById("btnSummarize");
+  const acta=document.getElementById("btnActaIA");
+  if(guardar)acciones.appendChild(guardar);
+  const hueco=document.createElement("span");hueco.className="hueco";
+  acciones.appendChild(hueco);
+  if(rapido)acciones.appendChild(rapido);
+  if(acta)acciones.appendChild(acta);
+
+  /* Contador de palabras, como en la maqueta */
+  function contar(){
+    const n=(typeof segments!=="undefined"&&segments.length)
+      ? segments.reduce((t,s)=>t+String(s.text||"").split(/\s+/).filter(Boolean).length,0):0;
+    const e=document.getElementById("transPalabras");
+    if(e)e.textContent=n+(n===1?" palabra":" palabras");
+  }
+  if(typeof renderTranscript==="function"){
+    const orig=renderTranscript;
+    window.renderTranscript=renderTranscript=function(){orig.apply(this,arguments);contar()};
+  }
+  contar();
 })();
 
 </script>
