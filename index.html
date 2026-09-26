@@ -270,7 +270,8 @@ body.conAnuncios .adrail{display:none}
         <option value="asociacion">🤝 Asamblea de asociación</option>
         <option value="pleno">🏛️ Pleno / órgano colegiado</option>
       </select>
-      <button class="btn sm pri" id="btnSummarize">✨ Generar resumen</button>
+      <button class="btn sm" id="btnSummarize" title="Vista previa instantánea y gratuita: extrae las frases que suenan a acuerdo, tarea o fecha">✨ Resumen rápido</button>
+      <button class="btn sm pri" id="btnActaIA" title="Redacta los acuerdos de verdad, con sus importes, plazos y votaciones (incluido en Pro)">🧠 Redactar acta con IA</button>
       <button class="btn sm" id="btnCopy">📋 Copiar</button>
       <button class="btn sm" id="btnTxt">⬇ TXT</button>
       <button class="btn sm" id="btnMd">⬇ Acta (MD)</button>
@@ -1141,6 +1142,20 @@ function generateSummary(){
 function renderSummary(sum){
   currentSummary=sum;
   $("#sumEmpty").classList.add("hide");$("#sumBody").classList.remove("hide");
+  // Aviso honesto de cómo se ha hecho el acta que se está mirando.
+  let av=$("#sumOrigen");
+  if(!av){
+    av=document.createElement("div");av.id="sumOrigen";
+    av.style.cssText="border-radius:12px;padding:11px 15px;margin-bottom:14px;font-size:12.5px;line-height:1.55";
+    $("#sumBody").prepend(av);
+  }
+  if(sum.redactadaIA){
+    av.style.background="rgba(99,102,241,.10)";av.style.border="1px solid rgba(99,102,241,.35)";av.style.color="#c6cde0";
+    av.innerHTML="🧠 <b>Acta redactada con IA.</b> Los acuerdos están escritos a partir de lo que se dijo, sin inventar cifras ni votaciones. Aun así <b>revísala antes de darle valor oficial</b>: es un borrador, no un acta firmada.";
+  }else{
+    av.style.background="rgba(255,255,255,.04)";av.style.border="1px solid rgba(255,255,255,.10)";av.style.color="var(--mut)";
+    av.innerHTML="✨ <b>Resumen rápido.</b> Son frases entresacadas de la transcripción tal y como se dijeron. Para un acta redactada de verdad, con importes, plazos y votaciones, pulsa <b>🧠 Redactar acta con IA</b>.";
+  }
   $("#sumStats").innerHTML=sum.stats.map(s=>`
     <div class="stat"><b>${s.pct}%</b><span>${esc(s.name)} · ${s.words} palabras · ${s.turns} turnos</span>
     <div class="bar"><i style="width:${s.pct}%;background:${s.color}"></i></div></div>`).join("")||"<div class='empty'>—</div>";
@@ -1159,6 +1174,102 @@ $("#btnSummarize").onclick=()=>{
   document.querySelector('nav button[data-tab="summary"]').classList.add("act");
   $$(".tabpane").forEach(p=>p.classList.add("hide"));$("#tab-summary").classList.remove("hide");
   toast("✨ Resumen generado");
+};
+
+
+/* =====================================================================
+   ACTA REDACTADA CON IA
+   El resumen rápido de arriba busca frases por patrones: sirve para una
+   vista previa instantánea y gratuita, pero copia lo que se dijo tal cual.
+   Esto otro redacta de verdad: «Se aprueba, por 8 votos a favor y 3 en
+   contra, la derrama de 12.400 € para la reforma del portal».
+
+   Reparto deliberado del trabajo:
+   · La aritmética (porcentajes, palabras, temas) la sigue calculando la
+     app en local. Un modelo de lenguaje no es de fiar contando.
+   · La redacción la hace la IA, con prohibición expresa de inventar
+     cifras, fechas o resultados de votación.
+===================================================================== */
+const ACTA_BLOQUE_CHARS=14000;   // por trozo enviado al servidor
+
+function trozosTranscripcion(){
+  const lineas=segments.map(s=>"["+fmtT(s.t0)+"] "+spkOf(s.spk).name+": "+s.text);
+  const trozos=[];let actual="";
+  for(const l of lineas){
+    if(actual.length+l.length+1>ACTA_BLOQUE_CHARS&&actual){trozos.push(actual);actual=""}
+    actual+=(actual?"\n":"")+l;
+  }
+  if(actual)trozos.push(actual);
+  return trozos;
+}
+
+function contextoRedaccion(){
+  const t=plantillaActual();
+  const o=orgOf(currentOrg);
+  return {
+    tipo:(t&&t.titulo)?t.titulo.replace(/^[^\wÁÉÍÓÚÑa-z]+/,"").trim():"reunión",
+    organizacion:o?o.nombre:"",
+    presidente:o?o.pres:"",
+    secretario:o?o.sec:"",
+    hablantes:speakers.map(s=>s.name).filter(Boolean)
+  };
+}
+
+/* Colorea cada punto con el color del hablante al que se atribuye. */
+function conColor(lista){
+  return (lista||[]).map(i=>{
+    const h=speakers.find(s=>s.name&&i.quien&&s.name.toLowerCase()===String(i.quien).toLowerCase());
+    return {text:i.texto,who:i.quien||"—",color:h?h.color:"#8b96b3"};
+  });
+}
+
+$("#btnActaIA").onclick=async()=>{
+  if(!segments.length){toast("Primero graba o transcribe la reunión");return}
+  if(window.pruebaBloquea&&window.pruebaBloquea("Redactar el acta con IA"))return;
+
+  const btn=$("#btnActaIA");
+  const trozos=trozosTranscripcion();
+  btn.disabled=true;btn.textContent="🧠 Redactando…";
+  toast("🧠 Redactando el acta… "+(trozos.length>1?"la reunión es larga, dale unos segundos":"un momento"));
+
+  try{
+    const tok=(typeof window.tokenSesion==="function")?await window.tokenSesion():null;
+    if(!tok)throw new Error("Entra en tu cuenta para redactar el acta con IA.");
+
+    const r=await fetch(SB_URL+"/functions/v1/redactar-acta",{
+      method:"POST",
+      headers:{Authorization:"Bearer "+tok,"Content-Type":"application/json"},
+      body:JSON.stringify({bloques:trozos,contexto:contextoRedaccion()})
+    });
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok){
+      if(j.error==="plan_insuficiente"){upsell("Redactar el acta con IA es una función Pro");return}
+      if(j.error==="cuota_agotada")throw new Error("Has agotado las redacciones con IA de este mes. Se renuevan el día 1.");
+      if(j.error==="ia_no_disponible")throw new Error("El servicio de redacción no responde ahora mismo. Inténtalo en unos minutos.");
+      throw new Error(j.error||("Error "+r.status));
+    }
+
+    // La parte numérica la seguimos calculando aquí, no la IA.
+    const base=generateSummary();
+    if(!base)return;
+    base.decisiones=conColor(j.acuerdos);
+    base.tareas=conColor(j.tareas);
+    base.fechas=conColor(j.fechas);
+    base.preguntas=conColor(j.preguntas);
+    base.destacadas=conColor(j.destacadas);
+    base.redactadaIA=true;
+    renderSummary(base);
+
+    $$("nav button").forEach(x=>x.classList.remove("act"));
+    document.querySelector('nav button[data-tab="summary"]').classList.add("act");
+    $$(".tabpane").forEach(p=>p.classList.add("hide"));$("#tab-summary").classList.remove("hide");
+
+    const n=base.decisiones.length;
+    toast(n?"🧠 Acta redactada: "+n+(n===1?" acuerdo":" acuerdos"):"🧠 Acta redactada, pero no se detectaron acuerdos");
+  }catch(err){
+    toast("❌ "+err.message);
+  }
+  btn.disabled=false;btn.textContent="🧠 Redactar acta con IA";
 };
 
 /* =====================================================================
