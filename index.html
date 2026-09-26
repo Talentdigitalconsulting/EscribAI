@@ -457,6 +457,41 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
   #colIzq{max-width:none}
 }
 
+
+/* ---------- bloque de organización en la barra lateral ---------- */
+#sideOrg{margin-top:26px;padding:0 6px}
+#sideOrg .rotulo{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:#6f7894;margin-bottom:10px}
+#sideOrg .tarjeta{position:relative;display:flex;flex-direction:column;gap:3px;padding:12px;
+  border:1px solid #1c2338;border-radius:10px;background:#0d1222;cursor:pointer;transition:.15s}
+#sideOrg .tarjeta:hover{border-color:#2a3350}
+#sideOrg .nom{font-size:13.5px;font-weight:500;line-height:1.3;color:var(--txt)}
+#sideOrg .tipo{font-size:12px;color:#8b93ab}
+#sideOrg .lista{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:60;padding:5px;
+  background:#141a2e;border:1px solid #242c45;border-radius:10px;box-shadow:0 18px 40px rgba(0,0,0,.5);
+  max-height:260px;overflow:auto}
+#sideOrg .opc{display:block;width:100%;text-align:left;padding:8px 10px;border:0;border-radius:7px;
+  background:none;font-size:13px;color:#c7ccdc}
+#sideOrg .opc:hover{background:#1a2139;color:var(--txt)}
+#sideOrg .opc.act{color:var(--txt);background:#1a2139}
+#sideOrgNueva{display:flex;align-items:center;gap:8px;margin-top:9px;padding:6px 2px;
+  font-size:12.5px;color:#8b93ab;background:none;border:0;width:100%}
+#sideOrgNueva:hover{color:var(--txt)}
+
+/* ---------- acciones en el encabezado de la página ---------- */
+#pageAcciones{display:flex;gap:8px;flex-wrap:wrap}
+#pageAcciones .btn{height:38px;padding:0 14px;font-size:13px}
+
+/* Donde hay barra lateral, la vieja barra de organización sobra.
+   En móvil reaparece, porque allí no existe la barra lateral. */
+@media(min-width:901px){
+  #barraOrgAntigua{display:none}
+}
+@media(max-width:900px){
+  #sideOrg{display:none}
+  #pageAcciones{display:none}
+}
+
 </style>
 </head>
 <body>
@@ -3170,6 +3205,111 @@ avisoNavegador();
     window.renderTranscript=renderTranscript=function(){orig.apply(this,arguments);contar()};
   }
   contar();
+})();
+
+</script>
+<script>
+
+/* =====================================================================
+   BLOQUE DE ORGANIZACIÓN EN LA BARRA LATERAL
+   Como en la maqueta: el nombre de la comunidad y su tipo de acta, con
+   «Nueva organización» debajo.
+
+   El desplegable original NO se mueve: sigue en su tarjeta, que solo se
+   oculta en pantallas anchas. En el móvil, donde no hay barra lateral,
+   la tarjeta reaparece y todo funciona como siempre. Esta lista propia
+   se limita a escribir en ese desplegable y avisar del cambio.
+===================================================================== */
+(function(){
+  "use strict";
+  const lado=document.getElementById("appSide");
+  const sel=document.getElementById("orgSel");
+  if(!lado||!sel||document.getElementById("sideOrg"))return;
+
+  const nav=lado.querySelector("nav");
+  const bloque=document.createElement("div");
+  bloque.id="sideOrg";
+  bloque.innerHTML=
+    '<div class="rotulo">Organización</div>'+
+    '<div class="tarjeta" id="sideOrgBoton"><span class="nom" id="sideOrgNom">Sin organización</span>'+
+    '<span class="tipo" id="sideOrgTipo">Elige o crea una</span>'+
+    '<div class="lista hide" id="sideOrgLista"></div></div>'+
+    '<button class="nueva" id="sideOrgNueva">＋ Nueva organización</button>';
+  nav.insertAdjacentElement("afterend",bloque);
+
+  document.getElementById("sideOrgNueva").onclick=()=>{
+    const b=document.getElementById("btnOrgNew");
+    if(b)b.click();
+  };
+
+  function tipoDe(o){
+    if(!o)return "Elige o crea una";
+    const p=(typeof PLANTILLAS!=="undefined"&&o.plantilla&&PLANTILLAS[o.plantilla])?PLANTILLAS[o.plantilla]:null;
+    if(!p||!p.titulo)return "Acta general";
+    return p.titulo.replace(/^[^\wÁÉÍÓÚÑa-z]+/,"").trim();
+  }
+
+  const lista=document.getElementById("sideOrgLista");
+  function abrirLista(v){lista.classList.toggle("hide",!v)}
+
+  function pintarOrg(){
+    const o=(typeof orgOf==="function")?orgOf(currentOrg):null;
+    const n=document.getElementById("sideOrgNom"),t=document.getElementById("sideOrgTipo");
+    if(n)n.textContent=o?o.nombre:"Sin organización";
+    if(t)t.textContent=tipoDe(o);
+    // La lista se arma a partir de las opciones reales del desplegable
+    lista.innerHTML="";
+    [...sel.options].forEach(op=>{
+      const b=document.createElement("button");
+      b.type="button";
+      b.className="opc"+(op.value===sel.value?" act":"");
+      b.textContent=op.textContent;
+      b.onclick=ev=>{
+        ev.stopPropagation();
+        sel.value=op.value;
+        sel.dispatchEvent(new Event("change",{bubbles:true}));
+        abrirLista(false);
+        pintarOrg();
+      };
+      lista.appendChild(b);
+    });
+  }
+  window.pintarOrgLateral=pintarOrg;
+
+  document.getElementById("sideOrgBoton").onclick=e=>{
+    if(e.target.closest(".lista"))return;
+    e.stopPropagation();
+    abrirLista(lista.classList.contains("hide"));
+  };
+  document.addEventListener("click",()=>abrirLista(false));
+  document.addEventListener("keydown",e=>{if(e.key==="Escape")abrirLista(false)});
+
+  if(typeof renderOrgs==="function"){
+    const orig=renderOrgs;
+    window.renderOrgs=renderOrgs=function(){orig.apply(this,arguments);pintarOrg()};
+  }
+  const alCambiar=sel.onchange;
+  sel.onchange=function(ev){ if(alCambiar)alCambiar.call(this,ev); pintarOrg(); };
+
+  /* Editar y Enviar acta, al encabezado de la página */
+  const cabecera=document.getElementById("pageHead");
+  if(cabecera){
+    const caja=document.createElement("div");caja.id="pageAcciones";
+    ["btnOrgEdit","btnEnviar"].forEach(id=>{
+      const b=document.getElementById(id);
+      if(b)caja.appendChild(b);
+    });
+    cabecera.appendChild(caja);
+  }
+
+  // La barra vieja solo se esconde donde hay barra lateral (ver el CSS)
+  const nuevo=document.getElementById("btnOrgNew");
+  if(nuevo){
+    const tarjetaVieja=nuevo.closest(".card");
+    if(tarjetaVieja)tarjetaVieja.id="barraOrgAntigua";
+  }
+
+  pintarOrg();
 })();
 
 </script>
