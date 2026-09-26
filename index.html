@@ -367,7 +367,12 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
 .seg:hover .tools{opacity:1}
 .interim .txt{color:#9aa2ba}
 
-/* ---------- acta: secciones numeradas ---------- */
+/* ---------- acta: el documento a la izquierda, los datos a la derecha ---------- */
+#actaFila{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;margin-top:16px}
+#actaDoc{flex:999 1 460px;min-width:0;display:flex;flex-direction:column;gap:20px}
+#actaLado{flex:1 1 300px;max-width:380px;min-width:0;display:flex;flex-direction:column;gap:20px}
+#actaDoc>.card,#actaLado>.card{margin:0!important}
+#tab-summary .sumgrid{display:contents}
 #tab-summary .sumcard{padding:24px 26px!important;counter-increment:acta}
 #tab-summary .sumcard h3{display:flex;align-items:baseline;gap:14px;font-size:15px;font-weight:600;margin-bottom:12px}
 #tab-summary .sumcard h3::before{content:"0" counter(acta);font-family:var(--serif);font-size:27px;
@@ -3101,6 +3106,29 @@ avisoNavegador();
   const tarjeta=trans.closest(".card");
   const acciones=tarjeta.querySelector(".actions");
   if(!acciones)return;
+
+  /* --- El acta: documento ancho a la izquierda, datos a la derecha --- */
+  (function(){
+    const cuerpoActa=document.getElementById("sumBody");
+    if(cuerpoActa&&!document.getElementById("actaFila")){
+      const fila=document.createElement("div");fila.id="actaFila";
+      const doc=document.createElement("div");doc.id="actaDoc";
+      const lado=document.createElement("div");lado.id="actaLado";
+      fila.appendChild(doc);fila.appendChild(lado);
+      const partes=[...cuerpoActa.children];
+      cuerpoActa.appendChild(fila);
+      partes.forEach(p=>{
+        if(p.id==="sumOrigen")return;                    // el aviso, a lo ancho
+        if(p.classList.contains("sumgrid")){
+          // acuerdos y tareas al documento; fechas y preguntas, también
+          [...p.children].forEach(c=>doc.appendChild(c));
+          p.remove();return;
+        }
+        // participación, temas y frases destacadas van al lateral
+        lado.appendChild(p);
+      });
+    }
+  })();
 
   const cab=document.createElement("div");
   cab.id="transHead";
