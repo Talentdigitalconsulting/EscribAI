@@ -226,7 +226,12 @@ body{background:var(--bg)!important;font-family:"Inter",system-ui,-apple-system,
 #sideBrand .nom{font-family:var(--serif);font-size:26px;line-height:1;letter-spacing:-.01em}
 #sideBrand .sub{font-family:var(--mono);font-size:8.5px;letter-spacing:.09em;text-transform:uppercase;
   color:#6f7894;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#sideBrand .logo{width:36px;height:36px;border-radius:10px;box-shadow:none}
+/* El logotipo trae dentro un micrófono de reserva por si la imagen no
+   carga; sin recorte se desbordaba por debajo. */
+#sideBrand .logo{width:36px;height:36px;border-radius:10px;box-shadow:none;overflow:hidden;position:relative}
+#sideBrand .logo img{position:absolute;inset:0;z-index:1}
+header .logo{overflow:hidden;position:relative}
+header .logo img{position:absolute;inset:0;z-index:1}
 
 /* El medidor de cuota, en tres líneas limpias en vez de partirse solo */
 #cuotaBox>div:first-child{flex-direction:column!important;align-items:flex-start!important;gap:1px!important}
@@ -2855,7 +2860,9 @@ avisoNavegador();
   navi.addEventListener("click",()=>setTimeout(pintarTitulo,0));
 
   /* --- Barra inferior para móvil: reutiliza las mismas pestañas --- */
-  const movil=document.createElement("nav");movil.id="navMovil";
+  // Es un div y no un <nav> a propósito: la app maneja las pestañas con
+  // el selector "nav button" y esta barra se colaría en él.
+  const movil=document.createElement("div");movil.id="navMovil";
   [["record","🎙️","Grabar"],["summary","✨","Acta"],["history","📚","Biblioteca"],["settings","⚙️","Ajustes"]]
     .forEach(([k,ic,txt])=>{
       const b=document.createElement("button");
