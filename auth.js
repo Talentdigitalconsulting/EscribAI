@@ -335,6 +335,11 @@ async function cargarPerfil(){
   const b=document.getElementById("btnUser");
   b.textContent=sesionUser?"👤 "+(sesionUser.email.split("@")[0]):"👤 Entrar";
   b.title=sesionUser?sesionUser.email+" — clic para salir":"Entrar o crear cuenta";
+  // Medidor de transcripción profesional: solo tiene sentido con sesión.
+  if(typeof refrescarCuota==="function"){
+    if(sesionUser)refrescarCuota();
+    else{const c=document.getElementById("cuotaBox");if(c)c.classList.add("hide")}
+  }
 }
 async function syncNube(){
   if(!sesionUser)return;

@@ -69,6 +69,12 @@ main{flex:1;max-width:1060px;width:100%;margin:0 auto;padding:0 22px 40px}
 .btn.pri{background:var(--grad);border:0;color:#fff;box-shadow:0 6px 18px rgba(99,102,241,.4)}
 .btn.pri:hover{filter:brightness(1.1)}
 .btn.sm{padding:7px 13px;font-size:12.5px;border-radius:10px}
+/* Cada formato del menú Exportar: título arriba y para qué sirve debajo */
+.expitem{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:2px;
+  padding:9px 11px;border:0;background:none;border-radius:8px;font-weight:500;text-align:left}
+.expitem:hover:not(:disabled){background:#1a2139;transform:none}
+.expitem small{font-size:11.5px;font-weight:400;color:var(--mut);line-height:1.35}
+.expitem:disabled{opacity:.45;cursor:not-allowed}
 .btn.danger{color:var(--err)}
 .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
 
@@ -252,6 +258,16 @@ body.conAnuncios .adrail{display:none}
       <button class="roundbtn" id="btnPause" title="Pausar" disabled><svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg></button>
     </div>
     <div class="live-speaker" id="liveSpk"></div>
+    <div id="cuotaBox" class="hide" style="max-width:420px;margin:18px auto 0;padding:12px 15px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.02);text-align:left">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:12.5px">
+        <span style="color:var(--txt);font-weight:600">Transcripción profesional</span>
+        <span id="cuotaRenueva" style="font-size:11px;color:var(--mut)"></span>
+      </div>
+      <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden;margin:9px 0 7px">
+        <div id="cuotaBarra" style="width:0%;height:100%;border-radius:3px;background:var(--grad);transition:width .4s"></div>
+      </div>
+      <div id="cuotaTexto" style="font-size:11.5px;color:var(--mut)"></div>
+    </div>
     <div id="onlineBar" style="display:flex;justify-content:center;margin-top:14px">
       <button class="btn sm" id="btnOnline" title="Transcribe una reunión por Zoom, Meet o Teams capturando el audio del ordenador">💻 Junta online (Zoom, Meet, Teams)</button>
     </div>
@@ -272,12 +288,17 @@ body.conAnuncios .adrail{display:none}
       </select>
       <button class="btn sm" id="btnSummarize" title="Vista previa instantánea y gratuita: extrae las frases que suenan a acuerdo, tarea o fecha">✨ Resumen rápido</button>
       <button class="btn sm pri" id="btnActaIA" title="Redacta los acuerdos de verdad, con sus importes, plazos y votaciones (incluido en Pro)">🧠 Redactar acta con IA</button>
-      <button class="btn sm" id="btnCopy">📋 Copiar</button>
-      <button class="btn sm" id="btnTxt">⬇ TXT</button>
-      <button class="btn sm" id="btnMd">⬇ Acta (MD)</button>
-      <button class="btn sm" id="btnWord">⬇ Word</button>
-      <button class="btn sm" id="btnJson">⬇ JSON</button>
-      <button class="btn sm" id="btnAudio" disabled>🔊 Audio</button>
+      <div style="position:relative;display:inline-block">
+        <button class="btn sm" id="btnExportar" aria-haspopup="true" aria-expanded="false">⬇ Exportar ▾</button>
+        <div id="menuExportar" class="hide" style="position:absolute;right:0;top:40px;z-index:40;width:266px;padding:6px;background:#141a2e;border:1px solid #242c45;border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,.5)">
+          <button class="btn sm expitem" id="btnCopy">📋 Copiar<small>La transcripción al portapapeles</small></button>
+          <button class="btn sm expitem" id="btnMd">⬇ Acta (MD)<small>El acta completa en Markdown</small></button>
+          <button class="btn sm expitem" id="btnWord">⬇ Word<small>Con tu plantilla si la has subido</small></button>
+          <button class="btn sm expitem" id="btnTxt">⬇ TXT<small>Solo la transcripción, texto plano</small></button>
+          <button class="btn sm expitem" id="btnJson">⬇ JSON<small>Todos los datos, para otro programa</small></button>
+          <button class="btn sm expitem" id="btnAudio" disabled>🔊 Audio<small>La grabación original de la reunión</small></button>
+        </div>
+      </div>
       <button class="btn sm" id="btnPulir" title="Corrige ortografía, puntuación y palabras mal entendidas usando el contexto (incluido en Pro)">🪄 Pulir texto</button>
       <button class="btn sm" id="btnAI" title="Reprocesa la reunión grabada con transcripción profesional y separación real de voces (incluido en Pro)">🤖 Mejorar con IA</button>
       <button class="btn sm" id="btnFile" title="Transcribe un audio ya grabado con separación real de voces (incluido en Pro)">📂 Transcribir archivo</button>
@@ -313,6 +334,10 @@ body.conAnuncios .adrail{display:none}
 
 <!-- ============ HISTORIAL ============ -->
 <div class="tabpane hide" id="tab-history">
+  <div class="card" style="margin-bottom:14px;padding:14px 16px">
+    <input id="biblioBuscar" type="search" placeholder="🔍 Buscar por comunidad, título o algo que se dijo en la reunión…" style="width:100%;font-size:13.5px">
+    <div id="biblioResultado" style="margin-top:9px;font-size:12px;color:var(--mut)"></div>
+  </div>
   <div class="card" id="histList"><div class="empty">No hay sesiones guardadas todavía.</div></div>
 </div>
 
@@ -585,6 +610,7 @@ $$("nav button").forEach(b=>b.onclick=()=>{
   $$(".tabpane").forEach(p=>p.classList.add("hide"));
   $("#tab-"+b.dataset.tab).classList.remove("hide");
   if(b.dataset.tab==="history")renderHistory();
+    if(b.dataset.tab==="record"&&typeof refrescarCuota==="function")refrescarCuota();
 });
 
 /* =====================================================================
@@ -1161,7 +1187,22 @@ function renderSummary(sum){
     <div class="bar"><i style="width:${s.pct}%;background:${s.color}"></i></div></div>`).join("")||"<div class='empty'>—</div>";
   const li=(arr,empty)=>arr.length?arr.map(i=>`<li><b class="who" style="background:${i.color}">${esc(i.who)}</b>${esc(i.text)}</li>`).join(""):`<li style="color:var(--mut)">${empty}</li>`;
   $("#sumDec").innerHTML=li(sum.decisiones,"No se detectaron decisiones explícitas.");
-  $("#sumTask").innerHTML=li(sum.tareas,"No se detectaron tareas.");
+  // Las tareas se pueden ir tachando: el acta se convierte en lista de pendientes.
+  $("#sumTask").innerHTML=sum.tareas.length
+    ? sum.tareas.map((i,n)=>'<li data-t="'+n+'" style="cursor:pointer;display:flex;gap:10px;align-items:flex-start">'+
+        '<span style="flex:none;margin-top:2px;width:17px;height:17px;border-radius:5px;display:grid;place-items:center;'+
+        'border:1.5px solid '+(i.hecha?"var(--ok,#34d399)":"var(--line)")+';background:'+(i.hecha?"var(--ok,#34d399)":"transparent")+
+        ';color:#0a0e1a;font-size:11px;font-weight:700">'+(i.hecha?"✓":"")+'</span>'+
+        '<span style="flex:1;'+(i.hecha?"opacity:.55;text-decoration:line-through":"")+'">'+
+        '<b class="who" style="background:'+i.color+'">'+esc(i.who)+'</b>'+esc(i.text)+'</span></li>').join("")
+    : '<li style="color:var(--mut)">No se detectaron tareas.</li>';
+  $$("#sumTask li[data-t]").forEach(el=>{
+    el.onclick=()=>{
+      const n=+el.dataset.t;
+      currentSummary.tareas[n].hecha=!currentSummary.tareas[n].hecha;
+      renderSummary(currentSummary);
+    };
+  });
   $("#sumDate").innerHTML=li(sum.fechas,"No se mencionaron fechas ni plazos.");
   $("#sumQ").innerHTML=li(sum.preguntas,"No quedaron preguntas abiertas.");
   $("#sumKey").innerHTML=li(sum.destacadas,"Sin frases marcadas como importantes.");
@@ -1560,11 +1601,35 @@ function abrirReunion(s){
   toast("Reunión cargada: "+s.name);
 }
 
+/* Busca en el título, la organización y TAMBIÉN dentro de lo que se dijo:
+   así se encuentra «la derrama del ascensor» aunque no esté en el título. */
+function filtrarBiblioteca(list,texto){
+  const q=String(texto||"").trim().toLowerCase();
+  if(!q)return list;
+  const palabras=q.split(/\s+/).filter(Boolean);
+  return list.filter(s=>{
+    const heno=[s.name,s.orgNombre,s.acta,(s.segments||[]).map(x=>x.text).join(" ")]
+      .filter(Boolean).join(" ").toLowerCase();
+    return palabras.every(p=>heno.includes(p));
+  });
+}
 function renderHistory(){
-  const list=LS.get("vs_sessions",[]);
+  const todas=LS.get("vs_sessions",[]);
+  const busca=$("#biblioBuscar")?$("#biblioBuscar").value:"";
+  const list=filtrarBiblioteca(todas,busca);
   const box=$("#histList");
-  if(!list.length){
+  const info=$("#biblioResultado");
+  if(info){
+    info.textContent=!busca.trim()?(todas.length?todas.length+(todas.length===1?" reunión archivada":" reuniones archivadas"):"")
+      :(list.length?list.length+(list.length===1?" reunión encontrada":" reuniones encontradas")+" de "+todas.length
+                   :"Ninguna reunión contiene eso");
+  }
+  if(!todas.length){
     box.innerHTML='<div class="empty">Tu biblioteca está vacía.<br><br>Cada reunión que guardes se archivará automáticamente en la carpeta de su organización, con la fecha como título.</div>';
+    return;
+  }
+  if(!list.length){
+    box.innerHTML='<div class="empty">No hay ninguna reunión que contenga «'+esc(busca)+'».<br><br>La búsqueda mira el título, la comunidad y todo lo que se dijo.</div>';
     return;
   }
   // Agrupar: organización -> año -> reuniones
@@ -1755,6 +1820,68 @@ $("#fileInput").onchange=async e=>{
   }catch(err){toast("❌ "+err.message)}
   $("#btnFile").disabled=false;$("#btnFile").textContent="📂 Transcribir archivo";
 };
+
+
+/* =====================================================================
+   MENÚ EXPORTAR
+   Antes había doce botones seguidos en una sola fila. Los seis formatos
+   de salida viven ahora aquí dentro; los botones son los mismos y
+   conservan su id, así que sus acciones no cambian.
+===================================================================== */
+(()=>{
+  const bt=$("#btnExportar"),menu=$("#menuExportar");
+  if(!bt||!menu)return;
+  const abrir=v=>{menu.classList.toggle("hide",!v);bt.setAttribute("aria-expanded",v?"true":"false")};
+  bt.onclick=e=>{e.stopPropagation();abrir(menu.classList.contains("hide"))};
+  // Al elegir un formato se cierra solo; si está deshabilitado, no.
+  menu.querySelectorAll(".expitem").forEach(b=>b.addEventListener("click",()=>{if(!b.disabled)abrir(false)}));
+  document.addEventListener("click",e=>{if(!menu.classList.contains("hide")&&!menu.contains(e.target))abrir(false)});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape")abrir(false)});
+})();
+
+/* =====================================================================
+   MEDIDOR DE CUOTA
+   Hasta ahora el usuario no sabía cuánta transcripción profesional le
+   quedaba hasta que se le agotaba a mitad de una junta.
+===================================================================== */
+async function refrescarCuota(){
+  const caja=$("#cuotaBox");
+  if(!caja)return;
+  try{
+    const s=await dgLlamada("saldo");
+    if(!s||!s.cuota_min){caja.classList.add("hide");return}
+    const usados=Math.min(s.usados_min,s.cuota_min);
+    const pct=Math.round(usados/s.cuota_min*100);
+    const hm=m=>m>=60?Math.floor(m/60)+" h "+(m%60?(m%60)+" min":""):m+" min";
+    $("#cuotaBarra").style.width=pct+"%";
+    if(pct>=90)$("#cuotaBarra").style.background="var(--err,#f87171)";
+    else if(pct>=70)$("#cuotaBarra").style.background="#fbbf24";
+    else $("#cuotaBarra").style.background="var(--grad)";
+    $("#cuotaTexto").textContent=hm(usados).trim()+" usadas de "+hm(s.cuota_min).trim()+
+      " · te quedan "+hm(s.restante_min).trim();
+    const d=new Date();d.setMonth(d.getMonth()+1);d.setDate(1);
+    $("#cuotaRenueva").textContent="renueva el 1 de "+d.toLocaleDateString("es-ES",{month:"long"});
+    caja.classList.remove("hide");
+  }catch(e){caja.classList.add("hide")}
+}
+/* Después de gastar cuota, el medidor se pone al día solo. */
+(()=>{
+  const orig=dgApuntarUso;
+  dgApuntarUso=async function(seg,origen){
+    await orig(seg,origen);
+    refrescarCuota();
+  };
+})();
+
+/* =====================================================================
+   BUSCADOR DE LA BIBLIOTECA
+===================================================================== */
+(()=>{
+  const inp=$("#biblioBuscar");
+  if(!inp)return;
+  let t=null;
+  inp.addEventListener("input",()=>{clearTimeout(t);t=setTimeout(renderHistory,180)});
+})();
 
 /* =====================================================================
    JUNTA ONLINE (Zoom, Meet, Teams…)
