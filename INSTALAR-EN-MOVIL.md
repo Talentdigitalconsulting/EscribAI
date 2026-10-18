@@ -1,11 +1,11 @@
-# 📱 Instalar Conste en el móvil
+# 📱 Instalar ConsteAi en el móvil
 
-La app ya está publicada en: **https://talentdigitalconsulting.github.io/Conste/**
+La app ya está publicada en: **https://talentdigitalconsulting.github.io/ConsteAi/**
 
 **Android (Chrome):**
 1. Abre la dirección en Chrome.
 2. Menú ⋮ → **"Añadir a pantalla de inicio"** (o el aviso "Instalar app").
-3. Ya tienes Conste con su icono, a pantalla completa, como una app normal.
+3. Ya tienes ConsteAi con su icono, a pantalla completa, como una app normal.
 
 **iPhone (Safari):**
 1. Abre la dirección en Safari.

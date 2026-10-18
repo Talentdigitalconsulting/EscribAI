@@ -1,4 +1,4 @@
-# 🎙️ Conste
+# 🎙️ ConsteAi
 
 Transcripción de reuniones en español con identificación de hablantes y resúmenes automáticos. PWA instalable, 100% local por defecto (sin costes ni servidores).
 
