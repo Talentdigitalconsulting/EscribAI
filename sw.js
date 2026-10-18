@@ -1,5 +1,5 @@
-/* Péndola — Service Worker v3 (red primero para el HTML, caché para el resto) */
-const CACHE = "pendola-v24";
+/* Conste — Service Worker v3 (red primero para el HTML, caché para el resto) */
+const CACHE = "conste-v25";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./auth.js", "./analitica.js", "./icons/icon-192.png", "./icons/icon-512.png"];
 
 self.addEventListener("install", e => {
