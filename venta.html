@@ -38,6 +38,10 @@ header .wrap{display:flex;align-items:center;gap:14px;padding-top:13px;padding-b
 .logo img{width:100%;height:100%;object-fit:cover}
 .bname{font-size:19px;font-weight:800;letter-spacing:-.02em}
 .bname span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+/* Logotipo completo: en la cabecera sustituye al azulejo y al nombre escrito. */
+.marcaHead{display:flex;align-items:center;flex:none}
+.marcaHead img{height:42px;width:auto;display:block}
+@media(max-width:600px){.marcaHead img{height:34px}}
 .hnav{margin-left:auto;display:flex;align-items:center;gap:26px}
 .hnav a{font-size:14.5px;color:var(--mut)}
 .hnav a:hover{color:var(--txt)}
@@ -169,8 +173,7 @@ footer img{height:56px;width:auto;border-radius:8px;opacity:.95}
 
 <header>
   <div class="wrap">
-    <div class="logo"><img src="icons/logo.png" alt="ConsteAi" onerror="this.remove()"></div>
-    <div class="bname">Conste<span>Ai</span></div>
+    <a href="index.html" class="marcaHead" aria-label="ConsteAi"><img src="icons/logo-consteai-oscuro.png" alt="ConsteAi — Que conste en acta"></a>
     <nav class="hnav">
       <a href="#como" class="hide-m">Cómo funciona</a>
       <a href="#plantilla" class="hide-m">Tu plantilla</a>
