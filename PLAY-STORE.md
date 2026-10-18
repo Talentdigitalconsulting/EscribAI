@@ -1,6 +1,6 @@
-# 🤖 Publicar Péndola en Google Play
+# 🤖 Publicar Conste en Google Play
 
-Tu app ya está publicada en **https://talentdigitalconsulting.github.io/Péndola/** — Google Play acepta apps web empaquetadas como **TWA** (Trusted Web Activity). El empaquetado lo hace gratis **PWABuilder**, de Microsoft.
+Tu app ya está publicada en **https://talentdigitalconsulting.github.io/Conste/** — Google Play acepta apps web empaquetadas como **TWA** (Trusted Web Activity). El empaquetado lo hace gratis **PWABuilder**, de Microsoft.
 
 ## Requisitos previos
 
@@ -9,15 +9,15 @@ Tu app ya está publicada en **https://talentdigitalconsulting.github.io/Péndol
 
 ## Pasos con PWABuilder (15 minutos)
 
-1. Entra en **https://www.pwabuilder.com** y pega `https://talentdigitalconsulting.github.io/Péndola/`.
+1. Entra en **https://www.pwabuilder.com** y pega `https://talentdigitalconsulting.github.io/Conste/`.
 2. Pulsa **Package for Stores → Android**.
-3. Rellena: Package ID `com.pendola.app`, App name `Péndola`, versión `1.0.0`. Deja "Signing key: New".
+3. Rellena: Package ID `com.conste.app`, App name `Conste`, versión `1.0.0`. Deja "Signing key: New".
 4. Descarga el paquete: obtendrás un **.aab** (para subir a Play) y un archivo **assetlinks.json**.
 5. **Importante:** ese `assetlinks.json` debe subirse al repositorio en `.well-known/assetlinks.json` (sin él, la app se abre con barra de navegador). Pásaselo a tu agente y lo sube.
 6. En **Play Console**: Crear aplicación → sube el `.aab` → rellena la ficha:
    - Descripción corta: "Escucha, transcribe, identifica quién habla y genera el acta automáticamente."
    - Capturas: abre la app en el móvil y haz 4-6 capturas.
-   - Política de privacidad: `https://talentdigitalconsulting.github.io/Péndola/privacidad.html`
+   - Política de privacidad: `https://talentdigitalconsulting.github.io/Conste/privacidad.html`
    - Permisos: micrófono → "grabación y transcripción de voz iniciada por el usuario".
 7. Envía a revisión (1-3 días).
 
