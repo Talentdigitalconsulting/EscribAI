@@ -1,11 +1,11 @@
-# 📱 Instalar EscribAI en el móvil
+# 📱 Instalar Péndola en el móvil
 
-La app ya está publicada en: **https://talentdigitalconsulting.github.io/EscribAI/**
+La app ya está publicada en: **https://talentdigitalconsulting.github.io/Péndola/**
 
 **Android (Chrome):**
 1. Abre la dirección en Chrome.
 2. Menú ⋮ → **"Añadir a pantalla de inicio"** (o el aviso "Instalar app").
-3. Ya tienes EscribAI con su icono, a pantalla completa, como una app normal.
+3. Ya tienes Péndola con su icono, a pantalla completa, como una app normal.
 
 **iPhone (Safari):**
 1. Abre la dirección en Safari.

@@ -1,20 +1,20 @@
-# 💰 Guía para vender EscribAI
+# 💰 Guía para vender Péndola
 
 ## Lo que ya tienes
 
 - `index.html` — la aplicación completa (el producto).
 - `venta.html` — landing de venta con planes Básico (0€) / Pro (9,99€/mes) / Empresas (29€/mes).
-- `VozScribe.bat` — lanzador de escritorio para Windows (puedes incluirlo como "versión PC" del producto).
+- `Pendola.bat` — lanzador de escritorio para Windows (puedes incluirlo como "versión PC" del producto).
 - PWA instalable en móvil (ver `INSTALAR-EN-MOVIL.md`).
 
 ## Plan de lanzamiento en 4 pasos
 
 ### 1. Publica (día 1)
-Sube la carpeta a Netlify (gratis, ver INSTALAR-EN-MOVIL.md). Configura `venta.html` como página principal: renómbrala a `index.html` y a la app llámala `app.html` (o usa un subdominio `app.tudominio.com`). Compra un dominio (~10€/año, ej. `vozscribe.es` en Namecheap o Porkbun).
+Sube la carpeta a Netlify (gratis, ver INSTALAR-EN-MOVIL.md). Configura `venta.html` como página principal: renómbrala a `index.html` y a la app llámala `app.html` (o usa un subdominio `app.tudominio.com`). Compra un dominio (~10€/año, ej. `pendola.es` en Namecheap o Porkbun).
 
 ### 2. Cobra (día 2)
 La forma más simple sin programar backend: **Stripe Payment Links**.
-1. Crea cuenta en stripe.com → Productos → añade "EscribAI 9,99€/mes".
+1. Crea cuenta en stripe.com → Productos → añade "Péndola 9,99€/mes".
 2. Genera el Payment Link y pégalo en `venta.html` donde pone `#ENLACE-STRIPE-PRO`.
 3. En "después del pago", redirige a una página con la app completa (ej. `app.html?plan=pro`).
 
