@@ -1,5 +1,5 @@
 /* =====================================================================
-   EscribAI · analitica.js — medición sin cookies
+   Péndola · analitica.js — medición sin cookies
 
    No usa cookies, ni localStorage, ni sessionStorage, ni huellas de
    dispositivo. No identifica a nadie ni sigue a la gente entre webs:
