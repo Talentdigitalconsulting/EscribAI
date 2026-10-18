@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a0e1a">
-<meta name="description" content="Conste — La junta termina y el acta ya está redactada. Transcripción con identificación de hablantes y acta automática.">
-<title>Conste · Que conste en acta</title>
+<meta name="description" content="ConsteAi — La junta termina y el acta ya está redactada. Transcripción con identificación de hablantes y acta automática.">
+<title>ConsteAi · Que conste en acta</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -500,7 +500,7 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
 
 <header>
   <div class="logo"><img src="icons/logo.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:11px" onerror="this.remove()"><svg viewBox="0 0 24 24"><path d="M12 15a4 4 0 0 0 4-4V6a4 4 0 1 0-8 0v5a4 4 0 0 0 4 4zm6-4a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.94V22h2v-3.06A8 8 0 0 0 20 11h-2z"/></svg></div>
-  <div class="brand"><b>Con<span style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">ste</span></b><span>Escucha · Transcribe · Resume · Acta</span></div>
+  <div class="brand"><b>Conste<span style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">Ai</span></b><span>Escucha · Transcribe · Resume · Acta</span></div>
   <button class="btn sm" id="btnTut" title="Ver el tutorial">❓</button>
   <div class="status"><span class="dot" id="statusDot"></span><span id="statusTxt">Listo</span></div>
 </header>
@@ -676,7 +676,7 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
       <button class="btn sm" id="btnCorrAdd" style="margin-top:10px">＋ Añadir palabra</button>
     </div>
     <div class="setrow">
-      <label>Licencia Conste</label>
+      <label>Licencia ConsteAi</label>
       <input type="text" id="setLic" placeholder="Pega aquí tu clave de licencia Pro">
       <p id="licEstado"></p>
       <p>El plan Pro desbloquea: hablantes ilimitados, acta completa (Markdown/JSON), historial de sesiones, descarga de audio y modo IA.</p>
@@ -807,7 +807,7 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
 <div class="overlay hide" id="tutOverlay">
   <div class="modal" style="max-width:720px">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-      <h2 style="margin:0">📖 Tutorial de Conste</h2>
+      <h2 style="margin:0">📖 Tutorial de ConsteAi</h2>
       <button class="btn sm" id="tutCerrar" style="margin-left:auto">✕ Cerrar</button>
     </div>
     <div class="tutwrap">
@@ -829,7 +829,7 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
 <div class="overlay hide" id="dgOverlay">
   <div class="modal" style="max-width:560px">
     <h2>🟣 Transcripción profesional</h2>
-    <p class="sub">Para los audios ya grabados, Conste usa un motor de voz profesional que transcribe con mucha más precisión y separa las voces de verdad. <b>Está incluido en el plan Pro y no tienes que configurar nada.</b></p>
+    <p class="sub">Para los audios ya grabados, ConsteAi usa un motor de voz profesional que transcribe con mucha más precisión y separa las voces de verdad. <b>Está incluido en el plan Pro y no tienes que configurar nada.</b></p>
     <div style="background:linear-gradient(135deg,rgba(99,102,241,.18),rgba(34,211,238,.1));border:1px solid var(--acc);border-radius:12px;padding:12px 16px;margin-bottom:14px">
       ✅ Tu plan incluye <b>10 horas de transcripción profesional al mes</b>, que se renuevan el día 1. Pulsa «📂 Transcribir archivo» o «🤖 Mejorar con IA» y funciona directamente.
     </div>
@@ -847,7 +847,7 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
 
 <script>
 /* =====================================================================
-   Conste · dictado + identificación de hablantes + resúmenes
+   ConsteAi · dictado + identificación de hablantes + resúmenes
    100% local por defecto. IA opcional vía API key (Deepgram / OpenAI).
 ===================================================================== */
 "use strict";
@@ -1119,8 +1119,8 @@ function esRepetido(txt){
    siempre confunde (nombres propios, tecnicismos, la propia marca).
    El usuario puede añadir los suyos en Ajustes. */
 const CORRECCIONES_BASE=[
-  ["escriba y escribáis","Conste"],["escriba i","Conste"],["escribe ay","Conste"],
-  ["escriba ai","Conste"],["escribay","Conste"],["escriba y","Conste"],
+  ["escriba y escribáis","ConsteAi"],["escriba i","ConsteAi"],["escribe ay","ConsteAi"],
+  ["escriba ai","ConsteAi"],["escribay","ConsteAi"],["escriba y","ConsteAi"],
   ["entreacriciones","y transcripciones"],["entre acriciones","y transcripciones"],
   ["acta entre","acta"],["derrama","derrama"],["l p h","LPH"],
   ["orden del dia","orden del día"],["por unanimidad","por unanimidad"]
@@ -1619,19 +1619,19 @@ function plainTranscript(){
 }
 const PLANTILLAS={
   general:{titulo:"📋 Acta de reunión",cab:[],sec:[["✅ Decisiones y acuerdos","decisiones","Sin decisiones explícitas"],["📌 Tareas y acciones","tareas","Sin tareas detectadas"],["📅 Fechas y plazos","fechas","Sin fechas mencionadas"],["❓ Preguntas abiertas","preguntas","Sin preguntas abiertas"],["🏷️ Temas principales","temas",""]],pie:""},
-  junta:{titulo:"🏢 Acta de Junta de Propietarios",cab:["Comunidad: ______________________________","Lugar y hora de celebración: ______________","Presidente: ____________  Secretario/Administrador: ____________","Convocatoria: ☐ Primera  ☐ Segunda"],sec:[["📋 Orden del día y temas tratados","temas",""],["✅ Acuerdos adoptados","decisiones","No se adoptaron acuerdos"],["📌 Encargos y gestiones pendientes","tareas","Sin encargos"],["📅 Plazos y fechas acordadas","fechas","Sin plazos"],["🗣️ Ruegos y preguntas","preguntas","Sin ruegos ni preguntas"]],pie:"Borrador generado automáticamente con Conste. Carece de validez hasta su revisión y firma por Presidente y Secretario conforme a la Ley de Propiedad Horizontal."},
+  junta:{titulo:"🏢 Acta de Junta de Propietarios",cab:["Comunidad: ______________________________","Lugar y hora de celebración: ______________","Presidente: ____________  Secretario/Administrador: ____________","Convocatoria: ☐ Primera  ☐ Segunda"],sec:[["📋 Orden del día y temas tratados","temas",""],["✅ Acuerdos adoptados","decisiones","No se adoptaron acuerdos"],["📌 Encargos y gestiones pendientes","tareas","Sin encargos"],["📅 Plazos y fechas acordadas","fechas","Sin plazos"],["🗣️ Ruegos y preguntas","preguntas","Sin ruegos ni preguntas"]],pie:"Borrador generado automáticamente con ConsteAi. Carece de validez hasta su revisión y firma por Presidente y Secretario conforme a la Ley de Propiedad Horizontal."},
   comercial:{titulo:"💼 Informe de reunión comercial",cab:["Cliente / Empresa: ______________","Comercial: ______________","Fase: ☐ Prospección  ☐ Propuesta  ☐ Negociación  ☐ Cierre"],sec:[["🎯 Necesidades e intereses detectados","destacadas","—"],["✅ Acuerdos alcanzados","decisiones","—"],["📌 Compromisos y próximos pasos","tareas","—"],["❓ Objeciones y dudas del cliente","preguntas","—"],["📅 Fechas clave","fechas","—"]],pie:""},
   clinica:{titulo:"🩺 Nota de sesión / consulta",cab:["Profesional: ______________","Paciente/Cliente (iniciales): ____","Nº de sesión: ____"],sec:[["📝 Observaciones relevantes","destacadas","—"],["✅ Valoración y acuerdos de la sesión","decisiones","—"],["📌 Pauta / tareas encomendadas","tareas","—"],["📅 Próximas citas","fechas","—"]],pie:"Documento confidencial. Tratar conforme al RGPD y al secreto profesional."},
   formacion:{titulo:"🎓 Resumen de clase / formación",cab:["Curso / Asignatura: ______________","Docente: ______________"],sec:[["📋 Temas impartidos","temas",""],["📌 Tareas y ejercicios encomendados","tareas","—"],["❓ Dudas planteadas por los alumnos","preguntas","—"],["📅 Fechas de examen / entrega","fechas","—"]],pie:""},
   entrevista:{titulo:"🎤 Entrevista transcrita",cab:["Entrevistador: ______________","Entrevistado: ______________"],sec:[["💬 Declaraciones destacadas","destacadas","—"],["📋 Temas tratados","temas",""],["❓ Preguntas clave","preguntas","—"]],pie:""},
-  asociacion:{titulo:"🤝 Acta de Asamblea de Asociación",cab:["Asociación: ______________","Tipo: ☐ Ordinaria  ☐ Extraordinaria","Presidente/a: ____________  Secretario/a: ____________"],sec:[["📋 Orden del día y temas tratados","temas",""],["✅ Acuerdos adoptados","decisiones","Sin acuerdos"],["📌 Encargos y comisiones","tareas","—"],["🗣️ Ruegos y preguntas","preguntas","—"],["📅 Plazos y fechas","fechas","—"]],pie:"Borrador de acta generado con Conste, pendiente de aprobación y firma conforme a los estatutos de la asociación."},
-  pleno:{titulo:"🏛️ Acta de sesión de órgano colegiado",cab:["Órgano: ______________","Sesión: ☐ Ordinaria  ☐ Extraordinaria   Quórum: ____","Preside: ____________  Secretario/a: ____________"],sec:[["📋 Orden del día y asuntos tratados","temas",""],["✅ Acuerdos y votaciones (a favor / en contra / abstenciones)","decisiones","Sin acuerdos"],["📌 Mandatos y gestiones encomendadas","tareas","—"],["🗣️ Intervenciones y ruegos","preguntas","—"],["📅 Plazos","fechas","—"]],pie:"Borrador de trabajo generado con Conste. El acta oficial requiere la redacción, diligencia y firma del Secretario/a con el visto bueno de la Presidencia."}
+  asociacion:{titulo:"🤝 Acta de Asamblea de Asociación",cab:["Asociación: ______________","Tipo: ☐ Ordinaria  ☐ Extraordinaria","Presidente/a: ____________  Secretario/a: ____________"],sec:[["📋 Orden del día y temas tratados","temas",""],["✅ Acuerdos adoptados","decisiones","Sin acuerdos"],["📌 Encargos y comisiones","tareas","—"],["🗣️ Ruegos y preguntas","preguntas","—"],["📅 Plazos y fechas","fechas","—"]],pie:"Borrador de acta generado con ConsteAi, pendiente de aprobación y firma conforme a los estatutos de la asociación."},
+  pleno:{titulo:"🏛️ Acta de sesión de órgano colegiado",cab:["Órgano: ______________","Sesión: ☐ Ordinaria  ☐ Extraordinaria   Quórum: ____","Preside: ____________  Secretario/a: ____________"],sec:[["📋 Orden del día y asuntos tratados","temas",""],["✅ Acuerdos y votaciones (a favor / en contra / abstenciones)","decisiones","Sin acuerdos"],["📌 Mandatos y gestiones encomendadas","tareas","—"],["🗣️ Intervenciones y ruegos","preguntas","—"],["📅 Plazos","fechas","—"]],pie:"Borrador de trabajo generado con ConsteAi. El acta oficial requiere la redacción, diligencia y firma del Secretario/a con el visto bueno de la Presidencia."}
 };
 function buildActa(){
   const d=new Date(),sum=currentSummary||generateSummary();
   const t=plantillaActual();
   const L=[];
-  L.push("# "+t.titulo+" — Conste");
+  L.push("# "+t.titulo+" — ConsteAi");
   L.push("**Fecha:** "+d.toLocaleDateString("es-ES",{weekday:"long",year:"numeric",month:"long",day:"numeric"}));
   L.push("**Duración:** "+fmtT(elapsed)+" · **Palabras:** "+(sum?sum.totalWords:"-"));
   L.push("**Participantes:** "+(speakers.map(s=>s.name).join(", ")||"—"));
@@ -1660,7 +1660,7 @@ function buildActa(){
   }
   L.push("\n---");
   if(t.pie)L.push("_"+t.pie+"_");
-  L.push("_Generado con Conste_");
+  L.push("_Generado con ConsteAi_");
   return L.join("\n");
 }
 function download(name,content,type){
@@ -1768,7 +1768,7 @@ $("#btnEnviar").onclick=()=>{
   let cuerpo="ACTA — "+o.nombre+" — "+fecha+"\n\n";
   const bloque=(t,arr)=>{if(arr&&arr.length)cuerpo+=t+"\n"+arr.map(i=>"· "+i.who+": "+i.text).join("\n")+"\n\n"};
   if(sum){bloque("ACUERDOS:",sum.decisiones);bloque("TAREAS:",sum.tareas);bloque("PLAZOS:",sum.fechas)}
-  cuerpo+="El acta completa se adjunta como archivo.\n\n— Generado con Conste";
+  cuerpo+="El acta completa se adjunta como archivo.\n\n— Generado con ConsteAi";
   download("acta-"+o.nombre.replace(/\s+/g,"-")+"-"+stamp()+".md",buildActa(),"text/markdown");
   location.href="mailto:?bcc="+encodeURIComponent(o.dest.join(","))+"&subject="+encodeURIComponent("Acta — "+o.nombre+" — "+fecha)+"&body="+encodeURIComponent(cuerpo.slice(0,1800));
   toast("📧 Email preparado — adjunta el archivo del acta que se acaba de descargar");
@@ -2025,7 +2025,7 @@ function keytermsActuales(){
   const tipo=(settings.plantilla||"general").replace(/^u:.*/,"general");
   (VOCAB_SECTOR[tipo]||VOCAB_SECTOR.general).forEach(v=>t.push(v));
   (settings.correcciones||[]).forEach(c=>{ if(c&&c.a)t.push(c.a) });
-  t.push("Conste","acta","borrador");
+  t.push("ConsteAi","acta","borrador");
   const vistos=new Set(),out=[];
   t.forEach(x=>{
     const v=String(x||"").trim();
@@ -2793,24 +2793,24 @@ $("#dgCerrar").onclick=()=>$("#dgOverlay").classList.add("hide");
 ===================================================================== */
 const TUTORIAL=[
  {i:"🚀",t:"Primeros pasos",p:[
-  ["Qué es Conste","Conste escucha tus reuniones, identifica quién habla por su voz, transcribe en tiempo real y redacta el acta sola. Todo se procesa en tu dispositivo: tus conversaciones no se suben a ningún servidor."],
+  ["Qué es ConsteAi","ConsteAi escucha tus reuniones, identifica quién habla por su voz, transcribe en tiempo real y redacta el acta sola. Todo se procesa en tu dispositivo: tus conversaciones no se suben a ningún servidor."],
   ["Tu cuenta","Con la cuenta gratuita tienes transcripción ilimitada, 2 perfiles de voz, 1 organización y exportación en TXT. Tus ajustes, organizaciones y actas guardadas viajan con tu cuenta: entra con el mismo correo en el PC y en el móvil y lo tendrás todo."],
   ["La pantalla principal","Arriba están las pestañas: Grabar (el trabajo del día a día), Resumen (el acta), Biblioteca (el archivo de todas tus reuniones), Ajustes y Planes. El botón ❓ de la cabecera reabre este tutorial cuando quieras: puedes elegir el capítulo que te interese en el menú de la izquierda."]]},
  {i:"🗣️",t:"Hablantes y calibración",p:[
   ["Añadir hablantes","Pulsa «＋ Añadir hablante» y escribe el nombre de cada participante (María, Cliente, Presidente…). Cada uno tiene un color, y sus intervenciones aparecerán pintadas con él."],
-  ["Calibrar la voz","Cada persona lee una frase en voz alta durante 6 segundos. Conste aprende su tono y su timbre para reconocerla después cuando hable. Hazlo cerca del micrófono y con voz natural."],
+  ["Calibrar la voz","Cada persona lee una frase en voz alta durante 6 segundos. ConsteAi aprende su tono y su timbre para reconocerla después cuando hable. Hazlo cerca del micrófono y con voz natural."],
   ["Precisión","La identificación funciona mejor con voces diferenciadas. Si la app confunde a dos personas con voces muy parecidas, pasa el cursor por la burbuja y corrige el hablante con el botón 👤. También puedes ajustar la sensibilidad de cambio de hablante en Ajustes."]]},
  {i:"🎙️",t:"Grabar y transcribir",p:[
   ["Empezar a grabar","Pulsa el micrófono grande. Verás la onda de sonido, el cronómetro y el texto apareciendo en tiempo real, cada frase asignada a su hablante. El botón de pausa detiene temporalmente; volver a pulsar el micrófono termina la sesión."],
   ["Editar sobre la marcha","Pasa el cursor (o el dedo) por cualquier burbuja: ✏️ edita el texto, 👤 cambia el hablante y 🗑 la elimina. La transcripción es tuya: corrígela cuanto necesites antes de generar el acta."],
-  ["En el móvil","Instala la app desde Chrome con «Añadir a pantalla de inicio». Durante la grabación, Conste mantiene la pantalla encendida por ti. Si el sistema interrumpe el micrófono (por ejemplo una llamada entrante que no descuelgas), la grabación se reconecta sola en cuanto vuelve a estar libre."]]},
+  ["En el móvil","Instala la app desde Chrome con «Añadir a pantalla de inicio». Durante la grabación, ConsteAi mantiene la pantalla encendida por ti. Si el sistema interrumpe el micrófono (por ejemplo una llamada entrante que no descuelgas), la grabación se reconecta sola en cuanto vuelve a estar libre."]]},
  {i:"🏛️",t:"Organizaciones",p:[
   ["Qué son","Una organización es la ficha de quien se reúne: una comunidad de propietarios, un consejo de administración, una asociación, un cliente. Guarda su nombre, presidente, secretario, la plantilla de acta que le corresponde y los emails de los destinatarios."],
   ["Crear y usar","Antes de grabar, elige la organización en la barra superior (o crea una con «＋ Nueva»). El acta saldrá sellada con sus datos y la sesión quedará archivada a su nombre. El plan gratis incluye 1 organización; el Pro, ilimitadas."],
   ["Voces que se recuerdan","Las voces calibradas se guardan dentro de la organización: en la próxima reunión, al seleccionarla, los participantes se cargan solos y la app los reconoce sin volver a calibrar. Solo tendrás que calibrar a alguien nuevo la primera vez que asista."],
   ["Envío sin errores","Al pulsar «📧 Enviar acta», la app te muestra a qué organización y a cuántos destinatarios se enviará, y te pide confirmación. Los destinatarios van en copia oculta y el asunto lleva el nombre y la fecha. Imposible confundirse de comunidad."]]},
  {i:"✨",t:"Resumen y plantillas",p:[
-  ["Generar el resumen","Al terminar la reunión pulsa «✨ Generar resumen»: Conste detecta decisiones y acuerdos, tareas, fechas y plazos, preguntas abiertas, frases importantes, los temas tratados y el porcentaje de participación de cada asistente."],
+  ["Generar el resumen","Al terminar la reunión pulsa «✨ Generar resumen»: ConsteAi detecta decisiones y acuerdos, tareas, fechas y plazos, preguntas abiertas, frases importantes, los temas tratados y el porcentaje de participación de cada asistente."],
   ["Plantillas de acta","El desplegable junto a «Generar resumen» elige el formato del acta: general, junta de propietarios, reunión comercial, consulta profesional, clase, entrevista, asamblea de asociación o pleno. Cada una organiza el documento como ese sector espera."],
   ["El acta","El acta incluye la cabecera con fecha, duración, participantes y organización, las secciones de la plantilla elegida y la transcripción completa. Descárgala con «⬇ Acta (MD)» o en Word con «⬇ Word»."]]},
  {i:"⭐",t:"Mis plantillas (Pro)",p:[
@@ -2824,7 +2824,7 @@ const TUTORIAL=[
   ["El motor profesional","Tu plan Pro incluye 10 horas al mes de transcripción profesional, que se renuevan el día 1. No tienes que contratar nada aparte ni configurar ninguna clave: pulsas el botón y funciona."],
   ["Transcribir audios ya grabados","«📂 Transcribir archivo» acepta audios y vídeos: la reunión grabada con el móvil, un audio de WhatsApp, una entrevista. Los transcribe identificando las voces con el mismo motor profesional."],
   ["Mejorar con IA","«🤖 Mejorar con IA» reprocesa el audio de la sesión recién grabada con diarización profesional en la nube. Útil cuando hay muchas voces, se pisan al hablar o necesitas máxima precisión."],
-  ["Juntas online","Si la reunión es por Zoom, Meet o Teams, pulsa «💻 Junta online». El navegador te pedirá elegir qué compartir: selecciona la pestaña de la videollamada y —esto es lo importante— marca la casilla «También compartir el audio de la pestaña» antes de aceptar. Conste mezcla lo que suena en la reunión con tu micrófono, así que en el acta salen todos. Al terminar, pulsa «⏹️ Terminar junta online» y se transcribe sola. Necesita Chrome o Edge en ordenador y consume cuota de transcripción profesional, porque el dictado del navegador solo sabe oír el micrófono."]]},
+  ["Juntas online","Si la reunión es por Zoom, Meet o Teams, pulsa «💻 Junta online». El navegador te pedirá elegir qué compartir: selecciona la pestaña de la videollamada y —esto es lo importante— marca la casilla «También compartir el audio de la pestaña» antes de aceptar. ConsteAi mezcla lo que suena en la reunión con tu micrófono, así que en el acta salen todos. Al terminar, pulsa «⏹️ Terminar junta online» y se transcribe sola. Necesita Chrome o Edge en ordenador y consume cuota de transcripción profesional, porque el dictado del navegador solo sabe oír el micrófono."]]},
  {i:"📧",t:"Guardar y exportar",p:[
   ["La biblioteca","«💾 Guardar sesión» archiva la reunión en la carpeta de su organización, con la fecha como título (Pro). En la pestaña Biblioteca tienes todas tus comunidades ordenadas por año: abres cualquier acta cuando quieras y, con el botón 📦, descargas la carpeta completa de esa reunión (acta, transcripción y audio) en un ZIP. El acta y la transcripción viajan con tu cuenta a cualquier dispositivo; el audio se queda en el equipo donde grabaste, porque no custodiamos grabaciones de tus vecinos."],
   ["Exportaciones","Tienes TXT (gratis), acta en Markdown, Word (con o sin tu modelo), JSON con todos los datos y el audio de la grabación. Y «📋 Copiar» para pegar la transcripción donde quieras."]]},
@@ -2923,11 +2923,11 @@ function avisoNavegador(){
   if(n.esFirefox){
     nivel="alto";
     tit="Firefox no puede dictar en directo";
-    txt="Firefox es el único navegador que no incorpora el motor de dictado, así que aquí no verás el texto mientras se habla. Tienes dos salidas: abrir Conste en Chrome o Edge, o grabar la reunión con cualquier grabadora y subir después el audio para transcribirlo. Todo lo demás (actas, plantillas, historial) funciona con normalidad.";
+    txt="Firefox es el único navegador que no incorpora el motor de dictado, así que aquí no verás el texto mientras se habla. Tienes dos salidas: abrir ConsteAi en Chrome o Edge, o grabar la reunión con cualquier grabadora y subir después el audio para transcribirlo. Todo lo demás (actas, plantillas, historial) funciona con normalidad.";
   }else if(n.esiOS){
     nivel="medio";
     tit="En iPhone y iPad el dictado en directo se interrumpe";
-    txt="Apple obliga a todos los navegadores del iPhone y el iPad a usar su propio motor, que corta el dictado cada pocos segundos. Para una junta entera, lo fiable es grabar con la app de notas de voz y subir luego el audio a Conste. Desde un ordenador con Chrome o Edge sí funciona en directo.";
+    txt="Apple obliga a todos los navegadores del iPhone y el iPad a usar su propio motor, que corta el dictado cada pocos segundos. Para una junta entera, lo fiable es grabar con la app de notas de voz y subir luego el audio a ConsteAi. Desde un ordenador con Chrome o Edge sí funciona en directo.";
   }else if(n.esSafari){
     nivel="medio";
     tit="En Safari el dictado en directo puede fallar";
@@ -2935,7 +2935,7 @@ function avisoNavegador(){
   }else if(!SR){
     nivel="alto";
     tit="Este navegador no admite el dictado en directo";
-    txt="No hemos encontrado el motor de voz en tu navegador. Abre Conste en Chrome o en Edge, o sube un audio ya grabado para transcribirlo.";
+    txt="No hemos encontrado el motor de voz en tu navegador. Abre ConsteAi en Chrome o en Edge, o sube un audio ya grabado para transcribirlo.";
   }
   if(!nivel)return;
 
@@ -2965,7 +2965,7 @@ avisoNavegador();
 </script>
 <footer id="firmaTDC" style="max-width:1100px;margin:36px auto 16px;padding:20px 16px 6px;border-top:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
   <img src="icons/logo-tdc.png" alt="Talent &amp; Digital Consulting" style="height:58px;width:auto;border-radius:8px;opacity:.96">
-  <div style="font-size:12px;color:#8b93a7;line-height:1.6">© 2026 <strong style="color:#c9d1e3">Talent &amp; Digital Consulting</strong> · Todos los derechos reservados.<br>Conste es un producto desarrollado y propiedad de Talent &amp; Digital Consulting.</div>
+  <div style="font-size:12px;color:#8b93a7;line-height:1.6">© 2026 <strong style="color:#c9d1e3">Talent &amp; Digital Consulting</strong> · Todos los derechos reservados.<br>ConsteAi es un producto desarrollado y propiedad de Talent &amp; Digital Consulting.</div>
   <div style="font-size:12px"><a href="privacidad.html" style="color:#7aa2ff;text-decoration:none">Política de privacidad</a><span style="color:#4a5268"> · </span><a href="condiciones.html" style="color:#7aa2ff;text-decoration:none">Condiciones de uso</a><span style="color:#4a5268"> · </span><a href="aviso-legal.html" style="color:#7aa2ff;text-decoration:none">Aviso legal</a><span style="color:#4a5268"> · </span><a href="mailto:contact@talentdigitalconsulting.com" style="color:#7aa2ff;text-decoration:none">Contacto</a></div>
 </footer>
 <script>
@@ -2997,7 +2997,7 @@ avisoNavegador();
   const logo=cab.querySelector(".logo");
   if(logo)marca.appendChild(logo.cloneNode(true));
   marca.insertAdjacentHTML("beforeend",
-    '<div class="marca"><span class="nom">Con<span style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">ste</span></span>'+
+    '<div class="marca"><span class="nom">Conste<span style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">Ai</span></span>'+
     '<span class="sub">Que conste en acta</span></div>');
   lado.appendChild(marca);
   lado.appendChild(navi);                       // la navegación se vuelve vertical

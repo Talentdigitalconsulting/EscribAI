@@ -1,5 +1,5 @@
 /* =====================================================================
-   Conste · auth.js — Cuentas, planes y sincronización (Supabase)
+   ConsteAi · auth.js — Cuentas, planes y sincronización (Supabase)
 ===================================================================== */
 "use strict";
 const SB_URL="https://tbaliejmtaeniffmqgif.supabase.co";
@@ -71,14 +71,14 @@ function renderPlanes(){
 window.gestionarSuscripcion=()=>{
   const email=sesionUser?sesionUser.email:"";
   if(PORTAL_LINK){location.href=PORTAL_LINK+(PORTAL_LINK.includes("?")?"&":"?")+"prefilled_email="+encodeURIComponent(email);return}
-  location.href="mailto:contact@talentdigitalconsulting.com?subject="+encodeURIComponent("Gestionar mi suscripción — Conste")+"&body="+encodeURIComponent("Hola, quiero gestionar o cancelar mi suscripción.\nMi cuenta: "+email);
+  location.href="mailto:contact@talentdigitalconsulting.com?subject="+encodeURIComponent("Gestionar mi suscripción — ConsteAi")+"&body="+encodeURIComponent("Hola, quiero gestionar o cancelar mi suscripción.\nMi cuenta: "+email);
 };
 window.suscribir=id=>{
   if(window.aEvento)window.aEvento("clic_plan");
   const link=PAY_LINKS[id];
   const email=sesionUser?sesionUser.email:"";
   if(link){location.href=link+(link.includes("?")?"&":"?")+"prefilled_email="+encodeURIComponent(email);return}
-  location.href="mailto:contact@talentdigitalconsulting.com?subject="+encodeURIComponent("Suscripción "+id+" — Conste")+"&body="+encodeURIComponent("Hola, quiero suscribirme al plan "+id+".\nMi cuenta: "+email);
+  location.href="mailto:contact@talentdigitalconsulting.com?subject="+encodeURIComponent("Suscripción "+id+" — ConsteAi")+"&body="+encodeURIComponent("Hola, quiero suscribirme al plan "+id+".\nMi cuenta: "+email);
 };
 
 /* ---------- UI: modal de acceso ---------- */
@@ -166,7 +166,7 @@ document.getElementById("authAccion").onclick=async()=>{
   }catch(err){
     console.error("auth:",err);
     let m=err&&err.message&&err.message!=="{}"?err.message:"";
-    if(/Failed to fetch|NetworkError|Load failed|fetch failed/i.test(m)||err instanceof TypeError)m="🔌 No hay conexión con el servidor de Conste. Comprueba tu internet y vuelve a intentarlo en unos minutos. Si el problema continúa, escríbenos a contact@talentdigitalconsulting.com";
+    if(/Failed to fetch|NetworkError|Load failed|fetch failed/i.test(m)||err instanceof TypeError)m="🔌 No hay conexión con el servidor de ConsteAi. Comprueba tu internet y vuelve a intentarlo en unos minutos. Si el problema continúa, escríbenos a contact@talentdigitalconsulting.com";
     else if(m==="Invalid login credentials")m="Correo o contraseña incorrectos";
     else if(m==="User already registered")m="Ese correo ya tiene cuenta: usa «Entrar» o recupera la contraseña";
     else if(!m||err.status>=500)m="No se pudo enviar el correo de verificación (fallo del SMTP). Arreglo: en Supabase → SMTP pon un remitente verificado en Brevo, o desactiva «Confirm email» en Authentication → Providers.";
@@ -241,7 +241,7 @@ function pintarPrueba(){
 }
 function arrancarPrueba(){
   if(pruebaRestante()<=0){
-    window.pruebaMuro("Ya usaste tu prueba gratuita en este navegador. Crea una cuenta gratis para seguir usando Conste.");
+    window.pruebaMuro("Ya usaste tu prueba gratuita en este navegador. Crea una cuenta gratis para seguir usando ConsteAi.");
     return;
   }
   pruebaOn=true;
@@ -331,7 +331,7 @@ async function cargarPerfil(){
   licPayload=await verifyLicense(settings.license);
   recalcPro();
   if(typeof curar!=="undefined"&&curar)syncNube();
-  console.log("[Conste] sesión:",sesionUser?sesionUser.email:"-","| plan nube:",perfil?perfil.plan:"-","| licencia local:",settings.license?"sí":"no","| PRO:",!!pro);
+  console.log("[ConsteAi] sesión:",sesionUser?sesionUser.email:"-","| plan nube:",perfil?perfil.plan:"-","| licencia local:",settings.license?"sí":"no","| PRO:",!!pro);
   const b=document.getElementById("btnUser");
   b.textContent=sesionUser?"👤 "+(sesionUser.email.split("@")[0]):"👤 Entrar";
   b.title=sesionUser?sesionUser.email+" — clic para salir":"Entrar o crear cuenta";
@@ -392,7 +392,7 @@ if(btnBC)btnBC.onclick=async()=>{
     const{error}=await sb.functions.invoke("borrar-cuenta");
     if(error)throw error;
     localStorage.clear();
-    toast("Cuenta eliminada. Gracias por probar Conste.");
+    toast("Cuenta eliminada. Gracias por probar ConsteAi.");
     setTimeout(()=>location.reload(),1600);
   }catch(e){toast("❌ No se pudo eliminar ("+(e.message||e)+"). Escríbenos a contact@talentdigitalconsulting.com y la eliminamos en 72 h.")}
 };

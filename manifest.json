@@ -1,6 +1,6 @@
 {
-  "name": "Conste — Que conste en acta",
-  "short_name": "Conste",
+  "name": "ConsteAi — Que conste en acta",
+  "short_name": "ConsteAi",
   "description": "Transcripción de reuniones en español con identificación de hablantes y resúmenes automáticos.",
   "lang": "es",
   "start_url": "./index.html",
