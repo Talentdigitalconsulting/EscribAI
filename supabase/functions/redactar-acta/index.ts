@@ -23,11 +23,23 @@ const MAX_BLOQUES_MES = 600;
 const MAX_CARACTERES = 18000;   // por bloque
 const MAX_BLOQUES = 12;         // por llamada
 
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+/* Solo responde a nuestras propias webs. Cualquier otro origen recibe la
+   primera de la lista, con lo que su navegador bloquea la respuesta. */
+const ORIGENES = [
+  "https://talentdigitalconsulting.github.io",
+  "https://consteai.es",
+  "https://www.consteai.es",
+];
+function cabeceras(req: Request) {
+  const o = req.headers.get("Origin") ?? "";
+  return {
+    "Access-Control-Allow-Origin": ORIGENES.includes(o) ? o : ORIGENES[0],
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+}
+let cors: Record<string, string> = cabeceras(new Request("https://x"));
 const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 
@@ -154,6 +166,7 @@ async function redactarBloque(texto: string, ctx: any, clave: string) {
 }
 
 Deno.serve(async (req) => {
+  cors = cabeceras(req);
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   try {
@@ -177,7 +190,21 @@ Deno.serve(async (req) => {
 
     const plan = perfil?.plan ?? "demo";
     const vigente = !perfil?.plan_hasta || new Date(perfil.plan_hasta) > new Date();
-    if (!vigente || !PLANES_CON_IA.includes(plan)) return json({ error: "plan_insuficiente", plan }, 403);
+    const esPro = vigente && PLANES_CON_IA.includes(plan);
+
+    /* Acta de regalo: quien no es Pro puede redactar con IA UNA vez en la
+       vida de su cuenta. Es la única forma de que vea lo que está
+       comprando antes de pagar. Se cuenta por filas con origen "acta":
+       si ya hay alguna, se acabó el regalo. */
+    let regalo = false;
+    if (!esPro) {
+      const { count: usadasAlgunaVez } = await admin
+        .from("uso_transcripcion")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id).eq("origen", "acta");
+      if ((usadasAlgunaVez ?? 0) > 0) return json({ error: "plan_insuficiente", plan }, 403);
+      regalo = true;
+    }
 
     const inicioMes = new Date();
     inicioMes.setUTCDate(1); inicioMes.setUTCHours(0, 0, 0, 0);
@@ -198,9 +225,15 @@ Deno.serve(async (req) => {
 
     const clave = Deno.env.get("OPENAI_API_KEY")!;
     const ctx = body.contexto || {};
+    // El modelo de redacción propio es una función Pro: en el acta de
+    // regalo se redacta con el estilo estándar.
+    if (regalo) ctx.estilo = null;
+    // Un acta de regalo es una sola llamada: si la reunión fue larga,
+    // se redactan los primeros bloques y se avisa.
+    const bloquesUsados = regalo ? bloques.slice(0, 3) : bloques;
 
     // Los bloques se redactan en paralelo y luego se funden en una sola acta.
-    const partes = await Promise.all(bloques.map((b) => redactarBloque(b, ctx, clave)));
+    const partes = await Promise.all(bloquesUsados.map((b) => redactarBloque(b, ctx, clave)));
 
     const unido: Record<string, { quien: string; texto: string }[]> = {};
     for (const k of LISTAS) {
@@ -221,7 +254,12 @@ Deno.serve(async (req) => {
       user_id: user.id, email: user.email, segundos: 0, origen: "acta",
     });
 
-    return json({ ...unido, restante_mes: Math.max(0, MAX_BLOQUES_MES - usados - 1) });
+    return json({
+      ...unido,
+      restante_mes: regalo ? 0 : Math.max(0, MAX_BLOQUES_MES - usados - 1),
+      regalo,
+      recortada: regalo && bloques.length > bloquesUsados.length,
+    });
   } catch (e) {
     const msg = (e && (e as Error).message) || "";
     if (msg === "ia_no_disponible") return json({ error: "ia_no_disponible" }, 502);
