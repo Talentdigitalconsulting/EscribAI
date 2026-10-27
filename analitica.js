@@ -20,13 +20,14 @@
     return (window.matchMedia && window.matchMedia("(max-width: 780px)").matches) ? "movil" : "escritorio";
   }
 
-  window.aEvento = function (nombre) {
+  window.aEvento = function (nombre, detalle) {
     try {
       var datos = JSON.stringify({
         evento: nombre,
         pagina: pagina(),
         origen: document.referrer || "",
-        disp: dispositivo()
+        disp: dispositivo(),
+        detalle: detalle ? String(detalle).slice(0, 200) : undefined
       });
       // sendBeacon no bloquea la navegación ni retrasa la página.
       // IMPORTANTE: el tipo tiene que ser text/plain. Con application/json
@@ -50,6 +51,32 @@
       }
     } catch (e) { /* la analítica jamás debe romper la app */ }
   };
+
+  window.registrarEvento = window.aEvento;
+
+  /* Errores no controlados: se envían como evento "error" con el
+     mensaje recortado y sin nada personal (el servidor vuelve a
+     limpiarlo). Como mucho cinco por carga de página, y sin repetir el
+     mismo, para no inundar la tabla si algo entra en bucle. */
+  var erroresEnviados = 0, erroresVistos = {};
+  function avisarError(mensaje, donde) {
+    try {
+      if (erroresEnviados >= 5) return;
+      var m = String(mensaje || "").slice(0, 160);
+      if (!m || erroresVistos[m]) return;
+      erroresVistos[m] = true;
+      erroresEnviados++;
+      window.aEvento("error", (donde ? donde + " · " : "") + m);
+    } catch (e) {}
+  }
+  window.addEventListener("error", function (ev) {
+    var src = (ev.filename || "").split("/").pop();
+    avisarError(ev.message, src + (ev.lineno ? ":" + ev.lineno : ""));
+  });
+  window.addEventListener("unhandledrejection", function (ev) {
+    var r = ev.reason;
+    avisarError((r && (r.message || r.toString())) || "promesa rechazada", "promesa");
+  });
 
   // Visita: una sola vez por carga de página.
   if (document.readyState === "loading") {

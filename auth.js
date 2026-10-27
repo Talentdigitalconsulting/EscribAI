@@ -267,7 +267,9 @@ function planNube(){
 }
 function recalcPro(){
   pro=licPayload||(planNube()?{email:perfil.email||sesionUser.email,plan:perfil.plan}:null);
+  window.sesionActiva=!!sesionUser;
   updateProUI();
+  if(typeof window.cargarEstilos==="function")window.cargarEstilos();
 }
 function limpiarDatosLocales(){
   ["vs_orgs","vs_profiles","vs_sessions","vs_org_actual","vs_wordmodelo","vs_settings","vs_biblio_abiertas"].forEach(k=>localStorage.removeItem(k));
@@ -284,6 +286,16 @@ async function cargarPerfil(){
   if(sesionUser){
     const uidPrev=LS.get("vs_uid",null);
     if(uidPrev&&uidPrev!==sesionUser.id){
+      /* Entra otra cuenta en el mismo dispositivo: lo de la anterior se
+         borra para que nadie vea actas ajenas. Pero antes, si hay algo
+         que perder, se ofrece bajarlo. Un cierre de sesión sin más NO
+         borra nada; solo el cambio de cuenta. */
+      const nReun=(LS.get("vs_sessions",[])||[]).length;
+      if(nReun>0&&typeof window.copiaSeguridadZip==="function"){
+        const quiere=confirm("En este dispositivo hay "+nReun+" reunión(es) y sus audios de otra cuenta. "+
+          "Se van a borrar para proteger su privacidad.\n\n¿Descargar antes una copia completa en ZIP?");
+        if(quiere){try{await window.copiaSeguridadZip()}catch(e){console.warn("copia",e)}}
+      }
       limpiarDatosLocales();
       toast("👤 Cuenta distinta detectada: espacio de trabajo limpio y privado");
     }

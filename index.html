@@ -7,6 +7,12 @@
 <meta name="description" content="ConsteAi — La junta termina y el acta ya está redactada. Transcripción con identificación de hablantes y acta automática.">
 <title>ConsteAi · Que conste en acta</title>
 <link rel="manifest" href="manifest.json">
+<!-- Política de seguridad de contenido. GitHub Pages no deja poner cabeceras,
+     así que va aquí. Limita de dónde pueden venir scripts y a dónde puede
+     hablar la app: aunque alguien colase código, no podría sacar datos a
+     un servidor ajeno ni cargar scripts de fuera de esta lista. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: data:; font-src 'self' data:; connect-src 'self' https://tbaliejmtaeniffmqgif.supabase.co wss://tbaliejmtaeniffmqgif.supabase.co https://api.deepgram.com wss://api.deepgram.com; worker-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self' https://buy.stripe.com; upgrade-insecure-requests">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <style>
@@ -110,6 +116,14 @@ main{flex:1;max-width:1060px;width:100%;margin:0 auto;padding:0 22px 40px}
 .bubble .txt[contenteditable="true"]{outline:1px dashed var(--acc);border-radius:6px;padding:2px 4px}
 .bubble .tools{position:absolute;top:8px;right:10px;display:none;gap:6px}
 .seg:hover .tools{display:flex}
+/* En pantallas táctiles no existe el «pasar el cursor»: los botones de
+   corregir hablante y editar texto se ven siempre, y un poco más grandes
+   para que se puedan pulsar con el dedo. */
+@media (hover:none){
+  .bubble .tools{display:flex;position:static;margin-top:6px;justify-content:flex-end}
+  .seg .tools{opacity:1}
+  .tools button{font-size:13px;padding:6px 10px;min-height:34px}
+}
 .tools button{color:var(--mut);font-size:12px}
 .tools button:hover{color:var(--txt)}
 .seg.interim .bubble{opacity:.6;border-style:dashed}
@@ -578,8 +592,9 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
       </div>
       <div id="cuotaTexto" style="font-size:11.5px;color:var(--mut)"></div>
     </div>
-    <div id="onlineBar" style="display:flex;justify-content:center;margin-top:14px">
+    <div id="onlineBar" style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px">
       <button class="btn sm" id="btnOnline" title="Transcribe una reunión por Zoom, Meet o Teams capturando el audio del ordenador">💻 Junta online (Zoom, Meet, Teams)</button>
+      <button class="btn sm" id="btnAvisoAsist" title="Texto para informar a los asistentes de que la reunión se graba y transcribe">📢 Aviso a los asistentes</button>
     </div>
   </div>
 
@@ -673,12 +688,20 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
         <option value="media" selected>Media (recomendado)</option>
         <option value="baja">Baja — solo con diferencias claras de voz</option>
       </select>
-      <p>La identificación local usa el timbre y tono (frecuencia fundamental y brillo espectral) calibrados de cada voz.</p>
+      <p>La identificación local compara once rasgos de la voz (tono, brillo, aspereza y reparto de energía por bandas) con la huella calibrada de cada persona. Para juntas con muchos asistentes, lo fiable es el motor profesional, que separa las voces sin calibrar.</p>
+    </div>
+    <div class="setrow">
+      <label>Motor de dictado en directo</label>
+      <select id="setMotorVivo">
+        <option value="navegador" selected>Navegador — gratuito e ilimitado, sin separar voces por sí solo</option>
+        <option value="deepgram">Profesional (Pro) — más preciso y separa las voces solo; gasta horas del plan</option>
+      </select>
+      <p>El motor profesional envía el audio según se habla y devuelve la transcripción con cada voz separada, sin calibrar a nadie. Consume de las mismas horas mensuales del plan. Si la conexión falla, la app vuelve sola al motor del navegador sin cortar la reunión.</p>
     </div>
     <div class="setrow">
       <label>Transcripción profesional</label>
-      <p id="dgEstadoCuota">El plan Pro incluye <b>10 horas al mes</b> de transcripción profesional para audios ya grabados: puntuación automática y separación real de voces. No hay nada que configurar.</p>
-      <p>Úsala con <b>«📂 Transcribir archivo»</b> para un audio grabado con el móvil, o con <b>«🤖 Mejorar con IA»</b> para reprocesar la reunión que acabas de grabar. El dictado en directo sigue usando el motor del navegador, que es gratuito e ilimitado.</p>
+      <p id="dgEstadoCuota">El plan Pro incluye <b>10 horas al mes</b> de transcripción profesional: puntuación automática y separación real de voces. No hay nada que configurar.</p>
+      <p>Úsala con <b>«📂 Transcribir archivo»</b> para un audio grabado con el móvil, con <b>«🤖 Mejorar con IA»</b> para reprocesar la reunión que acabas de grabar, o en directo eligiendo arriba el motor profesional.</p>
       <button class="btn sm" id="btnGuiaDG" style="margin-top:8px">ℹ️ Cómo funciona</button>
     </div>
     <div class="setrow">
@@ -865,6 +888,19 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
   </div>
 </div>
 
+<div class="overlay hide" id="avisoOverlay">
+  <div class="modal" style="max-width:620px">
+    <h2>📢 Aviso a los asistentes</h2>
+    <p class="sub">Quien graba una reunión debe informar a los presentes. Este texto cumple con el RGPD y la LOPDGDD: léelo al empezar, proyéctalo o envíalo con la convocatoria. Queda a tu criterio adaptarlo.</p>
+    <textarea id="avisoTexto" rows="11" style="margin-top:8px;font-size:13.5px;line-height:1.5"></textarea>
+    <div class="foot" style="flex-wrap:wrap">
+      <button class="btn" id="avisoCerrar">Cerrar</button>
+      <button class="btn" id="avisoCopiar">📋 Copiar</button>
+      <button class="btn pri" id="avisoEnviar">✉️ Enviar a los destinatarios</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay hide" id="estOverlay">
   <div class="modal" style="max-width:640px">
     <h2 id="estTitulo">Enseñarle un modelo de acta</h2>
@@ -872,7 +908,7 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
     <label style="font-size:13px;font-weight:600">Nombre del modelo</label>
     <input id="estNombre" placeholder="Ej.: Actas de junta de mi despacho" style="margin-top:6px">
     <div id="estMuestras" style="margin-top:14px;display:flex;flex-direction:column;gap:12px"></div>
-    <p class="sub" style="margin-top:12px">🔒 Las actas que subas <b>no se guardan</b> en ningún servidor. Se analizan para deducir tu estilo y se descartan en el acto. Solo se conserva la descripción del estilo, sin nombres ni importes.</p>
+    <p class="sub" style="margin-top:12px">🔒 Las actas que subas <b>no se guardan</b> en ningún servidor. Se analizan para deducir tu estilo y se descartan en el acto. Solo se conserva la descripción del estilo, sin nombres ni importes. <b>Consejo:</b> usa actas antiguas o con los nombres tachados; para aprender tu forma de escribir da exactamente igual.</p>
     <div id="estAviso" class="sub" style="margin-top:8px"></div>
     <div class="foot">
       <button class="btn" id="estCancel">Cancelar</button>
@@ -1199,7 +1235,7 @@ function frameLoop(){
 }
 function showLiveSpeaker(id){
   const p=speakers.find(s=>s.id===id);
-  $("#liveSpk").innerHTML=p?`Hablando ahora: <b style="background:${p.color}22;color:${p.color};border:1px solid ${p.color}55">${esc(p.name)}</b>`:"";
+  $("#liveSpk").innerHTML=p?`Hablando ahora: <b style="background:${colorSeguro(p.color)}22;color:${colorSeguro(p.color)};border:1px solid ${colorSeguro(p.color)}55">${esc(p.name)}</b>`:"";
   $$(".chip").forEach(c=>c.classList.toggle("speaking",c.dataset.id===String(id)));
 }
 /* visualizador */
@@ -1338,9 +1374,10 @@ async function startSession(){
   srSinResultados=0;srAvisado={};
   audioChunks=[];audioBlob=null;
   try{mediaRec.start(1000)}catch(e){}
-  if(settings.motorVivo==="deepgram"&&!usarDGVivo())toast("⚠️ Motor profesional no disponible (requiere Pro + API key de Deepgram): usando el del navegador");
+  if(settings.motorVivo==="deepgram"&&!usarDGVivo())toast("⚠️ El motor profesional en directo es del plan Pro con sesión iniciada: usando el del navegador");
   if(usarDGVivo())iniciarDGStream();else startRecognition();
   frameLoop();
+  arrancarBorrador();
   let ultimoTick=Date.now();
   timerInt=setInterval(()=>{
     if(paused){ultimoTick=Date.now();return}
@@ -1373,8 +1410,9 @@ async function startSession(){
 }
 function stopSession(){
   rescatarInterim(); // lo que quedaba en provisional entra en la transcripción
-  if(dgWS){try{dgWS.send('{"type":"CloseStream"}')}catch(e){}try{dgWS.close()}catch(e){}dgWS=null}
+  if(dgWS){cerrarDGVivo()}
   recording=false;paused=false;
+  pararBorrador();
   clearInterval(watchInt);
   if(rec){rec.onend=null;try{rec.stop()}catch(e){}}
   stopAudio();clearInterval(timerInt);
@@ -1390,7 +1428,7 @@ function stopSession(){
 $("#btnPause").onclick=()=>{
   paused=!paused;
   if(paused){
-    if(dgWS){try{dgWS.send('{"type":"CloseStream"}')}catch(e){}try{dgWS.close()}catch(e){}dgWS=null}
+    if(dgWS){cerrarDGVivo()}
     try{rec.stop()}catch(e){}
     if(mediaRec&&mediaRec.state==="recording")mediaRec.pause();
     $("#statusTxt").textContent="En pausa";$("#statusDot").className="dot";
@@ -1408,7 +1446,7 @@ $("#btnPause").onclick=()=>{
 };
 $("#btnClear").onclick=()=>{
   if(segments.length&&!confirm("¿Borrar toda la transcripción actual?"))return;
-  segments=[];elapsed=0;$("#timer").textContent="00:00";renderTranscript();
+  segments=[];elapsed=0;$("#timer").textContent="00:00";renderTranscript();limpiarBorrador();
   $("#sumBody").classList.add("hide");$("#sumEmpty").classList.remove("hide");currentSummary=null;
 };
 
@@ -1416,11 +1454,60 @@ $("#btnClear").onclick=()=>{
    TRANSCRIPCIÓN: render + edición
 ===================================================================== */
 function spkOf(id){return speakers.find(s=>s.id===id)||{name:"Sin identificar",color:"#8b96b3",id:null}}
+/* Un color solo puede ser un color. Los perfiles viajan por la nube y
+   vuelven a otro dispositivo: nada de lo que llegue de fuera entra en
+   un atributo style sin pasar por aquí. */
+function colorSeguro(c){return /^#[0-9a-fA-F]{3,8}$/.test(String(c||""))?c:"#8b96b3"}
+
+/* =====================================================================
+   BORRADOR AUTOMÁTICO
+   Mientras se graba, la transcripción se guarda sola cada 15 segundos
+   y cada vez que entra una frase nueva (como mucho una vez por
+   segundo). Si el navegador se cierra, la batería se acaba o el móvil
+   descarta la pestaña, al volver a abrir la app se ofrece recuperar lo
+   que había. Dos horas de junta no se pierden por un cierre.
+===================================================================== */
+let borradorUltimo=0,borradorInt=null;
+function guardarBorrador(fuerza){
+  if(!segments.length)return;
+  const ahora=Date.now();
+  if(!fuerza&&ahora-borradorUltimo<1000)return;
+  borradorUltimo=ahora;
+  try{
+    LS.set("vs_borrador",{
+      v:1,fecha:ahora,elapsed:elapsed,orgId:currentOrg,
+      plantilla:settings.plantilla,segments:segments,speakers:speakers
+    });
+  }catch(e){ /* sin sitio en el almacenamiento: no bloqueamos la reunión */ }
+}
+function limpiarBorrador(){try{localStorage.removeItem("vs_borrador")}catch(e){}}
+function arrancarBorrador(){clearInterval(borradorInt);borradorInt=setInterval(()=>guardarBorrador(true),15000)}
+function pararBorrador(){clearInterval(borradorInt);borradorInt=null;guardarBorrador(true)}
+function ofrecerBorrador(){
+  const b=LS.get("vs_borrador",null);
+  if(!b||!Array.isArray(b.segments)||!b.segments.length)return;
+  if(segments.length)return;   // ya hay trabajo en pantalla: no pisarlo
+  const cuando=new Date(b.fecha||Date.now());
+  const n=b.segments.length,min=Math.round((b.elapsed||0)/60);
+  const quiere=confirm("Hay una reunión sin guardar del "+cuando.toLocaleDateString("es-ES")+" a las "+
+    cuando.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})+
+    " ("+n+" intervenciones, "+min+" min).\n\n¿Recuperarla?");
+  if(!quiere){limpiarBorrador();return}
+  segments=b.segments;elapsed=b.elapsed||0;
+  if(Array.isArray(b.speakers)&&b.speakers.length){speakers=b.speakers;LS.set("vs_profiles",speakers);renderSpeakers()}
+  if(b.orgId&&orgOf(b.orgId)){currentOrg=b.orgId;LS.set("vs_org_actual",currentOrg);if(typeof renderOrgs==="function")renderOrgs()}
+  $("#timer").textContent=fmtT(elapsed);
+  renderTranscript();
+  toast("♻️ Reunión recuperada. Guárdala o genera el acta cuando quieras.");
+}
+setTimeout(ofrecerBorrador,1200);
+
 function addSegment(seg){
   const last=segments[segments.length-1];
   if(last&&last.spk===seg.spk&&seg.t0-last.t1<2.5){last.text+=" "+seg.text;last.t1=seg.t1}
   else segments.push(seg);
   renderTranscript();
+  if(recording)guardarBorrador(false);
 }
 function renderTranscript(){
   const box=$("#transcript");
@@ -1429,9 +1516,9 @@ function renderTranscript(){
   segments.forEach((s,i)=>{
     const p=spkOf(s.spk);
     const el=document.createElement("div");el.className="seg";
-    el.innerHTML=`<div class="avatar" style="background:${p.color}">${esc((p.name[0]||"?").toUpperCase())}</div>
-      <div class="bubble" style="border-left:3px solid ${p.color}">
-        <div class="meta"><b style="color:${p.color}">${esc(p.name)}</b><span>${fmtT(s.t0)}</span></div>
+    el.innerHTML=`<div class="avatar" style="background:${colorSeguro(p.color)}">${esc((p.name[0]||"?").toUpperCase())}</div>
+      <div class="bubble" style="border-left:3px solid ${colorSeguro(p.color)}">
+        <div class="meta"><b style="color:${colorSeguro(p.color)}">${esc(p.name)}</b><span>${fmtT(s.t0)}</span></div>
         <div class="txt" data-i="${i}">${esc(s.text)}</div>
         <div class="tools">
           <button data-act="spk" data-i="${i}" title="Cambiar hablante">👤</button>
@@ -1483,7 +1570,7 @@ function renderSpeakers(){
   const btn=$("#btnAddSpk");
   speakers.forEach(p=>{
     const c=document.createElement("div");c.className="chip";c.dataset.id=p.id;c.style.color=p.color;
-    c.innerHTML=`<span class="sw" style="background:${p.color}"></span>${esc(p.name)}
+    c.innerHTML=`<span class="sw" style="background:${colorSeguro(p.color)}"></span>${esc(p.name)}
       <small>${p.f0?Math.round(p.f0)+" Hz":"sin calibrar"}</small>
       <button class="x" title="Eliminar">×</button>`;
     c.querySelector(".x").onclick=()=>{
@@ -1673,8 +1760,8 @@ function renderSummary(sum){
   }
   $("#sumStats").innerHTML=sum.stats.map(s=>`
     <div class="stat"><b>${s.pct}%</b><span>${esc(s.name)} · ${s.words} palabras · ${s.turns} turnos</span>
-    <div class="bar"><i style="width:${s.pct}%;background:${s.color}"></i></div></div>`).join("")||"<div class='empty'>—</div>";
-  const li=(arr,empty)=>arr.length?arr.map(i=>`<li><b class="who" style="background:${i.color}">${esc(i.who)}</b>${esc(i.text)}</li>`).join(""):`<li style="color:var(--mut)">${empty}</li>`;
+    <div class="bar"><i style="width:${Number(s.pct)||0}%;background:${colorSeguro(s.color)}"></i></div></div>`).join("")||"<div class='empty'>—</div>";
+  const li=(arr,empty)=>arr.length?arr.map(i=>`<li><b class="who" style="background:${colorSeguro(i.color)}">${esc(i.who)}</b>${esc(i.text)}</li>`).join(""):`<li style="color:var(--mut)">${empty}</li>`;
   $("#sumDec").innerHTML=li(sum.decisiones,"No se detectaron decisiones explícitas.");
   // Las tareas se pueden ir tachando: el acta se convierte en lista de pendientes.
   $("#sumTask").innerHTML=sum.tareas.length
@@ -1774,7 +1861,11 @@ $("#btnActaIA").onclick=async()=>{
     });
     const j=await r.json().catch(()=>({}));
     if(!r.ok){
-      if(j.error==="plan_insuficiente"){upsell("Redactar el acta con IA es una función Pro");return}
+      if(j.error==="plan_insuficiente"){
+        btn.disabled=false;btn.textContent="🧠 Redactar acta con IA";
+        upsell("Ya usaste tu acta con IA de regalo. Con el plan Pro redactas todas las que necesites.");
+        return;
+      }
       if(j.error==="cuota_agotada")throw new Error("Has agotado las redacciones con IA de este mes. Se renuevan el día 1.");
       if(j.error==="ia_no_disponible")throw new Error("El servicio de redacción no responde ahora mismo. Inténtalo en unos minutos.");
       throw new Error(j.error||("Error "+r.status));
@@ -1797,6 +1888,12 @@ $("#btnActaIA").onclick=async()=>{
 
     const n=base.decisiones.length;
     toast(n?"🧠 Acta redactada: "+n+(n===1?" acuerdo":" acuerdos"):"🧠 Acta redactada, pero no se detectaron acuerdos");
+    if(j.regalo){
+      if(typeof window.registrarEvento==="function")window.registrarEvento("acta_regalo");
+      setTimeout(()=>toast(j.recortada
+        ?"🎁 Esta ha sido tu acta con IA de regalo (se han redactado los primeros bloques de la reunión). Con Pro, sin límite."
+        :"🎁 Esta ha sido tu acta con IA de regalo. Con el plan Pro redactas todas las que necesites."),2600);
+    }
   }catch(err){
     toast("❌ "+err.message);
   }
@@ -2055,6 +2152,7 @@ $("#btnSave").onclick=async()=>{
   LS.set("vs_sessions",list.slice(0,100));
 
   const conAudio=await guardarAudioLocal(id,audioBlob);
+  limpiarBorrador();
   toast(conAudio?"📚 Guardada en «"+ficha.orgNombre+"» con su audio":"📚 Guardada en «"+ficha.orgNombre+"»");
 };
 /* Descarga la carpeta completa de una reunión en un ZIP:
@@ -2647,6 +2745,7 @@ function mapAISpeaker(n){
 ===================================================================== */
 function loadSettings(){
   $("#setLang").value=settings.lang;$("#setSens").value=settings.sens;
+  if($("#setMotorVivo"))$("#setMotorVivo").value=settings.motorVivo==="deepgram"?"deepgram":"navegador";
 
   $("#setLic").value=settings.license||"";
   $("#setAudioAuto").checked=settings.audioAuto!==false;
@@ -2698,7 +2797,7 @@ $("#btnSaveSet").onclick=async()=>{
   const corr=(settings.correcciones||[])
     .map(c=>({de:String(c.de||"").trim(),a:String(c.a||"").trim()}))
     .filter(c=>c.de&&c.a);
-  settings={lang:$("#setLang").value,sens:$("#setSens").value,prov:"deepgram",key:"",license:$("#setLic").value.trim(),plantilla:$("#setPlantilla").value,audioAuto:$("#setAudioAuto").checked,motorVivo:"navegador",misPlantillas:settings.misPlantillas||[],correcciones:corr};
+  settings={lang:$("#setLang").value,sens:$("#setSens").value,prov:"deepgram",key:"",license:$("#setLic").value.trim(),plantilla:$("#setPlantilla").value,audioAuto:$("#setAudioAuto").checked,motorVivo:($("#setMotorVivo")&&$("#setMotorVivo").value==="deepgram")?"deepgram":"navegador",misPlantillas:settings.misPlantillas||[],correcciones:corr};
   LS.set("vs_settings",settings);
   renderCorrecciones();
   const prev=!!pro;
@@ -2710,10 +2809,50 @@ $("#btnSaveSet").onclick=async()=>{
 };
 $("#btnExportAll").onclick=()=>download("conste-backup-"+stamp()+".json",
   JSON.stringify({profiles:speakers,sessions:LS.get("vs_sessions",[]),settings:{lang:settings.lang,sens:settings.sens,plantilla:settings.plantilla}},null,2),"application/json");
-$("#btnWipe").onclick=()=>{
-  if(!confirm("Se borrarán perfiles de voz, sesiones y ajustes. ¿Continuar?"))return;
-  localStorage.removeItem("vs_profiles");localStorage.removeItem("vs_sessions");localStorage.removeItem("vs_settings");
-  location.reload();
+/* Copia completa de lo que hay en este dispositivo: organizaciones,
+   voces, reuniones con su acta y transcripción, y los audios de la
+   biblioteca. Se usa antes de cualquier borrado, para que nunca haya
+   un «borrar todo» sin marcha atrás. */
+async function copiaSeguridadZip(){
+  const sesiones=LS.get("vs_sessions",[]);
+  const datos={fecha:new Date().toISOString(),orgs:LS.get("vs_orgs",[]),profiles:speakers,
+               sessions:sesiones,settings:{lang:settings.lang,sens:settings.sens,plantilla:settings.plantilla,
+               misPlantillas:settings.misPlantillas||[],correcciones:settings.correcciones||[]}};
+  if(typeof JSZip==="undefined"){
+    download("conste-copia-"+stamp()+".json",JSON.stringify(datos,null,2),"application/json");
+    return;
+  }
+  const zip=new JSZip();
+  zip.file("copia.json",JSON.stringify(datos,null,2));
+  zip.file("LEEME.txt","Copia de seguridad de ConsteAi.\nCada carpeta es una organización; dentro, cada reunión con su acta, transcripción y audio.\n");
+  let conAudio=0;
+  for(const s of sesiones){
+    const carpeta=limpiaNombre(s.orgNombre||"Sin organización")+"/"+fechaCarpeta(s.date)+" "+limpiaNombre(s.name);
+    const c=zip.folder(carpeta);
+    c.file("acta.md",s.acta||"");
+    c.file("transcripcion.txt",(s.segments||[]).map(x=>{
+      const h=(s.speakers||[]).find(p=>p.id===x.spk);
+      return "["+fmtT(x.t0)+"] "+(h?h.name:"Sin identificar")+": "+x.text;
+    }).join("\n"));
+    try{const a=await leerAudioLocal(s.id);if(a){c.file("audio.webm",a);conAudio++}}catch(e){}
+  }
+  const blob=await zip.generateAsync({type:"blob"});
+  download("conste-copia-"+stamp()+".zip",blob);
+  return {reuniones:sesiones.length,audios:conAudio};
+}
+window.copiaSeguridadZip=copiaSeguridadZip;
+
+$("#btnWipe").onclick=async()=>{
+  const n=LS.get("vs_sessions",[]).length;
+  const resp=prompt("Vas a borrar organizaciones, voces, "+n+" reunión(es), sus audios y los ajustes de este dispositivo.\n\n"+
+    "Antes se descargará una copia completa en ZIP.\n\nPara confirmar, escribe BORRAR en mayúsculas:");
+  if(resp!=="BORRAR"){toast("Borrado cancelado");return}
+  toast("⬇ Descargando copia de seguridad…");
+  try{await copiaSeguridadZip()}catch(e){if(!confirm("No se pudo generar la copia. ¿Borrar de todos modos?"))return}
+  ["vs_profiles","vs_sessions","vs_settings","vs_orgs","vs_org_actual","vs_wordmodelo","vs_biblio_abiertas","vs_borrador"]
+    .forEach(k=>localStorage.removeItem(k));
+  try{indexedDB.deleteDatabase(AUDIO_DB)}catch(e){}
+  setTimeout(()=>location.reload(),900);
 };
 
 /* =====================================================================
@@ -2916,19 +3055,56 @@ $("#wmInput").onchange=e=>{
 /* =====================================================================
    MOTOR PROFESIONAL EN VIVO (Deepgram streaming, Pro)
 ===================================================================== */
-const DG_WS_URL="wss://api.deepgram.com/v1/listen?model=nova-2&language=es&punctuate=true&smart_format=true&interim_results=true&diarize=true";
-/* El dictado en directo usa siempre el motor del navegador.
-   El profesional en vivo queda pendiente de migrar a token temporal. */
-function usarDGVivo(){return false}
+/* El motor profesional en directo: el audio sale del micrófono hacia
+   Deepgram según se habla, con el mismo permiso temporal de diez
+   minutos que usa la transcripción de archivos. Separa las voces por sí
+   solo (sin calibrar) y gasta de la misma bolsa de horas del plan.
+   Solo para cuentas Pro con sesión iniciada; si algo falla, se vuelve
+   al motor del navegador sin cortar la reunión. */
+function urlDGVivo(){
+  const kt=keytermsActuales().map(t=>"&keyterm="+encodeURIComponent(t)).join("");
+  return "wss://api.deepgram.com/v1/listen?model=nova-3&language=es&punctuate=true"+
+         "&smart_format=true&interim_results=true&diarize=true&endpointing=300"+kt;
+}
+function usarDGVivo(){
+  return !!pro&&settings.motorVivo==="deepgram"&&typeof window.tokenSesion==="function"&&!!window.sesionActiva;
+}
+let dgVivoDesde=0,dgKeepAlive=null,dgReintentos=0;
 function dgSegmento(c){
   addSegment({t0:c.t0,t1:c.t1,text:capitalize(c.text),spk:mapAISpeaker(c.sp)});
 }
-function iniciarDGStream(){
-  try{dgWS=new WebSocket(DG_WS_URL,["token",settings.key])}
+/* Cierre ordenado: se apunta el tiempo usado y se para el latido. Se
+   pone dgWS a null ANTES de cerrar para que onclose no intente
+   reconectar. */
+function cerrarDGVivo(){
+  const ws=dgWS;dgWS=null;
+  clearInterval(dgKeepAlive);
+  dgApuntarVivo();
+  try{ws.send('{"type":"CloseStream"}')}catch(e){}
+  try{ws.close()}catch(e){}
+}
+function dgApuntarVivo(){
+  if(!dgVivoDesde)return;
+  const seg=Math.round((Date.now()-dgVivoDesde)/1000);
+  dgVivoDesde=0;
+  if(seg>3)dgApuntarUso(seg,"vivo");
+}
+async function iniciarDGStream(){
+  let cred;
+  try{cred=await dgAutorizacion()}
+  catch(e){toast("⚠️ "+e.message+" Usando el motor del navegador.");startRecognition();return}
+  const token=cred.auth.replace(/^Bearer\s+/i,"");
+  try{dgWS=new WebSocket(urlDGVivo(),["bearer",token])}
   catch(e){toast("❌ No se pudo abrir el motor profesional: "+e.message);startRecognition();return}
   dgWS.onopen=()=>{
     lastEvento=Date.now();
-    $("#recSub").textContent="🟣 Motor profesional en vivo (Deepgram) — escuchando";
+    dgVivoDesde=Date.now();
+    dgReintentos=0;
+    $("#recSub").textContent="🟣 Motor profesional en vivo — escuchando y separando voces";
+    /* Deepgram cierra a los diez segundos sin audio; en una pausa de
+       la junta nos mantenemos vivos con un latido cada cinco. */
+    clearInterval(dgKeepAlive);
+    dgKeepAlive=setInterval(()=>{try{if(dgWS&&dgWS.readyState===1)dgWS.send('{"type":"KeepAlive"}')}catch(e){}},5000);
   };
   dgWS.onmessage=ev=>{
     let j;try{j=JSON.parse(ev.data)}catch(e){return}
@@ -2956,9 +3132,20 @@ function iniciarDGStream(){
   dgWS.onclose=dgWS.onerror=()=>{
     if(!dgWS)return;
     dgWS=null;
+    clearInterval(dgKeepAlive);
+    dgApuntarVivo();
     if(recording&&!paused){
-      toast("⚠️ Motor profesional desconectado: cambiando al motor del navegador");
-      startRecognition();
+      /* Un corte de red no debe cambiar de motor a la primera: se
+         reintenta con un permiso nuevo, y solo si vuelve a fallar se
+         pasa al navegador para no perder nada de la reunión. */
+      if(dgReintentos<2){
+        dgReintentos++;
+        toast("🔄 Reconectando con el motor profesional…");
+        setTimeout(()=>{if(recording&&!paused&&!dgWS)iniciarDGStream()},1200);
+      }else{
+        toast("⚠️ Motor profesional desconectado: cambiando al motor del navegador");
+        startRecognition();
+      }
     }
   };
 }
@@ -2993,7 +3180,8 @@ const TUTORIAL=[
  {i:"🗣️",t:"Hablantes y calibración",p:[
   ["Añadir hablantes","Pulsa «＋ Añadir hablante» y escribe el nombre de cada participante (María, Cliente, Presidente…). Cada uno tiene un color, y sus intervenciones aparecerán pintadas con él."],
   ["Calibrar la voz","Cada persona lee una frase en voz alta durante 6 segundos. ConsteAi aprende su tono y su timbre para reconocerla después cuando hable. Hazlo cerca del micrófono y con voz natural."],
-  ["Precisión","La identificación funciona mejor con voces diferenciadas. Si la app confunde a dos personas con voces muy parecidas, pasa el cursor por la burbuja y corrige el hablante con el botón 👤. También puedes ajustar la sensibilidad de cambio de hablante en Ajustes."]]},
+  ["Precisión","La identificación funciona mejor con voces diferenciadas. Si la app confunde a dos personas con voces muy parecidas, corrige el hablante con el botón 👤 de la burbuja (en el móvil los botones se ven siempre). También puedes ajustar la sensibilidad de cambio de hablante en Ajustes."],
+  ["Juntas con muchos asistentes","Calibrar a cuarenta vecinos no es realista. Para una junta grande, lo fiable es no calibrar: graba, y al terminar pulsa «🤖 Mejorar con IA». El motor profesional separa las voces por sí solo, y tú les pones nombre después. Con el plan Pro también puedes elegir en Ajustes el motor profesional en directo, que separa las voces mientras se habla. Deja la calibración para consejos y reuniones de pocas personas."]]},
  {i:"🎙️",t:"Grabar y transcribir",p:[
   ["Empezar a grabar","Pulsa el micrófono grande. Verás la onda de sonido, el cronómetro y el texto apareciendo en tiempo real, cada frase asignada a su hablante. El botón de pausa detiene temporalmente; volver a pulsar el micrófono termina la sesión."],
   ["Editar sobre la marcha","Pasa el cursor (o el dedo) por cualquier burbuja: ✏️ edita el texto, 👤 cambia el hablante y 🗑 la elimina. La transcripción es tuya: corrígela cuanto necesites antes de generar el acta."],
@@ -3620,6 +3808,48 @@ avisoNavegador();
   window.__est = { textos: textos, llamar: llamar, cargar: cargar,
                    ocupado: function(v){ if(v===undefined) return trabajando; trabajando = v; } };
   setTimeout(cargar, 2500);
+})();
+</script>
+<script>
+/* =====================================================================
+   AVISO A LOS ASISTENTES
+   El texto que el responsable de la reunión lee o envía para informar
+   de que se graba y transcribe. Se rellena con la organización y el
+   responsable que haya en la ficha.
+===================================================================== */
+(function(){
+  function $1(s){return document.querySelector(s)}
+  function texto(){
+    var o=(typeof orgOf==="function"&&typeof currentOrg!=="undefined")?orgOf(currentOrg):null;
+    var org=o?o.nombre:"[nombre de la comunidad u organización]";
+    var resp=(o&&(o.sec||o.pres))?(o.sec||o.pres):"[nombre del responsable]";
+    return "INFORMACIÓN SOBRE LA GRABACIÓN DE ESTA REUNIÓN\n\n"+
+      "Se informa a los asistentes de que la presente reunión de "+org+" será grabada y transcrita "+
+      "con la única finalidad de elaborar el acta de la sesión.\n\n"+
+      "Responsable del tratamiento: "+resp+", en nombre de "+org+". "+
+      "Base jurídica: interés legítimo en documentar fielmente los acuerdos adoptados (art. 6.1.f RGPD) "+
+      "y, en su caso, obligación legal de levantar acta.\n\n"+
+      "La grabación se conserva únicamente el tiempo necesario para redactar y aprobar el acta, y después se elimina. "+
+      "La transcripción se procesa mediante la herramienta ConsteAi, de Talent & Digital Consulting, que actúa como "+
+      "encargado del tratamiento. El audio no se cede a terceros con fines distintos a la transcripción.\n\n"+
+      "Puede ejercer sus derechos de acceso, rectificación, supresión y oposición dirigiéndose al responsable. "+
+      "Si no desea que su intervención sea grabada, comuníquelo ahora y hágalo constar.";
+  }
+  var b=$1("#btnAvisoAsist");
+  if(b)b.onclick=function(){$1("#avisoTexto").value=texto();$1("#avisoOverlay").classList.remove("hide")};
+  var c=$1("#avisoCerrar");if(c)c.onclick=function(){$1("#avisoOverlay").classList.add("hide")};
+  var cp=$1("#avisoCopiar");if(cp)cp.onclick=async function(){
+    try{await navigator.clipboard.writeText($1("#avisoTexto").value);toast("Aviso copiado")}
+    catch(e){$1("#avisoTexto").select();document.execCommand("copy");toast("Aviso copiado")}
+  };
+  var en=$1("#avisoEnviar");if(en)en.onclick=function(){
+    var o=(typeof orgOf==="function")?orgOf(currentOrg):null;
+    var dest=(o&&o.dest&&o.dest.length)?o.dest.join(","):"";
+    if(!dest){toast("La organización no tiene destinatarios: añádelos en su ficha o copia el texto");return}
+    location.href="mailto:"+encodeURIComponent(dest).replace(/%2C/g,",")+
+      "?subject="+encodeURIComponent("Aviso: la próxima reunión será grabada para el acta")+
+      "&body="+encodeURIComponent($1("#avisoTexto").value);
+  };
 })();
 </script>
 <script>
