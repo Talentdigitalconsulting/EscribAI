@@ -1,5 +1,5 @@
 // =====================================================================
-// EscribAI — dg-token
+// ConsteAi — dg-token
 // Entrega al cliente un token temporal de Deepgram (10 min) si su plan
 // lo permite y le queda cuota del mes. El audio NUNCA pasa por aquí:
 // va directo del navegador a Deepgram con ese token efímero.
@@ -23,11 +23,21 @@ const CUOTA_MIN: Record<string, number> = {
 
 const TTL_SEGUNDOS = 600; // 10 minutos: suficiente para subir una junta larga
 
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const ORIGENES = [
+  "https://talentdigitalconsulting.github.io",
+  "https://consteai.es",
+  "https://www.consteai.es",
+];
+function cabeceras(req: Request) {
+  const o = req.headers.get("Origin") ?? "";
+  return {
+    "Access-Control-Allow-Origin": ORIGENES.includes(o) ? o : ORIGENES[0],
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+}
+let cors: Record<string, string> = cabeceras(new Request("https://x"));
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -37,6 +47,7 @@ function json(body: unknown, status = 200) {
 }
 
 Deno.serve(async (req) => {
+  cors = cabeceras(req);
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   try {
