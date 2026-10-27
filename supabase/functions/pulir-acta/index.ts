@@ -1,5 +1,5 @@
 // =====================================================================
-// EscribAI — pulir-acta
+// ConsteAi — pulir-acta
 // Corrige un bloque de intervenciones transcritas: ortografía, puntuación
 // y palabras mal oídas, deduciéndolas por el contexto. No resume, no
 // interpreta y no inventa: solo arregla lo que el dictado entendió mal.
@@ -16,11 +16,21 @@ const PLANES_CON_IA = ["pro_mes", "pro_anyo", "empresas"];
 const MAX_BLOQUES_MES = 400;          // ~40 actas largas al mes
 const MAX_CARACTERES = 20000;         // por bloque
 
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const ORIGENES = [
+  "https://talentdigitalconsulting.github.io",
+  "https://consteai.es",
+  "https://www.consteai.es",
+];
+function cabeceras(req: Request) {
+  const o = req.headers.get("Origin") ?? "";
+  return {
+    "Access-Control-Allow-Origin": ORIGENES.includes(o) ? o : ORIGENES[0],
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+}
+let cors: Record<string, string> = cabeceras(new Request("https://x"));
 const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 
@@ -53,6 +63,7 @@ function instrucciones(ctx: any) {
 }
 
 Deno.serve(async (req) => {
+  cors = cabeceras(req);
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   try {
