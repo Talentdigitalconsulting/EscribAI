@@ -1,5 +1,5 @@
 // =====================================================================
-// EscribAI — redactar-acta
+// ConsteAi — redactar-acta
 // Redacta los acuerdos, tareas y plazos de una reunión a partir de la
 // transcripción, en el registro formal de un acta.
 //
@@ -30,6 +30,33 @@ const cors = {
 };
 const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
+
+/* El modelo de acta que el cliente ha aprendido de sus propias actas.
+   No cambia QUE se extrae —eso sigue siendo literal y verificable—,
+   solo COMO se redacta: el tono, la persona verbal y las formulas de su
+   despacho. Las prohibiciones de inventar siguen por encima de esto. */
+function bloqueEstilo(e: any): string {
+  if (!e || typeof e !== "object") return "";
+  const L: string[] = ["", "MODELO DE REDACCION DEL CLIENTE."];
+  L.push("Imita este estilo al redactar cada frase. No cambia lo que extraes,");
+  L.push("solo como lo escribes. Si el estilo pidiera un dato que no se dijo,");
+  L.push("manda la prohibicion de inventar: deja el dato fuera.");
+  if (e.tono) L.push("Tono: " + e.tono);
+  if (e.persona) L.push("Persona verbal: " + e.persona);
+  if (e.tratamiento) L.push("Tratamiento: " + e.tratamiento);
+  if (e.longitud) L.push("Extension habitual de cada punto: " + e.longitud);
+  const f = e.formulas || {};
+  if (f.acuerdo) L.push("Formula para los acuerdos: " + f.acuerdo);
+  if (f.votacion) L.push("Formula para las votaciones: " + f.votacion);
+  if (f.tarea) L.push("Formula para los encargos: " + f.tarea);
+  if (Array.isArray(e.convenciones) && e.convenciones.length) {
+    L.push("Convenciones de forma: " + e.convenciones.slice(0, 10).join("; "));
+  }
+  if (Array.isArray(e.vocabulario) && e.vocabulario.length) {
+    L.push("Usa su vocabulario cuando proceda: " + e.vocabulario.slice(0, 25).join(", "));
+  }
+  return L.join("\n");
+}
 
 function instrucciones(ctx: any) {
   const nombres = (ctx?.hablantes || []).filter(Boolean).join(", ");
@@ -70,6 +97,7 @@ function instrucciones(ctx: any) {
     ctx?.presidente ? "Preside: " + ctx.presidente + "." : "",
     ctx?.secretario ? "Secretaría: " + ctx.secretario + "." : "",
     nombres ? "Asistentes identificados: " + nombres + "." : "",
+    bloqueEstilo(ctx?.estilo),
     "",
     'El campo "quien" es el nombre de quien lo propuso o lo manifestó, elegido',
     "de la lista de asistentes. Si no está claro, déjalo como cadena vacía.",
