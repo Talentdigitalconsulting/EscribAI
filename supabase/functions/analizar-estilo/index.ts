@@ -24,11 +24,21 @@ const MAX_MUESTRAS = 3;
 const MAX_CARACTERES = 14000;   // por muestra
 const MIN_CARACTERES = 300;     // menos que esto no es un acta
 
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const ORIGENES = [
+  "https://talentdigitalconsulting.github.io",
+  "https://consteai.es",
+  "https://www.consteai.es",
+];
+function cabeceras(req: Request) {
+  const o = req.headers.get("Origin") ?? "";
+  return {
+    "Access-Control-Allow-Origin": ORIGENES.includes(o) ? o : ORIGENES[0],
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+}
+let cors: Record<string, string> = cabeceras(new Request("https://x"));
 const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 
@@ -110,6 +120,7 @@ function limpiarAnalisis(b: any) {
 }
 
 Deno.serve(async (req) => {
+  cors = cabeceras(req);
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   try {
