@@ -495,6 +495,15 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
 
 /* El sufijo Ai de la marca va en la misma linea que Conste */
 .brand b span{display:inline!important;font-size:inherit!important;letter-spacing:inherit!important;opacity:1!important}
+
+/* Distintivo de función de pago. Discreto: informa, no interrumpe. */
+.etqPro{display:inline-block;margin-left:7px;padding:1px 7px;border-radius:999px;
+  font-family:var(--mono);font-size:9px;letter-spacing:.08em;vertical-align:middle;
+  background:linear-gradient(135deg,#3D7BFF,#22d3ee);color:#05070f;font-weight:700}
+.estFicha{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #232d47;
+  border-radius:11px;background:#0e1420}
+.estFicha b{font-size:13.5px}
+.estFicha .sub{font-size:11.5px;color:#6f7894;margin:2px 0 0}
 </style>
 </head>
 <body>
@@ -679,6 +688,12 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
       <button class="btn sm" id="btnCorrAdd" style="margin-top:10px">＋ Añadir palabra</button>
     </div>
     <div class="setrow">
+      <label>Mis modelos de acta <span class="etqPro">PRO</span></label>
+      <p>Sube dos o tres actas tuyas y la app aprende cómo escribes: el tono, las secciones y tus fórmulas. A partir de ahí las actas salen ya redactadas a tu manera. <b>Las actas de ejemplo no se guardan</b>: se analizan y se descartan.</p>
+      <div id="estLista" style="display:flex;flex-direction:column;gap:8px;margin-top:10px"></div>
+      <button class="btn sm" id="btnEstNuevo" style="margin-top:10px">＋ Enseñarle un modelo de acta</button>
+    </div>
+    <div class="setrow">
       <label>Licencia ConsteAi</label>
       <input type="text" id="setLic" placeholder="Pega aquí tu clave de licencia Pro">
       <p id="licEstado"></p>
@@ -748,6 +763,10 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
       <option value="entrevista">🎤 Entrevista</option>
       <option value="asociacion">🤝 Asamblea de asociación</option>
       <option value="pleno">🏛️ Pleno / órgano colegiado</option>
+    </select>
+    <label style="font-size:13px;font-weight:600;display:block;margin-top:12px">Modelo de redacción <span class="etqPro">PRO</span></label>
+    <select id="orgEstilo" style="margin-top:6px">
+      <option value="">Redacción estándar de ConsteAi</option>
     </select>
     <div class="inline" style="margin-top:12px">
       <div style="flex:1"><label style="font-size:13px;font-weight:600">Presidente/a</label><input id="orgPres" style="margin-top:6px"></div>
@@ -846,6 +865,22 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
   </div>
 </div>
 
+<div class="overlay hide" id="estOverlay">
+  <div class="modal" style="max-width:640px">
+    <h2 id="estTitulo">Enseñarle un modelo de acta</h2>
+    <p class="sub">Pega o sube entre una y tres actas tuyas ya terminadas. Cuantas más, mejor aprende. Acepta texto pegado, <b>.txt</b> y <b>.docx</b>.</p>
+    <label style="font-size:13px;font-weight:600">Nombre del modelo</label>
+    <input id="estNombre" placeholder="Ej.: Actas de junta de mi despacho" style="margin-top:6px">
+    <div id="estMuestras" style="margin-top:14px;display:flex;flex-direction:column;gap:12px"></div>
+    <p class="sub" style="margin-top:12px">🔒 Las actas que subas <b>no se guardan</b> en ningún servidor. Se analizan para deducir tu estilo y se descartan en el acto. Solo se conserva la descripción del estilo, sin nombres ni importes.</p>
+    <div id="estAviso" class="sub" style="margin-top:8px"></div>
+    <div class="foot">
+      <button class="btn" id="estCancel">Cancelar</button>
+      <button class="btn pri" id="estAnalizar">✨ Aprender mi estilo</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -915,22 +950,55 @@ $$("nav button").forEach(b=>b.onclick=()=>{
 });
 
 /* =====================================================================
-   ANÁLISIS DE VOZ (pitch por autocorrelación + centroide espectral)
+   ANÁLISIS DE VOZ
+   De cada trozo de audio sacamos una huella de 11 rasgos que describe
+   CÓMO suena la voz, no cuánto: tono, brillo, aspereza y el reparto de
+   energía por bandas (lo que distingue el timbre de dos personas). Al
+   ser todos proporciones, no se falsean si alguien se aleja del
+   micrófono o el navegador sube la ganancia.
 ===================================================================== */
+const RMS_VOZ=0.006;          // por debajo de esto damos el trozo por silencio
+const BANDAS_VOZ=[[150,300],[300,600],[600,1200],[1200,2400],[2400,4000],[4000,6500]];
+/* Cuánto pesa cada rasgo al comparar. El tono manda, pero por sí solo
+   confunde a dos personas del mismo registro: por eso el timbre suma. */
+const PESOS_VOZ=[2.2,1.2,1.0,0.8,0.6,1.0,1.1,1.2,1.2,1.0,0.8];
+/* La sensibilidad que el usuario elige en Ajustes. umbral = cuánto se
+   puede parecer como máximo para dar por buena una identificación;
+   inercia = cuánto tiene que ganar un hablante nuevo para desbancar al
+   anterior. Antes este ajuste estaba en la pantalla pero no hacía nada. */
+const SENS_VOZ={
+  alta:{umbral:1.55,inercia:0.95},
+  media:{umbral:1.15,inercia:0.80},
+  baja:{umbral:0.85,inercia:0.62}
+};
+function sensVoz(){return SENS_VOZ[(typeof settings!=="undefined"&&settings.sens)||"media"]||SENS_VOZ.media}
+
 function detectPitch(buf,sr){
   const N=buf.length;let rms=0;
   for(let i=0;i<N;i++)rms+=buf[i]*buf[i];
   rms=Math.sqrt(rms/N);
-  if(rms<0.012)return{f0:0,rms};
+  if(rms<RMS_VOZ)return{f0:0,rms};
   const minL=Math.floor(sr/350),maxL=Math.floor(sr/70);
+  /* Dos pasadas: primero a saltos de 4 muestras y despues afinando
+     alrededor del mejor candidato. Da el mismo resultado que recorrer
+     todos los desfases, pero cuesta la cuarta parte: asi el analisis
+     no se come el hilo principal y no se pierden fotogramas. */
   let best=0,bestL=0;
-  for(let lag=minL;lag<=maxL&&lag<N;lag++){
+  for(let lag=minL;lag<=maxL&&lag<N;lag+=4){
+    let c=0;
+    for(let i=0;i<N-lag;i+=2)c+=buf[i]*buf[i+lag];
+    if(c>best){best=c;bestL=lag}
+  }
+  if(!bestL)return{f0:0,rms};
+  const d0=Math.max(minL,bestL-4),d1=Math.min(maxL,bestL+4);
+  best=0;
+  for(let lag=d0;lag<=d1&&lag<N;lag++){
     let c=0;
     for(let i=0;i<N-lag;i++)c+=buf[i]*buf[i+lag];
     if(c>best){best=c;bestL=lag}
   }
   let norm=0;for(let i=0;i<N;i++)norm+=buf[i]*buf[i];
-  if(norm===0||best/norm<0.30)return{f0:0,rms};
+  if(norm===0||best/norm<0.28)return{f0:0,rms};
   return{f0:sr/bestL,rms};
 }
 function spectralCentroid(freqData,sr,fft){
@@ -943,39 +1011,114 @@ function spectralCentroid(freqData,sr,fft){
 }
 const median=a=>{if(!a.length)return 0;const s=[...a].sort((x,y)=>x-y);return s[Math.floor(s.length/2)]};
 
+/* Huella de timbre de un instante de voz. Devuelve 11 números. */
+function rasgosVoz(fr,sr,fft,f0){
+  const n=fr.length,hz=i=>i*sr/fft;
+  const mag=new Float64Array(n);
+  let tot=0;
+  for(let i=0;i<n;i++){const m=Math.pow(10,fr[i]/20);mag[i]=m;tot+=m}
+  if(!tot)return null;
+  let num=0;for(let i=0;i<n;i++)num+=mag[i]*hz(i);
+  const cent=num/tot;
+  let v=0;for(let i=0;i<n;i++){const d=hz(i)-cent;v+=mag[i]*d*d}
+  const spread=Math.sqrt(v/tot);
+  let acc=0,roll=cent;
+  for(let i=0;i<n;i++){acc+=mag[i];if(acc>=tot*0.85){roll=hz(i);break}}
+  let logSum=0,cnt=0;
+  for(let i=1;i<n;i++)if(mag[i]>0){logSum+=Math.log(mag[i]);cnt++}
+  const flat=cnt?Math.exp(logSum/cnt)/(tot/n):0;
+  const bandas=BANDAS_VOZ.map(function(b){
+    let s=0;for(let i=0;i<n;i++){const h=hz(i);if(h>=b[0]&&h<b[1])s+=mag[i]}
+    return s;
+  });
+  const sb=bandas.reduce((x,y)=>x+y,0)||1;
+  const out=[Math.log(Math.max(f0,60)),Math.log(Math.max(cent,80)),
+             Math.log(Math.max(roll,120)),Math.log(Math.max(spread,40)),
+             Math.sqrt(Math.max(flat,1e-6))];
+  bandas.forEach(x=>out.push(x/sb));
+  return out;
+}
+/* Perfil de una persona: la mediana de cada rasgo y cuánto le varía.
+   Usamos mediana y no media porque una tos o un portazo no deben
+   desplazar la huella entera. */
+function perfilDeRasgos(lista){
+  if(!lista.length)return null;
+  const d=lista[0].length,med=[],disp=[];
+  for(let k=0;k<d;k++){
+    const col=lista.map(v=>v[k]);
+    const m=median(col);
+    med.push(m);
+    disp.push(Math.max(median(col.map(x=>Math.abs(x-m))),1e-3));
+  }
+  return{med:med,disp:disp,n:lista.length};
+}
+/* 0 = clavado; 1 = a tres desviaciones de media. Cada rasgo se recorta
+   a 4 para que un solo valor raro no decida por los otros diez. */
+function distRasgos(p,v){
+  if(!p||!v)return 1e9;
+  let s=0,pt=0;
+  for(let k=0;k<p.med.length&&k<v.length;k++){
+    const w=PESOS_VOZ[k]||1;
+    s+=w*Math.min(Math.abs(v[k]-p.med[k])/(p.disp[k]*3),4);
+    pt+=w;
+  }
+  return pt?s/pt:1e9;
+}
+/* Perfiles antiguos (solo tono y brillo): se siguen admitiendo para que
+   nadie pierda las voces que ya tenía calibradas. */
 function distVoz(p,f0,cent){
   return Math.abs(f0-p.f0)/Math.max(p.f0dev*2,18)+0.6*Math.abs(cent-p.cent)/Math.max((p.centDev||400)*2,300);
 }
-function classify(f0s,cents){
+function distHablante(p,f){
+  if(p.perfil&&f.v)return distRasgos(p.perfil,f.v);
+  if(p.f0&&f.f0)return distVoz(p,f.f0,f.cent)*0.55;
+  return 1e9;
+}
+/* Indicador de «hablando ahora»: mira los últimos trozos, no uno solo. */
+function classify(fs){
   if(!speakers.length)return null;
   if(speakers.length===1)return speakers[0].id;
-  const f0=median(f0s),cent=median(cents);
-  if(!f0)return null;
-  let bestId=null,bestD=Infinity;
-  for(const p of speakers){
-    if(!p.f0)continue;
-    const d=distVoz(p,f0,cent);
-    if(d<bestD){bestD=d;bestId=p.id}
-  }
-  return bestId;
+  const utiles=(fs||[]).filter(f=>f&&f.f0);
+  if(!utiles.length)return null;
+  const umbral=sensVoz().umbral;
+  const puntos={};
+  utiles.forEach(function(f){
+    let mejor=null,md=1e9;
+    speakers.forEach(function(p){const d=distHablante(p,f);if(d<md){md=d;mejor=p.id}});
+    if(mejor!=null&&md<=umbral)puntos[mejor]=(puntos[mejor]||0)+1;
+  });
+  const orden=Object.entries(puntos).sort((a,b)=>b[1]-a[1]);
+  return orden.length?+orden[0][0]:null;
 }
 /* Atribución de un segmento: cada frame de voz vota por el perfil más cercano
    (ponderado por volumen). Si está reñido, se mantiene al hablante anterior. */
 function clasificaSegmento(fs){
   if(!speakers.length)return null;
   if(speakers.length===1){ultimoSpk=speakers[0].id;return ultimoSpk}
-  const perfiles=speakers.filter(p=>p.f0);
+  const perfiles=speakers.filter(p=>p.perfil||p.f0);
   if(!perfiles.length||!fs.length)return ultimoSpk;
+  const cfg=sensVoz();
+  /* Cada trozo de voz vota por el perfil más parecido, pero solo si se
+     parece de verdad: los que no llegan al umbral no votan. Y el voto
+     pesa según el volumen Y según lo claro que fue el parecido. */
   const votos={};
-  fs.forEach(f=>{
+  let conVoto=0;
+  fs.forEach(function(f){
     let mejor=null,md=1e9;
-    perfiles.forEach(p=>{const d=distVoz(p,f.f0,f.cent);if(d<md){md=d;mejor=p.id}});
-    if(mejor!=null)votos[mejor]=(votos[mejor]||0)+Math.max(f.rms,0.01);
+    perfiles.forEach(function(p){const d=distHablante(p,f);if(d<md){md=d;mejor=p.id}});
+    if(mejor!=null&&md<=cfg.umbral){
+      const peso=Math.max(f.rms,0.01)*(1-Math.min(md/cfg.umbral,1)*0.5);
+      votos[mejor]=(votos[mejor]||0)+peso;
+      conVoto++;
+    }
   });
   const orden=Object.entries(votos).sort((a,b)=>b[1]-a[1]);
-  if(!orden.length)return ultimoSpk;
+  /* Si ninguna voz se parece lo suficiente preferimos dejarlo sin
+     asignar: en un acta, atribuir una frase a quien no la dijo es peor
+     que dejarla sin nombre. */
+  if(!orden.length||conVoto<Math.max(2,fs.length*0.15))return null;
   const ganador=+orden[0][0];
-  if(orden.length>1&&ultimoSpk===+orden[1][0]&&orden[1][1]>orden[0][1]*0.8)return ultimoSpk;
+  if(orden.length>1&&ultimoSpk===+orden[1][0]&&orden[1][1]>orden[0][1]*cfg.inercia)return ultimoSpk;
   ultimoSpk=ganador;
   return ganador;
 }
@@ -983,15 +1126,33 @@ function clasificaSegmento(fs){
 /* =====================================================================
    AUDIO: mic + visualizador + frames de características
 ===================================================================== */
+/* Las MISMAS condiciones al calibrar que al grabar. Antes la
+   calibración pedía el micrófono con los ajustes por defecto del
+   navegador y la grabación con otros: la huella se tomaba con un
+   sonido y se comparaba con otro, y de ahí venían buena parte de las
+   confusiones. La ganancia automática va desactivada porque sube y
+   baja sola y deforma el timbre justo en lo que miramos. */
+const MIC_AUDIO={
+  channelCount:1,
+  echoCancellation:true,
+  noiseSuppression:true,
+  autoGainControl:false
+};
 async function initAudio(){
   if(micStream)return;
-  micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+  micStream=await navigator.mediaDevices.getUserMedia({audio:MIC_AUDIO});
   audioCtx=new(window.AudioContext||window.webkitAudioContext)();
   const src=audioCtx.createMediaStreamSource(micStream);
   analyser=audioCtx.createAnalyser();analyser.fftSize=2048;
+  analyser.smoothingTimeConstant=0.2;   // menos suavizado: el timbre llega más fiel
   src.connect(analyser);
   micStream.getAudioTracks().forEach(t=>{t.onended=()=>setTimeout(()=>{if(typeof recuperarMic==="function")recuperarMic()},800)});
-  mediaRec=new MediaRecorder(micStream);
+  /* Un poco más de bitrate: el audio que luego sube a transcripción
+     profesional llega con más detalle y salen menos palabras mal. */
+  let opciones={};
+  try{ if(MediaRecorder.isTypeSupported("audio/webm;codecs=opus"))
+         opciones={mimeType:"audio/webm;codecs=opus",audioBitsPerSecond:128000}; }catch(e){}
+  mediaRec=new MediaRecorder(micStream,opciones);
   mediaRec.ondataavailable=e=>{
     if(e.data.size)audioChunks.push(e.data);
     if(dgWS&&dgWS.readyState===1&&e.data.size)dgWS.send(e.data);
@@ -1010,22 +1171,29 @@ function stopAudio(){
   if(micStream){micStream.getTracks().forEach(t=>t.stop());micStream=null}
   if(audioCtx){audioCtx.close();audioCtx=null}
 }
+let ultimoAnalisis=0;
 function frameLoop(){
   if(!recording||!analyser)return;
   if(!paused){
-    const N=analyser.fftSize,buf=new Float32Array(N),fr=new Float32Array(analyser.frequencyBinCount);
-    analyser.getFloatTimeDomainData(buf);analyser.getFloatFrequencyData(fr);
-    const sr=audioCtx.sampleRate;
-    const r=detectPitch(buf,sr);
-    const cent=r.rms>0.012?spectralCentroid(fr,sr,N):0;
-    const t=(Date.now()-recStart)/1000;
-    frames.push({t,f0:r.f0,cent,rms:r.rms});
-    if(frames.length>3000)frames.splice(0,500);
-    if(r.f0){
-      const id=classify([r.f0],[cent]);
-      showLiveSpeaker(id);
-    }
+    const N=analyser.fftSize,buf=new Float32Array(N);
+    analyser.getFloatTimeDomainData(buf);
     drawWave(buf);
+    /* La onda se dibuja a 60 por segundo porque es lo que se ve; la
+       huella de voz se calcula 16 veces por segundo, que basta de
+       sobra para una conversación y deja el resto del tiempo libre. */
+    const ahora=Date.now();
+    if(ahora-ultimoAnalisis>=60){
+      ultimoAnalisis=ahora;
+      const fr=new Float32Array(analyser.frequencyBinCount);
+      analyser.getFloatFrequencyData(fr);
+      const sr=audioCtx.sampleRate;
+      const r=detectPitch(buf,sr);
+      let v=null,cent=0;
+      if(r.f0){v=rasgosVoz(fr,sr,N,r.f0);if(v)cent=Math.exp(v[1])}
+      frames.push({t:(ahora-recStart)/1000,f0:r.f0,cent:cent,rms:r.rms,v:v});
+      if(frames.length>4000)frames.splice(0,800);
+      if(r.f0)showLiveSpeaker(classify(frames.slice(-10)));
+    }
   }
   requestAnimationFrame(frameLoop);
 }
@@ -1147,7 +1315,7 @@ function commitFinal(txt){
   ultimoCommitTxt=normTxt(txt);ultimoCommitT=Date.now();
   const t1=(Date.now()-recStart)/1000;
   const t0=lastFinalTime;lastFinalTime=t1;
-  const fs=frames.filter(f=>f.t>=t0-0.3&&f.t<=t1&&f.f0>0&&f.rms>0.018);
+  const fs=frames.filter(f=>f.t>=t0-0.35&&f.t<=t1+0.1&&f.f0>0&&f.rms>RMS_VOZ*1.5);
   addSegment({t0,t1,text:capitalize(txt),spk:clasificaSegmento(fs)});
 }
 function rescatarInterim(){
@@ -1362,22 +1530,27 @@ function stopCalAudio(){
 }
 $("#calRec").onclick=async()=>{
   const btn=$("#calRec");btn.disabled=true;
-  try{calStream=await navigator.mediaDevices.getUserMedia({audio:true})}
+  /* Mismas condiciones de micrófono que al grabar la reunión: si no,
+     la huella se toma con un sonido y se compara con otro. */
+  try{calStream=await navigator.mediaDevices.getUserMedia({audio:MIC_AUDIO})}
   catch(e){toast("No se pudo acceder al micrófono");btn.disabled=false;return}
   calCtx=new(window.AudioContext||window.webkitAudioContext)();
   const src=calCtx.createMediaStreamSource(calStream);
-  const an=calCtx.createAnalyser();an.fftSize=2048;src.connect(an);
+  const an=calCtx.createAnalyser();an.fftSize=2048;an.smoothingTimeConstant=0.2;src.connect(an);
   const cv=$("#calwave"),cx=cv.getContext("2d");
   cv.width=cv.clientWidth*devicePixelRatio;cv.height=cv.clientHeight*devicePixelRatio;
-  const f0s=[],cents=[];
-  const t0=Date.now(),DUR=6000;
+  const f0s=[],cents=[],vecs=[];
+  const t0=Date.now(),DUR=9000;   // 9 s: con 6 apenas daba para 40 muestras
   $("#calMsg").textContent="🎙️ Grabando… lee la frase con voz natural";
   (function loop(){
     if(!calCtx)return;
     const N=an.fftSize,buf=new Float32Array(N),fr=new Float32Array(an.frequencyBinCount);
     an.getFloatTimeDomainData(buf);an.getFloatFrequencyData(fr);
     const r=detectPitch(buf,calCtx.sampleRate);
-    if(r.f0){f0s.push(r.f0);cents.push(spectralCentroid(fr,calCtx.sampleRate,N))}
+    if(r.f0){
+      const v=rasgosVoz(fr,calCtx.sampleRate,N,r.f0);
+      if(v){vecs.push(v);f0s.push(r.f0);cents.push(Math.exp(v[1]))}
+    }
     cx.clearRect(0,0,cv.width,cv.height);
     cx.strokeStyle=calTarget.color;cx.lineWidth=2*devicePixelRatio;cx.beginPath();
     for(let x=0;x<cv.width;x++){
@@ -1389,13 +1562,14 @@ $("#calRec").onclick=async()=>{
     const pct=Math.min(100,(Date.now()-t0)/DUR*100);
     $("#calProgBar").style.width=pct+"%";
     if(Date.now()-t0<DUR)requestAnimationFrame(loop);
-    else finishCal(f0s,cents);
+    else finishCal(f0s,cents,vecs);
   })();
 };
-function finishCal(f0s,cents){
+function finishCal(f0s,cents,vecs){
   stopCalAudio();
-  if(f0s.length<20){
-    $("#calMsg").textContent="⚠️ No se detectó suficiente voz. Inténtalo de nuevo más cerca del micrófono.";
+  vecs=vecs||[];
+  if(f0s.length<30){
+    $("#calMsg").textContent="⚠️ No se detectó suficiente voz. Acércate al micrófono y lee la frase entera sin pausas.";
     $("#calRec").disabled=false;return;
   }
   const f0=median(f0s);
@@ -1403,12 +1577,26 @@ function finishCal(f0s,cents){
   const medc=median(cents);
   calTarget.f0=f0;calTarget.f0dev=Math.max(dev,8);calTarget.cent=medc;
   calTarget.centDev=Math.max(median(cents.map(x=>Math.abs(x-medc))),150);
+  calTarget.perfil=perfilDeRasgos(vecs);   // la huella de 11 rasgos
   speakers.push(calTarget);LS.set("vs_profiles",speakers);
   renderSpeakers();
   guardarVocesEnOrg();
   $("#calOverlay").classList.add("hide");
   const _oc=orgOf(currentOrg);
-  toast("✅ Voz de "+calTarget.name+" calibrada ("+Math.round(f0)+" Hz)"+(_oc?" y guardada en "+_oc.nombre:""));
+  /* Si la voz nueva se parece demasiado a otra ya calibrada, avisamos:
+     vale más decirlo ahora que ver el acta con los nombres cambiados. */
+  let aviso="";
+  if(calTarget.perfil){
+    let choca=null,md=1e9;
+    speakers.forEach(function(p){
+      if(p.id===calTarget.id||!p.perfil)return;
+      const d=distRasgos(p.perfil,calTarget.perfil.med);
+      if(d<md){md=d;choca=p}
+    });
+    if(choca&&md<0.55)aviso=" ⚠️ Su voz se parece mucho a la de "+choca.name+
+      ": repasa quién es quién al terminar.";
+  }
+  toast("✅ Voz de "+calTarget.name+" calibrada ("+Math.round(f0)+" Hz)"+(_oc?" y guardada en "+_oc.nombre:"")+aviso);
 }
 
 /* =====================================================================
@@ -1553,7 +1741,8 @@ function contextoRedaccion(){
     organizacion:o?o.nombre:"",
     presidente:o?o.pres:"",
     secretario:o?o.sec:"",
-    hablantes:speakers.map(s=>s.name).filter(Boolean)
+    hablantes:speakers.map(s=>s.name).filter(Boolean),
+    estilo:(typeof estiloDeOrg==="function"?estiloDeOrg(o):null)
   };
 }
 
@@ -1726,7 +1915,9 @@ function openOrgModal(o){
   orgEditing=o?o.id:null;
   $("#orgTitle").textContent=o?"Editar organización":"Nueva organización";
   $("#orgNombre").value=o?o.nombre:"";
+  pintarSelectEstilos();
   $("#orgPlantilla").value=o?o.plantilla:"general";
+  $("#orgEstilo").value=(o&&o.estilo)||"";
   $("#orgPres").value=o?o.pres:"";
   $("#orgSec").value=o?o.sec:"";
   $("#orgDest").value=o?o.dest.join(", "):"";
@@ -1753,7 +1944,7 @@ $("#orgSave").onclick=()=>{
   const nombre=$("#orgNombre").value.trim();
   if(!nombre){toast("Pon un nombre a la organización");return}
   const dest=$("#orgDest").value.split(/[\n,;]+/).map(s=>s.trim()).filter(s=>/.+@.+\..+/.test(s));
-  const data={nombre,plantilla:$("#orgPlantilla").value,pres:$("#orgPres").value.trim(),sec:$("#orgSec").value.trim(),dest};
+  const data={nombre,plantilla:$("#orgPlantilla").value,estilo:$("#orgEstilo").value||"",pres:$("#orgPres").value.trim(),sec:$("#orgSec").value.trim(),dest};
   if(orgEditing){Object.assign(orgs.find(o=>o.id===orgEditing),data)}
   else{data.id=Date.now();orgs.push(data);currentOrg=data.id;LS.set("vs_org_actual",currentOrg)}
   LS.set("vs_orgs",orgs);renderOrgs();
@@ -3315,6 +3506,279 @@ avisoNavegador();
   pintarOrg();
 })();
 
+</script>
+<script>
+/* =====================================================================
+   MODELOS DE ACTA  (aprender el estilo del cliente)  — función Pro
+
+   El cliente pega o sube hasta tres actas suyas. Viajan a la función
+   analizar-estilo, que deduce cómo escribe y devuelve esa descripción.
+   Las actas NO se guardan en ninguna parte: ni aquí ni en el servidor.
+   Solo se conserva la descripción del estilo, ya depurada de nombres,
+   importes y cualquier dato de terceros.
+===================================================================== */
+(function(){
+  var estilos = [];            // lo que hay guardado en la cuenta
+  var textos  = ["", "", ""];  // las muestras de esta sesión, solo en memoria
+  var trabajando = false;
+
+  function $1(s){ return document.querySelector(s) }
+
+  async function llamar(cuerpo){
+    if(typeof window.tokenSesion!=="function") throw new Error("sin_sesion");
+    var tok = await window.tokenSesion();
+    if(!tok) throw new Error("sin_sesion");
+    var r = await fetch(SB_URL+"/functions/v1/analizar-estilo",{
+      method:"POST",
+      headers:{Authorization:"Bearer "+tok,apikey:SB_KEY,"Content-Type":"application/json"},
+      body:JSON.stringify(cuerpo)
+    });
+    var j = await r.json().catch(function(){ return {} });
+    if(!r.ok) throw new Error(j.error||"error");
+    return j;
+  }
+
+  function pintarLista(){
+    var c = $1("#estLista");
+    if(!c) return;
+    c.innerHTML = "";
+    if(!estilos.length){
+      var p = document.createElement("p");
+      p.className = "sub"; p.style.margin = "0";
+      p.textContent = "Todavía no le has enseñado ningún modelo. Con dos actas tuyas ya aprende.";
+      c.appendChild(p);
+      return;
+    }
+    estilos.forEach(function(e){
+      var a = e.analisis || {};
+      var resumen = [a.tono, a.tratamiento,
+                     (a.secciones||[]).length ? ((a.secciones||[]).length + " secciones") : ""]
+                    .filter(Boolean).join(" · ");
+      var d = document.createElement("div");
+      d.className = "estFicha";
+      d.innerHTML = '<div style="flex:1;min-width:0"><b></b><p class="sub"></p></div>'+
+                    '<button class="btn sm" data-ver="1">Ver</button>'+
+                    '<button class="btn sm danger" data-del="1">Borrar</button>';
+      d.querySelector("b").textContent = e.nombre;
+      d.querySelector(".sub").textContent = resumen || "Modelo aprendido";
+      d.querySelector("[data-ver]").onclick = function(){ verEstilo(e) };
+      d.querySelector("[data-del]").onclick = async function(){
+        if(!confirm("¿Borrar el modelo «"+e.nombre+"»?")) return;
+        try{ await llamar({accion:"borrar", id:e.id}); await cargar(); toast("Modelo borrado"); }
+        catch(err){ toast("No se pudo borrar el modelo"); }
+      };
+      c.appendChild(d);
+    });
+  }
+
+  function verEstilo(e){
+    var a = e.analisis || {}, L = [];
+    if(a.tono) L.push("Tono: " + a.tono);
+    if(a.persona) L.push("Persona verbal: " + a.persona);
+    if(a.tratamiento) L.push("Tratamiento: " + a.tratamiento);
+    if(a.numeracion) L.push("Numeración: " + a.numeracion);
+    if((a.secciones||[]).length)
+      L.push("Secciones: " + a.secciones.map(function(s){ return s.titulo }).join(" · "));
+    if((a.convenciones||[]).length) L.push("Convenciones: " + a.convenciones.join("; "));
+    if((a.vocabulario||[]).length) L.push("Vocabulario: " + a.vocabulario.slice(0,20).join(", "));
+    if(a.notas) L.push("Notas: " + a.notas);
+    alert("«" + e.nombre + "»" + String.fromCharCode(10,10) + L.join(String.fromCharCode(10,10)));
+  }
+
+  window.pintarSelectEstilos = function(){
+    var s = $1("#orgEstilo");
+    if(!s) return;
+    var previo = s.value;
+    s.innerHTML = "";
+    var o0 = document.createElement("option");
+    o0.value = ""; o0.textContent = "Redacción estándar de ConsteAi";
+    s.appendChild(o0);
+    estilos.forEach(function(e){
+      var o = document.createElement("option");
+      o.value = e.id; o.textContent = e.nombre;
+      s.appendChild(o);
+    });
+    s.value = previo;
+  };
+
+  /* Lo que se le pasa a la IA al redactar el acta de esa organización. */
+  window.estiloDeOrg = function(o){
+    if(!o || !o.estilo) return null;
+    var e = estilos.find(function(x){ return String(x.id) === String(o.estilo) });
+    return e ? e.analisis : null;
+  };
+
+  async function cargar(){
+    try{
+      var j = await llamar({accion:"listar"});
+      estilos = j.estilos || [];
+    }catch(e){ estilos = []; }
+    pintarLista();
+    window.pintarSelectEstilos();
+  }
+  window.cargarEstilos = cargar;
+  window.__est = { textos: textos, llamar: llamar, cargar: cargar,
+                   ocupado: function(v){ if(v===undefined) return trabajando; trabajando = v; } };
+  setTimeout(cargar, 2500);
+})();
+</script>
+<script>
+/* =====================================================================
+   MODELOS DE ACTA (2 de 2): la ventana donde se suben los ejemplos
+===================================================================== */
+(function(){
+  var MIN = 300;      // menos de esto no es un acta
+  var MAX = 14000;    // por muestra, lo que admite la función
+  function $1(s){ return document.querySelector(s) }
+
+  /* Un .docx es un zip con el texto dentro. JSZip ya está cargado para
+     las descargas de la biblioteca, así que lo reaprovechamos y nos
+     ahorramos traer otra librería solo para esto. */
+  async function textoDeDocx(file){
+    if(typeof JSZip==="undefined") throw new Error("docx_no_disponible");
+    var zip = await JSZip.loadAsync(file);
+    var doc = zip.file("word/document.xml");
+    if(!doc) throw new Error("docx_ilegible");
+    var xml = await doc.async("string");
+    return xml
+      .replace(/<w:p[ >]/g, String.fromCharCode(10) + "<w:p ")
+      .replace(/<w:br\s*\/?>/g, String.fromCharCode(10))
+      .replace(/<[^>]+>/g, "")
+      .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"').replace(/&apos;/g, "'")
+      .replace(/[ \t]+/g, " ")
+      .trim();
+  }
+
+  async function textoDeFichero(file){
+    var n = (file.name||"").toLowerCase();
+    if(n.endsWith(".docx")) return await textoDeDocx(file);
+    if(n.endsWith(".txt") || n.endsWith(".md") || n.endsWith(".rtf")) return await file.text();
+    if(n.endsWith(".doc")) throw new Error("doc_viejo");
+    if(n.endsWith(".pdf")) throw new Error("pdf");
+    return await file.text();
+  }
+
+  function pintarCajas(){
+    var c = $1("#estMuestras");
+    if(!c) return;
+    var T = window.__est.textos;
+    c.innerHTML = "";
+    for(var i=0;i<3;i++){
+      (function(k){
+        var caja = document.createElement("div");
+        caja.innerHTML =
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">'+
+            '<label style="font-size:13px;font-weight:600;flex:1"></label>'+
+            '<button class="btn sm" data-sub="1">Subir fichero</button>'+
+            '<input type="file" accept=".txt,.md,.docx,.rtf" style="display:none">'+
+          '</div>'+
+          '<textarea rows="4" placeholder="Pega aquí el acta completa, o súbela como fichero…"></textarea>'+
+          '<p class="sub" data-info="1" style="margin:4px 0 0;font-size:11.5px"></p>';
+        var lab = caja.querySelector("label");
+        lab.textContent = "Acta de ejemplo " + (k+1) + (k ? " (opcional)" : "");
+        var ta = caja.querySelector("textarea");
+        var info = caja.querySelector("[data-info]");
+        var inp = caja.querySelector('input[type="file"]');
+        function refresca(){
+          var n = (T[k]||"").trim().length;
+          if(!n){ info.textContent = ""; return }
+          info.textContent = n < MIN
+            ? ("Solo " + n + " caracteres: hace falta un acta entera para que el estilo se note.")
+            : (n.toLocaleString("es-ES") + " caracteres leídos.");
+          info.style.color = n < MIN ? "#f0a85b" : "#6f7894";
+        }
+        ta.value = T[k] || "";
+        ta.oninput = function(){ T[k] = ta.value.slice(0, MAX); refresca() };
+        caja.querySelector("[data-sub]").onclick = function(){ inp.click() };
+        inp.onchange = async function(){
+          var f = inp.files && inp.files[0];
+          if(!f) return;
+          info.textContent = "Leyendo " + f.name + "…";
+          try{
+            var txt = await textoDeFichero(f);
+            T[k] = String(txt||"").slice(0, MAX);
+            ta.value = T[k];
+            refresca();
+          }catch(err){
+            var m = err && err.message;
+            info.style.color = "#f0a85b";
+            info.textContent =
+              m==="pdf"      ? "Los PDF todavía no: ábrelo, copia el texto y pégalo aquí." :
+              m==="doc_viejo"? "El formato .doc antiguo no se puede leer. Guárdalo como .docx o pega el texto." :
+                               "No se pudo leer el fichero. Pega el texto a mano.";
+          }
+          inp.value = "";
+        };
+        refresca();
+        c.appendChild(caja);
+      })(i);
+    }
+  }
+
+  function abrir(){
+    var T = window.__est.textos;
+    T[0] = T[1] = T[2] = "";
+    $1("#estNombre").value = "";
+    $1("#estAviso").textContent = "";
+    pintarCajas();
+    $1("#estOverlay").classList.remove("hide");
+  }
+
+  var btn = $1("#btnEstNuevo");
+  if(btn) btn.onclick = function(){
+    if(typeof pro!=="undefined" && !pro && typeof upsell==="function"){
+      upsell("Aprender tu estilo de acta es una función del plan Pro");
+      return;
+    }
+    abrir();
+  };
+  var cancel = $1("#estCancel");
+  if(cancel) cancel.onclick = function(){ $1("#estOverlay").classList.add("hide") };
+
+  var analizar = $1("#estAnalizar");
+  if(analizar) analizar.onclick = async function(){
+    if(window.__est.ocupado()) return;
+    var T = window.__est.textos;
+    var muestras = T.map(function(x){ return String(x||"").trim() })
+                    .filter(function(x){ return x.length >= MIN });
+    var aviso = $1("#estAviso");
+    if(!muestras.length){
+      aviso.style.color = "#f0a85b";
+      aviso.textContent = "Necesito al menos un acta completa (unas 300 palabras o más).";
+      return;
+    }
+    window.__est.ocupado(true);
+    analizar.disabled = true;
+    analizar.textContent = "Leyendo tus actas…";
+    aviso.style.color = "#6f7894";
+    aviso.textContent = "Esto tarda unos segundos. No cierres la ventana.";
+    try{
+      var j = await window.__est.llamar({
+        nombre: $1("#estNombre").value.trim(),
+        muestras: muestras
+      });
+      T[0] = T[1] = T[2] = "";          // fuera de memoria en cuanto se usan
+      await window.__est.cargar();
+      $1("#estOverlay").classList.add("hide");
+      toast("Modelo aprendido: «" + (j.nombre||"sin nombre") +
+            "». Asígnalo a una organización en su ficha.");
+    }catch(e){
+      var m = e && e.message;
+      aviso.style.color = "#ff6b6b";
+      aviso.textContent =
+        m==="plan_insuficiente" ? "Aprender tu estilo está incluido en el plan Pro." :
+        m==="limite_estilos"    ? "Has llegado al máximo de 20 modelos. Borra alguno." :
+        m==="no_reconocido"     ? "No he sabido reconocer la estructura. ¿Seguro que es un acta entera?" :
+        m==="ia_no_disponible"  ? "El servicio no responde ahora mismo. Inténtalo en unos minutos." :
+        m==="sin_sesion"        ? "Entra en tu cuenta para usar esta función." :
+                                  "No se pudo analizar. Inténtalo de nuevo.";
+    }
+    window.__est.ocupado(false);
+    analizar.disabled = false;
+    analizar.textContent = "Aprender mi estilo";
+  };
+})();
 </script>
 <script src="auth.js"></script>
 <script src="analitica.js"></script>
