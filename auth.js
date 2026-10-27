@@ -10,7 +10,8 @@ const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 const PAY_LINKS={
   pro_mes:"https://buy.stripe.com/aFacN6aFW5H5fYAbMH9k403",
   pro_anyo:"https://buy.stripe.com/dRmcN6bK0glJ13GeYT9k404",
-  empresas:"https://buy.stripe.com/8x2eVeeWc0mL13G3gb9k405"
+  empresas:"https://buy.stripe.com/8x2eVeeWc0mL13G3gb9k405",
+  despacho:"https://buy.stripe.com/eVqeVe7tK6L9fYAbMH9k407"
 };
 /* Portal de clientes de Stripe (gestionar/cancelar suscripción). Actívalo en Stripe → Settings → Billing → Customer portal */
 const PORTAL_LINK="https://billing.stripe.com/p/login/28E8wQ7tK7PdfYA03Z9k400";
@@ -18,7 +19,7 @@ const PLANES=[
   {id:"demo",nombre:"Gratis",precio:"0€",per:"para siempre",puntos:["Transcripción en tiempo real","2 perfiles de voz","1 comunidad u organización","Resumen automático","Exportación a texto"]},
   {id:"pro_mes",nombre:"Pro",precio:"19€",per:"/mes",puntos:["Todo lo del plan gratuito","Comunidades y voces ilimitadas","Tu plantilla de Word propia","Los 8 modelos de acta y envío por correo","Historial guardado en la nube","Transcripción de audios grabados"]},
   {id:"pro_anyo",nombre:"Pro anual",precio:"190€",per:"/año (2 meses gratis)",puntos:["Todo lo del plan Pro","Ahorras 38 € al año","Precio bloqueado mientras sigas","Soporte prioritario"]},
-  {id:"empresas",nombre:"Despachos y empresas",precio:"45€",per:"/mes (IVA incl.)",puntos:["Todo lo del plan Pro","Transcripción profesional incluida","Varios usuarios en el despacho","Plantillas con tu marca","Formación y soporte dedicado"]}
+  {id:"despacho",nombre:"Despacho",precio:"149€",per:"/mes · 5 personas",puntos:["Todo lo del plan Pro para cada persona","Comunidades, voces y modelos de acta compartidos","Bolsa común de 40 h/mes de transcripción profesional","Actas de todo el equipo en una sola biblioteca","Contrato de encargado del tratamiento incluido","Soporte prioritario"]}
 ];
 
 let sb=null,sesionUser=null,perfil=null,licPayload=null;
@@ -263,10 +264,39 @@ document.getElementById("btnPrueba").onclick=arrancarPrueba;
 
 /* ---------- lógica de sesión, perfil y plan ---------- */
 function planNube(){
-  return !!(perfil&&["pro","pro_mes","pro_anyo","empresas"].includes(perfil.plan)&&(!perfil.plan_hasta||new Date(perfil.plan_hasta)>new Date()));
+  return !!(perfil&&["pro","pro_mes","pro_anyo","empresas","despacho"].includes(perfil.plan)&&(!perfil.plan_hasta||new Date(perfil.plan_hasta)>new Date()));
 }
+/* ---------- despacho (plan de equipo) ----------
+   El despacho manda sobre el plan personal: si está al día, todos sus
+   miembros son Pro aunque su perfil diga «demo». */
+let despacho=null,despachoMiembros=[],despachoInvitaciones=[];
+window.despachoActivo=()=>!!(despacho&&despacho.vigente);
+window.despachoActual=()=>despacho;
+async function llamarDespacho(cuerpo){
+  const tok=await window.tokenSesion();
+  if(!tok)throw new Error("sin_sesion");
+  const r=await fetch(SB_URL+"/functions/v1/despacho",{
+    method:"POST",headers:{Authorization:"Bearer "+tok,apikey:SB_KEY,"Content-Type":"application/json"},
+    body:JSON.stringify(cuerpo||{accion:"estado"})
+  });
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(j.error||"error");
+  return j;
+}
+window.llamarDespacho=llamarDespacho;
+async function cargarDespacho(){
+  despacho=null;despachoMiembros=[];despachoInvitaciones=[];
+  if(!sesionUser)return;
+  try{
+    const j=await llamarDespacho({accion:"estado"});
+    despacho=j.despacho||null;despachoMiembros=j.miembros||[];despachoInvitaciones=j.invitaciones||[];
+  }catch(e){console.warn("despacho",e)}
+  if(typeof window.pintarDespacho==="function")window.pintarDespacho(despacho,despachoMiembros,despachoInvitaciones);
+}
+window.recargarDespacho=async function(){await cargarDespacho();recalcPro()};
 function recalcPro(){
   pro=licPayload||(planNube()?{email:perfil.email||sesionUser.email,plan:perfil.plan}:null);
+  if(!pro&&window.despachoActivo())pro={email:sesionUser.email,plan:"despacho"};
   window.sesionActiva=!!sesionUser;
   updateProUI();
   if(typeof window.cargarEstilos==="function")window.cargarEstilos();
@@ -282,7 +312,8 @@ function limpiarDatosLocales(){
   renderOrgs();renderSpeakers();renderTranscript();loadSettings();
 }
 async function cargarPerfil(){
-  perfil=null;
+  perfil=null;despacho=null;despachoMiembros=[];despachoInvitaciones=[];
+  if(!sesionUser&&typeof window.pintarDespacho==="function")window.pintarDespacho(null,[],[]);
   if(sesionUser){
     const uidPrev=LS.get("vs_uid",null);
     if(uidPrev&&uidPrev!==sesionUser.id){
@@ -323,7 +354,15 @@ async function cargarPerfil(){
         LS.set("vs_settings",settings);loadSettings();
       }
     }
-    const{data:acts}=await sb.from("actas").select("*").eq("user_id",sesionUser.id).order("fecha",{ascending:false}).limit(50);
+    /* Despacho: primero se carga la pertenencia (y se acepta la
+       invitación pendiente si la hay), luego las comunidades
+       compartidas, que se funden con las propias marcadas como tales. */
+    await aceptarInvitacionPendiente();
+    await cargarDespacho();
+    await cargarOrgsDespacho();
+
+    // Las actas: las mías y las de mi despacho (la base de datos ya filtra).
+    const{data:acts}=await sb.from("actas").select("*").order("fecha",{ascending:false}).limit(80);
     if(acts&&acts.length){
       const loc=LS.get("vs_sessions",[]);
       const ids=new Set(loc.map(s=>s.id));
@@ -331,17 +370,20 @@ async function cargarPerfil(){
         id:a.id,name:a.nombre,date:a.fecha,duration:a.duracion,
         orgId:a.org_id||null,
         orgNombre:a.org_nombre||"Sin organización",
+        despachoId:a.despacho_id||null,
+        deOtro:a.user_id!==sesionUser.id,
         segments:a.contenido.segments||[],
         summary:a.contenido.summary||null,
         acta:a.contenido.acta||null,
         speakers:a.contenido.speakers||[]
       })});
       loc.sort((a,b)=>new Date(b.date)-new Date(a.date));
-      LS.set("vs_sessions",loc.slice(0,100));
+      LS.set("vs_sessions",loc.slice(0,150));
     }
   }
   licPayload=await verifyLicense(settings.license);
   recalcPro();
+  seguirConPlanPendiente();
   if(typeof curar!=="undefined"&&curar)syncNube();
   console.log("[ConsteAi] sesión:",sesionUser?sesionUser.email:"-","| plan nube:",perfil?perfil.plan:"-","| licencia local:",settings.license?"sí":"no","| PRO:",!!pro);
   const b=document.getElementById("btnUser");
@@ -353,12 +395,83 @@ async function cargarPerfil(){
     else{const c=document.getElementById("cuotaBox");if(c)c.classList.add("hide")}
   }
 }
+/* ---------- invitación por enlace ----------
+   ?invitacion=TOKEN en la URL. Si hay sesión se acepta al momento; si
+   no, se guarda y se acepta nada más entrar. */
+(function(){
+  const q=new URLSearchParams(location.search);
+  const t=q.get("invitacion");
+  if(t){LS.set("vs_invitacion",t);history.replaceState(null,"",location.pathname)}
+  /* ?plan=despacho desde la web de venta: el pago necesita una cuenta con
+     el mismo correo, así que primero se entra y luego se va a Stripe. */
+  const p=q.get("plan");
+  if(p&&PAY_LINKS[p]!==undefined){LS.set("vs_plan_pendiente",p);history.replaceState(null,"",location.pathname)}
+})();
+function seguirConPlanPendiente(){
+  const p=LS.get("vs_plan_pendiente",null);
+  if(!p)return;
+  if(!sesionUser){toast("Crea tu cuenta o entra: el plan "+p+" se activará con este mismo correo.");return}
+  localStorage.removeItem("vs_plan_pendiente");
+  if(p==="despacho"&&!despacho){
+    toast("Primero crea tu despacho en Ajustes y después pulsa «Activar plan Despacho».");
+    const b=document.querySelector('nav button[data-tab="settings"]');if(b)b.click();
+    setTimeout(()=>{const r=document.getElementById("despRow");if(r)r.scrollIntoView({behavior:"smooth"})},300);
+    return;
+  }
+  setTimeout(()=>window.suscribir(p),800);
+}
+async function aceptarInvitacionPendiente(){
+  const t=LS.get("vs_invitacion",null);
+  if(!t||!sesionUser)return;
+  try{
+    const j=await llamarDespacho({accion:"aceptar",token:t});
+    localStorage.removeItem("vs_invitacion");
+    toast("🤝 Te has unido al despacho «"+((j.despacho&&j.despacho.nombre)||"")+"»");
+  }catch(e){
+    const m=e&&e.message;
+    localStorage.removeItem("vs_invitacion");
+    toast(m==="invitacion_caducada"?"La invitación ha caducado: pide otra a tu despacho.":
+          m==="ya_en_otro_despacho"?"Ya perteneces a otro despacho. Sal de él antes de aceptar esta invitación.":
+          m==="sin_asientos"?"El despacho no tiene asientos libres.":
+          "La invitación no es válida.");
+  }
+}
+
+/* ---------- organizaciones compartidas por el despacho ----------
+   Viven en orgs_despacho (todo el equipo las ve y las edita). En local
+   se funden con las propias con la marca compartida:true, y al subir a
+   datos_usuario se excluyen para que no se dupliquen. */
+async function cargarOrgsDespacho(){
+  if(!sesionUser||!despacho)return;
+  try{
+    const{data}=await sb.from("orgs_despacho").select("id,datos,actualizado").eq("despacho_id",despacho.id);
+    const propias=(orgs||[]).filter(o=>!o.compartida);
+    const compartidas=(data||[]).map(r=>Object.assign({},r.datos,{id:isNaN(+r.id)?r.id:+r.id,compartida:true}));
+    orgs=propias.concat(compartidas);
+    LS.set("vs_orgs",orgs);renderOrgs();
+  }catch(e){console.warn("orgs despacho",e)}
+}
+window.subirOrgDespacho=async function(o){
+  if(!sesionUser||!despacho||!o)return;
+  try{
+    const datos=Object.assign({},o);delete datos.compartida;
+    await sb.from("orgs_despacho").upsert({id:String(o.id),despacho_id:despacho.id,datos:datos,
+      actualizado:new Date().toISOString(),actualizado_por:sesionUser.id});
+  }catch(e){console.warn("subir org despacho",e)}
+};
+window.borrarOrgDespacho=async function(id){
+  if(!sesionUser||!despacho)return;
+  try{await sb.from("orgs_despacho").delete().eq("id",String(id))}catch(e){console.warn("borrar org despacho",e)}
+};
+
 async function syncNube(){
   if(!sesionUser)return;
   try{
     await sb.from("datos_usuario").upsert({user_id:sesionUser.id,
       ajustes:{license:settings.license,key:settings.key,prov:settings.prov,lang:settings.lang,sens:settings.sens,plantilla:settings.plantilla,misPlantillas:settings.misPlantillas||[]},
-      orgs:orgs,actualizado:new Date().toISOString()});
+      orgs:(orgs||[]).filter(o=>!o.compartida),actualizado:new Date().toISOString()});
+    // Las compartidas que tenga en local se suben a su sitio.
+    if(despacho)for(const o of (orgs||[]).filter(o=>o.compartida))await window.subirOrgDespacho(o);
   }catch(e){console.warn("sync",e)}
 }
 /* A la nube viaja SOLO el texto (acta, transcripción y resumen).
@@ -367,17 +480,27 @@ async function syncNube(){
 async function subirActa(s){
   if(!sesionUser)return;
   try{
+    // Si la reunión es de una comunidad compartida, el acta es del despacho.
+    const o=(orgs||[]).find(x=>String(x.id)===String(s.orgId));
+    const despachoId=(o&&o.compartida&&despacho)?despacho.id:null;
+    if(despachoId)s.despachoId=despachoId;
+    if(s.deOtro){
+      // Acta de un compañero: solo se actualiza el contenido, nunca el dueño.
+      await sb.from("actas").update({contenido:{segments:s.segments,summary:s.summary,speakers:s.speakers,acta:s.acta||null}}).eq("id",s.id);
+      return;
+    }
     await sb.from("actas").upsert({
       id:s.id,user_id:sesionUser.id,nombre:s.name,fecha:s.date,duracion:s.duration,
       org_id:s.orgId?String(s.orgId):null,
       org_nombre:s.orgNombre||"Sin organización",
+      despacho_id:despachoId,
       contenido:{segments:s.segments,summary:s.summary,speakers:s.speakers,acta:s.acta||null}
     });
   }catch(e){console.warn("acta",e)}
 }
 window.borrarActaNube=async function(id){
   if(!sesionUser)return;
-  try{await sb.from("actas").delete().eq("id",id).eq("user_id",sesionUser.id)}
+  try{await sb.from("actas").delete().eq("id",id)}   // la base de datos solo deja borrar lo mío o lo de mi despacho
   catch(e){console.warn("borrar acta",e)}
 };
 

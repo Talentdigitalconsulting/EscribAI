@@ -710,6 +710,48 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
       <div id="corrLista" style="display:flex;flex-direction:column;gap:8px;margin-top:10px"></div>
       <button class="btn sm" id="btnCorrAdd" style="margin-top:10px">＋ Añadir palabra</button>
     </div>
+    <div class="setrow" id="despRow">
+      <label>Mi despacho <span class="etqPro">EQUIPO</span></label>
+      <div id="despSin">
+        <p>Si en tu despacho sois varios, el plan Despacho (149 €/mes, 5 personas) comparte las comunidades, las voces calibradas, los modelos de acta y una bolsa común de 40 horas de transcripción profesional. Cada uno entra con su cuenta y ve el trabajo de todos.</p>
+        <div class="inline" style="margin-top:8px;flex-wrap:wrap;gap:8px">
+          <input type="text" id="despNombre" placeholder="Nombre del despacho (ej.: Fincas García)" style="flex:1;min-width:220px">
+          <button class="btn sm pri" id="btnDespCrear">Crear mi despacho</button>
+        </div>
+        <p style="margin-top:8px">Crear el despacho es gratis. Las funciones de equipo se activan al contratar el plan desde la pestaña <b>Planes</b>.</p>
+      </div>
+      <div id="despCon" class="hide">
+        <div class="estFicha" style="flex-wrap:wrap">
+          <div style="flex:1;min-width:0">
+            <b id="despTitulo">—</b>
+            <p class="sub" id="despEstado"></p>
+          </div>
+          <button class="btn sm" id="btnDespRenombrar">✏️ Nombre</button>
+          <button class="btn sm pri hide" id="btnDespPagar">Activar plan Despacho</button>
+        </div>
+        <div id="despHoras" class="sub" style="margin:8px 0 0"></div>
+        <p style="margin-top:12px;font-weight:600;font-size:13px">Personas</p>
+        <div id="despMiembros" style="display:flex;flex-direction:column;gap:6px;margin-top:6px"></div>
+        <div id="despInvitar" class="hide" style="margin-top:12px">
+          <div class="inline" style="flex-wrap:wrap;gap:8px">
+            <input type="email" id="despEmail" placeholder="correo@del-companero.es" style="flex:1;min-width:220px">
+            <button class="btn sm pri" id="btnDespInvitar">＋ Invitar</button>
+          </div>
+          <div id="despEnlace" class="hide" style="margin-top:10px;padding:10px 12px;border:1px dashed #3D7BFF;border-radius:10px;font-size:13px">
+            <div style="color:#6f7894;font-size:11.5px;margin-bottom:4px">Enlace de invitación (caduca en 7 días). Envíaselo por el medio que quieras:</div>
+            <div id="despEnlaceTxt" style="word-break:break-all;font-family:var(--mono);font-size:12px"></div>
+            <div class="inline" style="margin-top:8px;gap:8px">
+              <button class="btn sm" id="btnDespCopiar">📋 Copiar enlace</button>
+              <button class="btn sm" id="btnDespMail">✉️ Enviar por correo</button>
+            </div>
+          </div>
+          <div id="despPendientes" style="margin-top:10px"></div>
+        </div>
+        <div class="inline" style="margin-top:14px;gap:8px">
+          <button class="btn sm danger hide" id="btnDespSalir">Salir del despacho</button>
+        </div>
+      </div>
+    </div>
     <div class="setrow">
       <label>Mis modelos de acta <span class="etqPro">PRO</span></label>
       <p>Sube dos o tres actas tuyas y la app aprende cómo escribes: el tono, las secciones y tus fórmulas. A partir de ahí las actas salen ya redactadas a tu manera. <b>Las actas de ejemplo no se guardan</b>: se analizan y se descartan.</p>
@@ -787,6 +829,9 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
       <option value="asociacion">🤝 Asamblea de asociación</option>
       <option value="pleno">🏛️ Pleno / órgano colegiado</option>
     </select>
+    <label id="orgCompartirFila" class="hide" style="display:flex;gap:8px;align-items:center;font-size:13px;cursor:pointer;margin-top:12px">
+      <input type="checkbox" id="orgCompartir" style="width:auto"> Compartir con mi despacho (todo el equipo la ve y archiva sus actas en ella)
+    </label>
     <label style="font-size:13px;font-weight:600;display:block;margin-top:12px">Modelo de redacción <span class="etqPro">PRO</span></label>
     <select id="orgEstilo" style="margin-top:6px">
       <option value="">Redacción estándar de ConsteAi</option>
@@ -1987,7 +2032,7 @@ let currentOrg=LS.get("vs_org_actual",null);
 function orgOf(id){return orgs.find(o=>o.id===id)||null}
 function renderOrgs(){
   const sel=$("#orgSel");
-  sel.innerHTML='<option value="">— Sin organización —</option>'+orgs.map(o=>`<option value="${o.id}">${esc(o.nombre)}</option>`).join("");
+  sel.innerHTML='<option value="">— Sin organización —</option>'+orgs.map(o=>`<option value="${o.id}">${o.compartida?"👥 ":""}${esc(o.nombre)}</option>`).join("");
   sel.value=currentOrg&&orgOf(currentOrg)?currentOrg:"";
 }
 $("#orgSel").onchange=()=>{
@@ -2015,6 +2060,9 @@ function openOrgModal(o){
   pintarSelectEstilos();
   $("#orgPlantilla").value=o?o.plantilla:"general";
   $("#orgEstilo").value=(o&&o.estilo)||"";
+  const enDesp=typeof window.despachoActual==="function"&&!!window.despachoActual();
+  $("#orgCompartirFila").classList.toggle("hide",!enDesp);
+  $("#orgCompartir").checked=!!(o&&o.compartida);
   $("#orgPres").value=o?o.pres:"";
   $("#orgSec").value=o?o.sec:"";
   $("#orgDest").value=o?o.dest.join(", "):"";
@@ -2032,7 +2080,9 @@ $("#btnOrgEdit").onclick=()=>{
 };
 $("#orgCancel").onclick=()=>$("#orgOverlay").classList.add("hide");
 $("#orgDel").onclick=()=>{
-  if(!confirm("¿Eliminar esta organización?"))return;
+  const oEl=orgs.find(o=>o.id===orgEditing);
+  if(!confirm(oEl&&oEl.compartida?"Esta comunidad es compartida: desaparecerá para todo el despacho. ¿Eliminarla?":"¿Eliminar esta organización?"))return;
+  if(oEl&&oEl.compartida&&typeof window.borrarOrgDespacho==="function")window.borrarOrgDespacho(oEl.id);
   orgs=orgs.filter(o=>o.id!==orgEditing);LS.set("vs_orgs",orgs);
   if(currentOrg===orgEditing){currentOrg=null;LS.set("vs_org_actual",null)}
   renderOrgs();$("#orgOverlay").classList.add("hide");
@@ -2042,8 +2092,13 @@ $("#orgSave").onclick=()=>{
   if(!nombre){toast("Pon un nombre a la organización");return}
   const dest=$("#orgDest").value.split(/[\n,;]+/).map(s=>s.trim()).filter(s=>/.+@.+\..+/.test(s));
   const data={nombre,plantilla:$("#orgPlantilla").value,estilo:$("#orgEstilo").value||"",pres:$("#orgPres").value.trim(),sec:$("#orgSec").value.trim(),dest};
-  if(orgEditing){Object.assign(orgs.find(o=>o.id===orgEditing),data)}
-  else{data.id=Date.now();orgs.push(data);currentOrg=data.id;LS.set("vs_org_actual",currentOrg)}
+  const enDesp=typeof window.despachoActual==="function"&&!!window.despachoActual();
+  data.compartida=enDesp&&$("#orgCompartir").checked;
+  let org;
+  if(orgEditing){org=orgs.find(o=>o.id===orgEditing);const antes=!!org.compartida;Object.assign(org,data);
+    if(antes&&!org.compartida&&typeof window.borrarOrgDespacho==="function")window.borrarOrgDespacho(org.id);}
+  else{data.id=Date.now();orgs.push(data);org=data;currentOrg=data.id;LS.set("vs_org_actual",currentOrg)}
+  if(org.compartida&&typeof window.subirOrgDespacho==="function")window.subirOrgDespacho(org);
   LS.set("vs_orgs",orgs);renderOrgs();
   $("#orgOverlay").classList.add("hide");
   toast("🏛️ Organización guardada: "+nombre);
@@ -3619,6 +3674,18 @@ avisoNavegador();
     '<button class="nueva" id="sideOrgNueva">＋ Nueva organización</button>';
   nav.insertAdjacentElement("afterend",bloque);
 
+  // Resumen del despacho, debajo de la organización. Se rellena desde auth.js.
+  const desp=document.createElement("div");
+  desp.id="sideDespacho";desp.className="hide";
+  desp.innerHTML='<div class="rotulo">Despacho</div><div class="tarjeta" id="sideDespBoton"><span class="nom nomD">—</span><span class="tipo subD"></span></div>';
+  bloque.insertAdjacentElement("afterend",desp);
+  desp.querySelector("#sideDespBoton").onclick=()=>{
+    const b=document.querySelector('nav button[data-tab="settings"]');
+    if(b)b.click();
+    setTimeout(()=>{const r=document.getElementById("despRow");if(r)r.scrollIntoView({behavior:"smooth",block:"start"})},150);
+  };
+  if(typeof window.despachoActual==="function"&&window.despachoActual()&&typeof window.recargarDespacho==="function")window.recargarDespacho();
+
   document.getElementById("sideOrgNueva").onclick=()=>{
     const b=document.getElementById("btnOrgNew");
     if(b)b.click();
@@ -3808,6 +3875,140 @@ avisoNavegador();
   window.__est = { textos: textos, llamar: llamar, cargar: cargar,
                    ocupado: function(v){ if(v===undefined) return trabajando; trabajando = v; } };
   setTimeout(cargar, 2500);
+})();
+</script>
+<script>
+/* =====================================================================
+   MI DESPACHO (plan de equipo)
+   Pantalla de Ajustes: crear el despacho, invitar por enlace, ver a la
+   gente, expulsar, salir. Y el resumen en la barra lateral.
+===================================================================== */
+(function(){
+  function $1(s){return document.querySelector(s)}
+  var ultimoEnlace="",ultimoEmail="";
+
+  function fechaCorta(x){try{return new Date(x).toLocaleDateString("es-ES")}catch(e){return ""}}
+
+  window.pintarDespacho=function(d,miembros,invitaciones){
+    var sin=$1("#despSin"),con=$1("#despCon");
+    if(!sin||!con)return;
+    var side=$1("#sideDespacho");
+    if(!d){
+      sin.classList.remove("hide");con.classList.add("hide");
+      if(side)side.classList.add("hide");
+      return;
+    }
+    sin.classList.add("hide");con.classList.remove("hide");
+    $1("#despTitulo").textContent=d.nombre;
+    var estado=d.vigente
+      ?("Plan Despacho activo hasta el "+fechaCorta(d.plan_hasta)+" · "+miembros.length+" de "+d.asientos+" asientos")
+      :("Plan Despacho sin activar · "+miembros.length+" de "+d.asientos+" asientos. Las funciones de equipo se activan al contratar el plan.");
+    $1("#despEstado").textContent=estado;
+    $1("#btnDespPagar").classList.toggle("hide",d.vigente||!d.soy_admin);
+    $1("#btnDespRenombrar").classList.toggle("hide",!d.soy_admin);
+    $1("#despInvitar").classList.toggle("hide",!d.soy_admin);
+    $1("#btnDespSalir").classList.toggle("hide",d.soy_propietario);
+    var h=$1("#despHoras");
+    h.textContent=d.vigente
+      ?("Transcripción profesional del equipo este mes: "+Math.floor(d.usados_min/60)+" h "+(d.usados_min%60)+" min usadas de "+Math.floor(d.cuota_min/60)+" h (bolsa común).")
+      :"";
+
+    var lista=$1("#despMiembros");lista.innerHTML="";
+    miembros.forEach(function(m){
+      var fila=document.createElement("div");fila.className="estFicha";
+      fila.innerHTML='<div style="flex:1;min-width:0"><b></b><p class="sub"></p></div><button class="btn sm danger" data-exp="1">Quitar</button>';
+      fila.querySelector("b").textContent=m.email||m.user_id;
+      fila.querySelector(".sub").textContent=(m.rol==="admin"?"Administrador":"Miembro")+" · desde el "+fechaCorta(m.unido)+(m.user_id===d.propietario?" · propietario":"");
+      var b=fila.querySelector("[data-exp]");
+      if(!d.soy_admin||m.user_id===d.propietario)b.remove();
+      else b.onclick=async function(){
+        if(!confirm("¿Quitar a "+(m.email||"esta persona")+" del despacho? Dejará de ver las comunidades y actas compartidas."))return;
+        try{await window.llamarDespacho({accion:"expulsar",user_id:m.user_id});await window.recargarDespacho();toast("Persona retirada del despacho")}
+        catch(e){toast("No se pudo quitar")}
+      };
+      lista.appendChild(fila);
+    });
+
+    var pend=$1("#despPendientes");pend.innerHTML="";
+    if(invitaciones.length){
+      var t=document.createElement("p");t.className="sub";t.style.margin="0 0 6px";t.textContent="Invitaciones pendientes:";pend.appendChild(t);
+      invitaciones.forEach(function(i){
+        var fila=document.createElement("div");fila.className="estFicha";
+        fila.innerHTML='<div style="flex:1;min-width:0"><b></b><p class="sub"></p></div><button class="btn sm" data-rev="1">Anular</button>';
+        fila.querySelector("b").textContent=i.email;
+        fila.querySelector(".sub").textContent="caduca el "+fechaCorta(i.caduca);
+        fila.querySelector("[data-rev]").onclick=async function(){
+          try{await window.llamarDespacho({accion:"revocar",id:i.id});await window.recargarDespacho()}catch(e){toast("No se pudo anular")}
+        };
+        pend.appendChild(fila);
+      });
+    }
+
+    if(side){
+      side.classList.remove("hide");
+      side.querySelector(".nomD").textContent=d.nombre;
+      side.querySelector(".subD").textContent=(d.vigente?"Plan Despacho · ":"Sin activar · ")+miembros.length+"/"+d.asientos+" personas";
+    }
+  };
+
+  var bCrear=$1("#btnDespCrear");
+  if(bCrear)bCrear.onclick=async function(){
+    if(!window.sesionActiva){toast("Entra en tu cuenta para crear un despacho");return}
+    var nombre=$1("#despNombre").value.trim();
+    if(!nombre){toast("Ponle nombre al despacho");return}
+    bCrear.disabled=true;
+    try{await window.llamarDespacho({accion:"crear",nombre:nombre});await window.recargarDespacho();toast("🏢 Despacho creado. Invita a tu equipo y activa el plan cuando quieras.")}
+    catch(e){toast(e.message==="ya_tienes_despacho"?"Ya perteneces a un despacho":"No se pudo crear el despacho")}
+    bCrear.disabled=false;
+  };
+  var bRen=$1("#btnDespRenombrar");
+  if(bRen)bRen.onclick=async function(){
+    var d=window.despachoActual();if(!d)return;
+    var n=prompt("Nombre del despacho:",d.nombre);
+    if(!n||!n.trim())return;
+    try{await window.llamarDespacho({accion:"renombrar",nombre:n.trim()});await window.recargarDespacho()}catch(e){toast("No se pudo cambiar el nombre")}
+  };
+  var bPagar=$1("#btnDespPagar");
+  if(bPagar)bPagar.onclick=function(){if(typeof window.suscribir==="function")window.suscribir("despacho")};
+  var bInv=$1("#btnDespInvitar");
+  if(bInv)bInv.onclick=async function(){
+    var email=$1("#despEmail").value.trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){toast("Escribe un correo válido");return}
+    bInv.disabled=true;
+    try{
+      var j=await window.llamarDespacho({accion:"invitar",email:email});
+      ultimoEnlace=j.enlace;ultimoEmail=j.email;
+      $1("#despEnlaceTxt").textContent=j.enlace;
+      $1("#despEnlace").classList.remove("hide");
+      $1("#despEmail").value="";
+      await window.recargarDespacho();
+      $1("#despEnlace").classList.remove("hide");
+      toast("Invitación creada para "+j.email);
+    }catch(e){
+      var m=e.message;
+      toast(m==="sin_asientos"?"No quedan asientos libres en el despacho":
+            m==="ya_es_miembro"?"Esa persona ya está en el despacho":
+            m==="solo_admin"?"Solo el administrador puede invitar":"No se pudo crear la invitación");
+    }
+    bInv.disabled=false;
+  };
+  var bCop=$1("#btnDespCopiar");
+  if(bCop)bCop.onclick=async function(){
+    try{await navigator.clipboard.writeText(ultimoEnlace);toast("Enlace copiado")}catch(e){prompt("Copia el enlace:",ultimoEnlace)}
+  };
+  var bMail=$1("#btnDespMail");
+  if(bMail)bMail.onclick=function(){
+    var d=window.despachoActual();
+    var cuerpo="Hola,\n\nTe invito a unirte al despacho «"+(d?d.nombre:"")+"» en ConsteAi, la herramienta con la que hacemos las actas de las juntas.\n\n"+
+      "Abre este enlace, crea tu cuenta (o entra si ya la tienes) y quedarás dentro automáticamente:\n"+ultimoEnlace+"\n\nEl enlace caduca en 7 días.";
+    location.href="mailto:"+encodeURIComponent(ultimoEmail)+"?subject="+encodeURIComponent("Invitación a ConsteAi — "+(d?d.nombre:"despacho"))+"&body="+encodeURIComponent(cuerpo);
+  };
+  var bSalir=$1("#btnDespSalir");
+  if(bSalir)bSalir.onclick=async function(){
+    if(!confirm("¿Salir del despacho? Dejarás de ver sus comunidades y actas compartidas."))return;
+    try{await window.llamarDespacho({accion:"salir"});await window.recargarDespacho();toast("Has salido del despacho")}
+    catch(e){toast(e.message==="propietario_no_sale"?"El propietario no puede salir: transfiere el despacho o cancela el plan.":"No se pudo salir")}
+  };
 })();
 </script>
 <script>
