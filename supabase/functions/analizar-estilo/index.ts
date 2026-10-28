@@ -159,13 +159,15 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-    const { data: perfil } = await admin
-      .from("perfiles").select("plan, plan_hasta").eq("id", user.id).maybeSingle();
-    const plan = perfil?.plan ?? "demo";
-    const vigente = !perfil?.plan_hasta || new Date(perfil.plan_hasta) > new Date();
-    if (!vigente || !PLANES_CON_ESTILO.includes(plan)) {
+    const { data: pe } = await admin.rpc("plan_efectivo", { uid: user.id }).maybeSingle();
+    const plan: string = pe?.plan ?? "demo";
+    const vigente: boolean = !!pe?.vigente;
+    const enDespacho = plan === "despacho" && vigente;
+    if (!vigente || !(enDespacho || PLANES_CON_ESTILO.includes(plan))) {
       return json({ error: "plan_insuficiente", plan }, 403);
     }
+    // En un despacho los modelos son de todos: se guardan a nombre del despacho.
+    const despachoId: string | null = enDespacho ? pe.despacho_id : null;
 
     const nombre = String(body.nombre || "").trim().slice(0, 80) || "Mi modelo de acta";
     const muestras: string[] = (Array.isArray(body.muestras) ? body.muestras : [])
@@ -218,7 +220,7 @@ Deno.serve(async (req) => {
     } else {
       const { data: d, error } = await anon
         .from("estilos_acta")
-        .insert({ user_id: user.id, nombre, analisis, muestras: muestras.length })
+        .insert({ user_id: user.id, nombre, analisis, muestras: muestras.length, despacho_id: despachoId })
         .select("id,nombre,analisis,muestras").maybeSingle();
       if (error) {
         if (String(error.message || "").includes("limite_estilos")) {
