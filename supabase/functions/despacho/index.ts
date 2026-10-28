@@ -22,7 +22,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const DIAS_INVITACION = 7;
 const MINUTOS_POR_ASIENTO = 480;   // 8 horas
-const APP_URL = "https://talentdigitalconsulting.github.io/EscribAI/index.html";
+const APP_URL = "https://consteai.es/index.html";
 
 const ORIGENES = [
   "https://talentdigitalconsulting.github.io",
