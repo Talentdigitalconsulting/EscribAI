@@ -185,12 +185,11 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-    const { data: perfil } = await admin
-      .from("perfiles").select("plan, plan_hasta").eq("id", user.id).maybeSingle();
-
-    const plan = perfil?.plan ?? "demo";
-    const vigente = !perfil?.plan_hasta || new Date(perfil.plan_hasta) > new Date();
-    const esPro = vigente && PLANES_CON_IA.includes(plan);
+    // El plan que aplica: el del despacho si está al día, si no el propio.
+    const { data: pe } = await admin.rpc("plan_efectivo", { uid: user.id }).maybeSingle();
+    const plan: string = pe?.plan ?? "demo";
+    const vigente: boolean = !!pe?.vigente;
+    const esPro = vigente && (plan === "despacho" || PLANES_CON_IA.includes(plan));
 
     /* Acta de regalo: quien no es Pro puede redactar con IA UNA vez en la
        vida de su cuenta. Es la única forma de que vea lo que está
