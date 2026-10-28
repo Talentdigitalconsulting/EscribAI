@@ -596,6 +596,9 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
       <button class="btn sm" id="btnOnline" title="Transcribe una reunión por Zoom, Meet o Teams capturando el audio del ordenador">💻 Junta online (Zoom, Meet, Teams)</button>
       <button class="btn sm" id="btnAvisoAsist" title="Texto para informar a los asistentes de que la reunión se graba y transcribe">📢 Aviso a los asistentes</button>
     </div>
+    <p class="sub" id="notaMic" style="text-align:center;margin:12px auto 0;max-width:460px;font-size:12px;line-height:1.5">
+      🎧 <b>Para distinguir bien las voces usa un micrófono externo</b> (de mesa para una sala, de solapa para una persona). El micrófono integrado del portátil o del móvil capta la sala de forma plana y las voces se parecen más.
+    </p>
   </div>
 
   <div class="card" style="margin-top:14px">
@@ -798,7 +801,7 @@ input:focus,select:focus,textarea:focus{border-color:#35406a}
     </div>
     <div id="calStep2" class="hide">
       <h2>Calibración de voz</h2>
-      <p class="sub">Pide a <b id="calWho">…</b> que lea esta frase en voz alta y natural:</p>
+      <p class="sub">Pide a <b id="calWho">…</b> que lea esta frase en voz alta y natural, <b>cerca del micrófono</b>. Para que la identificación de voces sea eficaz se recomienda un micrófono externo; el integrado del portátil o del móvil hace que las voces se parezcan más.</p>
       <div class="calphrase">«El veloz murciélago hindú comía feliz cardillo y kiwi. La cigüeña tocaba el saxofón detrás del palenque de paja.»</div>
       <div class="calmeter"><canvas id="calwave"></canvas></div>
       <div class="calprog"><i id="calProgBar"></i></div>
@@ -3234,7 +3237,8 @@ const TUTORIAL=[
   ["La pantalla principal","Arriba están las pestañas: Grabar (el trabajo del día a día), Resumen (el acta), Biblioteca (el archivo de todas tus reuniones), Ajustes y Planes. El botón ❓ de la cabecera reabre este tutorial cuando quieras: puedes elegir el capítulo que te interese en el menú de la izquierda."]]},
  {i:"🗣️",t:"Hablantes y calibración",p:[
   ["Añadir hablantes","Pulsa «＋ Añadir hablante» y escribe el nombre de cada participante (María, Cliente, Presidente…). Cada uno tiene un color, y sus intervenciones aparecerán pintadas con él."],
-  ["Calibrar la voz","Cada persona lee una frase en voz alta durante 6 segundos. ConsteAi aprende su tono y su timbre para reconocerla después cuando hable. Hazlo cerca del micrófono y con voz natural."],
+  ["Calibrar la voz","Cada persona lee una frase en voz alta durante 9 segundos. ConsteAi aprende once rasgos de su voz (tono, brillo, timbre) para reconocerla después cuando hable. Hazlo cerca del micrófono y con voz natural."],
+  ["Usa un micrófono externo","Para distinguir bien las voces se recomienda un micrófono externo: de mesa (omnidireccional) para una sala, o de solapa para una persona. El micrófono integrado del portátil o del móvil capta la sala de forma plana y hace que las voces se parezcan más entre sí."],
   ["Precisión","La identificación funciona mejor con voces diferenciadas. Si la app confunde a dos personas con voces muy parecidas, corrige el hablante con el botón 👤 de la burbuja (en el móvil los botones se ven siempre). También puedes ajustar la sensibilidad de cambio de hablante en Ajustes."],
   ["Juntas con muchos asistentes","Calibrar a cuarenta vecinos no es realista. Para una junta grande, lo fiable es no calibrar: graba, y al terminar pulsa «🤖 Mejorar con IA». El motor profesional separa las voces por sí solo, y tú les pones nombre después. Con el plan Pro también puedes elegir en Ajustes el motor profesional en directo, que separa las voces mientras se habla. Deja la calibración para consejos y reuniones de pocas personas."]]},
  {i:"🎙️",t:"Grabar y transcribir",p:[
@@ -3266,7 +3270,8 @@ const TUTORIAL=[
   ["La biblioteca","«💾 Guardar sesión» archiva la reunión en la carpeta de su organización, con la fecha como título (Pro). En la pestaña Biblioteca tienes todas tus comunidades ordenadas por año: abres cualquier acta cuando quieras y, con el botón 📦, descargas la carpeta completa de esa reunión (acta, transcripción y audio) en un ZIP. El acta y la transcripción viajan con tu cuenta a cualquier dispositivo; el audio se queda en el equipo donde grabaste, porque no custodiamos grabaciones de tus vecinos."],
   ["Exportaciones","Tienes TXT (gratis), acta en Markdown, Word (con o sin tu modelo), JSON con todos los datos y el audio de la grabación. Y «📋 Copiar» para pegar la transcripción donde quieras."]]},
  {i:"👤",t:"Cuenta y planes",p:[
-  ["Tu plan","En ⭐ Planes ves tu plan actual y las opciones: Pro (19€/mes), Pro Anual (190€, dos meses gratis) y Despachos y empresas (45€/mes). Precios con IVA incluido. El pago es seguro con Stripe y el plan se activa automáticamente en segundos."],
+  ["Tu plan","En ⭐ Planes ves tu plan actual y las opciones: Pro (19 €/mes), Pro Anual (190 €, dos meses gratis) y Despacho (149 €/mes, 5 personas con comunidades, modelos y 40 h/mes compartidos). Precios con IVA incluido. El pago es seguro con Stripe y el plan se activa automáticamente en segundos. Toda cuenta gratuita tiene un acta con IA de regalo para probar."],
+  ["El asistente","El botón 💬 de la barra lateral (o el ? flotante) abre el asistente: pregúntale con tus palabras cómo hacer cualquier cosa en la app y te responde al instante, con un botón que te lleva al sitio. Solo responde sobre el uso y la configuración de ConsteAi."],
   ["Gestionar la suscripción","Desde Planes → «⚙️ Gestionar / cancelar suscripción» entras en el portal seguro de pagos: cambiar la tarjeta, descargar facturas o cancelar cuando quieras. Al cancelar vuelves al plan gratis sin perder tus datos."],
   ["Acceso y contraseña","Entra con tu correo y contraseña (marca «Recordar mi correo»). Vale cualquier correo: no hace falta cuenta de Google ni de ninguna otra plataforma. Si olvidas la contraseña, escribe tu correo en la pantalla de acceso y pulsa «¿Has olvidado tu contraseña?»: recibirás un enlace para crear una nueva."]]}
 ];
@@ -3442,8 +3447,8 @@ avisoNavegador();
   lado.appendChild(relleno);
   if(cuota)lado.appendChild(cuota);             // el medidor de cuota, siempre a la vista
   const ayuda=document.createElement("button");
-  ayuda.id="sideAyuda";ayuda.innerHTML="❓ Cómo funciona";
-  ayuda.onclick=()=>{if(typeof abrirTutorial==="function")abrirTutorial(0)};
+  ayuda.id="sideAyuda";ayuda.innerHTML="💬 Asistente y ayuda";
+  ayuda.onclick=()=>{if(typeof window.abrirAsistente==="function")window.abrirAsistente();else if(typeof abrirTutorial==="function")abrirTutorial(0)};
   lado.appendChild(ayuda);
 
   // Título de la página, al estilo del rediseño.
@@ -4213,5 +4218,16 @@ avisoNavegador();
 </script>
 <script src="auth.js"></script>
 <script src="analitica.js"></script>
+<script src="ayuda.js"></script>
+<script>
+/* El asistente sustituye al tutorial como primera puerta de ayuda. El
+   tutorial sigue existiendo: se abre desde el propio asistente. */
+(function(){
+  ["btnTut","sideAyuda","btnGuiaDG"].forEach(function(id){
+    var b=document.getElementById(id);
+    if(b)b.onclick=function(){ if(typeof window.abrirAsistente==="function")window.abrirAsistente(); else if(typeof abrirTutorial==="function")abrirTutorial(0); };
+  });
+})();
+</script>
 </body>
 </html>

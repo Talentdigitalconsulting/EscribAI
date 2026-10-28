@@ -1,6 +1,6 @@
 /* ConsteAi — Service Worker v3 (red primero para el HTML, caché para el resto) */
-const CACHE = "consteai-v31";
-const ASSETS = ["./", "./index.html", "./manifest.json", "./auth.js", "./analitica.js", "./icons/icon-192.png", "./icons/icon-512.png"];
+const CACHE = "consteai-v32";
+const ASSETS = ["./", "./index.html", "./manifest.json", "./auth.js", "./analitica.js", "./ayuda.js", "./icons/icon-192.png", "./icons/icon-512.png"];
 
 self.addEventListener("install", e => {
   // cache:"reload" obliga a traerlos de la red. Sin esto, la instalación
@@ -23,7 +23,7 @@ self.addEventListener("fetch", e => {
   if (/deepgram\.com|openai\.com/.test(e.request.url)) return;
   // El HTML y nuestro propio JavaScript van siempre a la red primero: son
   // los que cambian con cada mejora. Iconos y librerías, desde la caché.
-  const esHTML = e.request.mode === "navigate" || /\.html$|\/$|auth\.js$|analitica\.js$/.test(new URL(e.request.url).pathname);
+  const esHTML = e.request.mode === "navigate" || /\.html$|\/$|auth\.js$|analitica\.js$|ayuda\.js$/.test(new URL(e.request.url).pathname);
   if (esHTML) {
     e.respondWith(
       fetch(e.request).then(r => {
