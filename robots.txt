@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /index.html
+Disallow: /auth.js
+Disallow: /ayuda.js
+Disallow: /analitica.js
+Disallow: /sw.js
+
+Sitemap: https://consteai.es/sitemap.xml
