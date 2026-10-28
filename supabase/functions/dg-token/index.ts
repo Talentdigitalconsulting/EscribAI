@@ -68,25 +68,23 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-    const { data: perfil } = await admin
-      .from("perfiles")
-      .select("plan, plan_hasta")
-      .eq("id", user.id)
-      .maybeSingle();
+    /* plan_efectivo() decide: si la persona está en un despacho al día,
+       manda el despacho (bolsa común de 8 h por asiento); si no, su
+       propio plan. */
+    const { data: pe } = await admin.rpc("plan_efectivo", { uid: user.id }).maybeSingle();
+    const plan: string = pe?.plan ?? "demo";
+    const vigente: boolean = !!pe?.vigente;
+    const enDespacho = plan === "despacho" && vigente;
+    const despachoId: string | null = enDespacho ? pe.despacho_id : null;
+    const cuota = vigente ? (enDespacho ? Number(pe.cuota_min) || 0 : (CUOTA_MIN[plan] ?? 0)) : 0;
 
-    const plan = perfil?.plan ?? "demo";
-    const vigente = !perfil?.plan_hasta || new Date(perfil.plan_hasta) > new Date();
-    const cuota = (vigente ? CUOTA_MIN[plan] : 0) ?? 0;
-
-    // 3) Consumo del mes en curso
+    // 3) Consumo del mes en curso: de la persona, o de todo el despacho
     const inicioMes = new Date();
     inicioMes.setUTCDate(1);
     inicioMes.setUTCHours(0, 0, 0, 0);
-    const { data: filas } = await admin
-      .from("uso_transcripcion")
-      .select("segundos")
-      .eq("user_id", user.id)
-      .gte("creado", inicioMes.toISOString());
+    let consulta = admin.from("uso_transcripcion").select("segundos").gte("creado", inicioMes.toISOString());
+    consulta = despachoId ? consulta.eq("despacho_id", despachoId) : consulta.eq("user_id", user.id);
+    const { data: filas } = await consulta;
     const usadosSeg = (filas ?? []).reduce((s, f) => s + (f.segundos ?? 0), 0);
     const usadosMin = Math.ceil(usadosSeg / 60);
     const restante = Math.max(0, cuota - usadosMin);
@@ -107,6 +105,7 @@ Deno.serve(async (req) => {
           email: user.email,
           segundos: Math.round(seg),
           origen: String(body.origen ?? "").slice(0, 20) || null,
+          despacho_id: despachoId,
         });
       }
       return json({ ok: true, restante_min: Math.max(0, cuota - Math.ceil((usadosSeg + seg) / 60)) });
