@@ -30,6 +30,7 @@ const EVENTOS_VALIDOS = new Set([
   "clic_plan",       // pulsa "Suscribirme" en un plan
   "acta_regalo",     // un usuario gratuito usa su acta con IA de regalo
   "error",           // error no controlado en el navegador
+  "ayuda",           // alguien pregunta al asistente
 ]);
 
 const TOPE_MINUTO = 240;
