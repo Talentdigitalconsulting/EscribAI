@@ -3,532 +3,467 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ConsteAi — El acta de la junta, redactada sola | Actas para administradores de fincas</title>
-<meta name="description" content="ConsteAi escucha la junta de propietarios, distingue quién habla y te entrega el borrador del acta en tu propia plantilla de Word. De tres horas de trabajo a diez minutos de revisión. En español y con todos los acentos.">
-<meta name="theme-color" content="#0a0e1a">
+<title>ConsteAi — La reunión termina y el acta ya está redactada</title>
+<meta name="description" content="ConsteAi escucha la reunión, distingue quién habla y redacta el acta sola. Para administradores de fincas, despachos, consultas, aulas, asociaciones y ayuntamientos.">
 <link rel="icon" href="icons/icon-192.png">
-<meta property="og:type" content="website">
-<meta property="og:title" content="ConsteAi — El acta de la junta, redactada sola">
-<meta property="og:description" content="Graba la junta, identifica a cada participante por su voz y recibe el acta en tu plantilla. Para administradores de fincas, asociaciones y despachos.">
-<meta property="og:image" content="https://consteai.es/icons/icon-512.png">
-<meta property="og:url" content="https://consteai.es/">
-<link rel="canonical" href="https://consteai.es/">
-<meta property="og:locale" content="es_ES">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0a0e1a; --bg2:#0d1322; --card:#111827; --line:#1f2a44;
-  --txt:#e9eef9; --mut:#94a0bb; --acc:#4f7cff; --acc2:#22d3ee;
-  --grad:linear-gradient(135deg,#4f7cff 0%,#22d3ee 100%);
-  --gold:#f6c453;
+  --bg:#0A0E1A;--bg2:#0e1420;--card:#111827;--line:#1d2640;--line2:#2a3454;
+  --txt:#E9ECF5;--mut:#9aa3bd;--dim:#6f7894;
+  --acc:#3D7BFF;--acc2:#22d3ee;--warm:#f5b65a;
+  --serif:"Fraunces",Georgia,serif;--sans:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:18px;--sh:0 30px 80px rgba(0,0,0,.55);
 }
+*{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--txt);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.65 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 a{color:inherit;text-decoration:none}
-.wrap{max-width:1120px;margin:0 auto;padding:0 22px}
-.btn{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--line);background:#141c30;color:var(--txt);
-  padding:13px 22px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:.18s;white-space:nowrap}
-.btn:hover{border-color:#2f3d5f;transform:translateY(-1px)}
-.btn.pri{background:var(--grad);border:none;color:#04101f;font-weight:700}
-.btn.pri:hover{filter:brightness(1.08)}
-.btn.lg{padding:16px 30px;font-size:16.5px}
+img{display:block;max-width:100%}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+h1,h2,h3{font-family:var(--serif);font-weight:500;letter-spacing:-.02em;margin:0}
+h1{font-size:clamp(40px,5.2vw,66px);line-height:1.04}
+h2{font-size:clamp(32px,4.2vw,52px);line-height:1.08}
+h3{font-size:22px;line-height:1.25}
+p{margin:0}
+.eyebrow{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--acc2)}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:14px 24px;border-radius:999px;font-weight:600;font-size:15px;border:1px solid var(--line2);background:rgba(255,255,255,.03);transition:.2s;cursor:pointer}
+.btn:hover{border-color:var(--acc);transform:translateY(-1px)}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff;box-shadow:0 10px 30px rgba(61,123,255,.35)}
+.btn.pri:hover{background:#2f6cf0}
+.btn.lg{padding:18px 32px;font-size:16px}
+.grad{background:linear-gradient(92deg,#7aa6ff,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent}
 
-/* ---------- cabecera ---------- */
-header{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);background:rgba(10,14,26,.86);border-bottom:1px solid var(--line)}
-header .wrap{display:flex;align-items:center;gap:14px;padding-top:13px;padding-bottom:13px}
-.logo{width:38px;height:38px;border-radius:11px;overflow:hidden;flex:none;background:var(--grad)}
-.logo img{width:100%;height:100%;object-fit:cover}
-.bname{font-size:19px;font-weight:800;letter-spacing:-.02em}
-.bname span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-/* Logotipo completo: en la cabecera sustituye al azulejo y al nombre escrito. */
-.marcaHead{display:flex;align-items:center;flex:none}
-.marcaHead img{height:42px;width:auto;display:block}
-@media(max-width:600px){.marcaHead img{height:34px}}
-.hnav{margin-left:auto;display:flex;align-items:center;gap:26px}
-.hnav a{font-size:14.5px;color:var(--mut)}
-.hnav a:hover{color:var(--txt)}
-@media(max-width:860px){.hnav a.hide-m{display:none}}
+/* ---------- nav ---------- */
+header{position:sticky;top:0;z-index:50;backdrop-filter:blur(16px);background:rgba(10,14,26,.72);border-bottom:1px solid rgba(255,255,255,.05)}
+header .wrap{display:flex;align-items:center;gap:28px;height:72px}
+header img{height:40px;width:auto}
+nav{margin-left:auto;display:flex;align-items:center;gap:26px}
+nav a{font-size:14px;color:var(--mut)}nav a:hover{color:var(--txt)}
+@media(max-width:860px){nav a:not(.btn){display:none}}
 
 /* ---------- hero ---------- */
-.hero{padding:74px 0 60px;position:relative;overflow:hidden}
-.hero::before{content:"";position:absolute;top:-220px;left:50%;transform:translateX(-50%);width:900px;height:560px;
-  background:radial-gradient(ellipse at center,rgba(79,124,255,.20),transparent 68%);pointer-events:none}
-.hero .wrap{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:52px;align-items:center}
-@media(max-width:940px){.hero .wrap{grid-template-columns:1fr;gap:40px}}
-.tag{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--acc2);
-  border:1px solid rgba(34,211,238,.32);background:rgba(34,211,238,.07);padding:7px 15px;border-radius:999px;margin-bottom:22px}
-h1{font-size:clamp(33px,5vw,54px);line-height:1.09;letter-spacing:-.033em;font-weight:820}
-h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-.lead{font-size:18px;color:#c2cbe2;margin-top:22px;max-width:560px}
-.cta{display:flex;gap:13px;flex-wrap:wrap;margin-top:32px}
-.mini{font-size:13px;color:var(--mut);margin-top:18px}
+.hero{position:relative;padding:80px 0 60px;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:-20% -10% auto;height:700px;background:
+  radial-gradient(600px 400px at 20% 30%,rgba(61,123,255,.22),transparent 60%),
+  radial-gradient(500px 360px at 85% 20%,rgba(34,211,238,.14),transparent 60%);pointer-events:none}
+.hero .wrap{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
+.hero .lead{font-size:19px;color:var(--mut);max-width:540px;margin:26px 0 34px}
+.hero .lead b{color:var(--txt);font-weight:600}
+.cta{display:flex;gap:12px;flex-wrap:wrap}
+.fine{margin-top:18px;font-size:13px;color:var(--dim)}
+.rot{display:inline-block;color:#fff;transition:opacity .35s,transform .35s;white-space:nowrap}
+.rot.fuera{opacity:0;transform:translateY(8px)}
 
-/* ---------- mockup ---------- */
-.mock{background:linear-gradient(170deg,#101a2e,#0c1220);border:1px solid var(--line);border-radius:20px;
-  padding:20px;box-shadow:0 24px 56px rgba(0,0,0,.42)}
-.mockbar{display:flex;align-items:center;gap:7px;margin-bottom:16px}
-.mockbar i{width:10px;height:10px;border-radius:50%;background:#26334f;display:block}
-.mockbar b{margin-left:8px;font-size:11.5px;color:var(--mut);font-weight:600;letter-spacing:.04em}
-.line{display:flex;gap:11px;margin-bottom:13px;align-items:flex-start}
-.av{width:29px;height:29px;border-radius:9px;flex:none;display:grid;place-items:center;font-size:12px;font-weight:800;color:#04101f}
-.who{font-size:11.5px;color:var(--mut);margin-bottom:3px;font-weight:600}
-.said{font-size:13.5px;color:#dbe3f5;line-height:1.5}
-.acta{margin-top:18px;border-top:1px dashed #253150;padding-top:16px}
-.acta b{font-size:11.5px;color:var(--gold);letter-spacing:.05em}
-.acta ul{list-style:none;margin-top:10px;display:flex;flex-direction:column;gap:7px}
-.acta li{font-size:13px;color:#c8d2e8}
+/* collage */
+.collage{position:relative;height:560px}
+.collage .ph{position:absolute;border-radius:22px;overflow:hidden;box-shadow:var(--sh);border:1px solid rgba(255,255,255,.08)}
+.collage .ph img{width:100%;height:100%;object-fit:cover;transition:transform 1.2s ease}
+.collage .ph:hover img{transform:scale(1.04)}
+.collage .p1{left:0;top:0;width:62%;height:380px}
+.collage .p2{right:0;top:40px;width:35%;height:220px}
+.collage .p3{right:0;bottom:30px;width:46%;height:240px}
+.collage .tag{position:absolute;left:14px;bottom:14px;background:rgba(10,14,26,.78);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600}
+.acta{position:absolute;left:0;bottom:0;width:300px;background:#0d1322;border:1px solid var(--line2);border-radius:16px;padding:16px 18px;box-shadow:var(--sh);animation:flota 7s ease-in-out infinite}
+@keyframes flota{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.acta .t{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.14em;color:var(--warm);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.acta .t i{width:7px;height:7px;border-radius:50%;background:#ff5f57;box-shadow:12px 0 0 #febc2e,24px 0 0 #28c840;display:inline-block;margin-right:24px}
+.acta li{list-style:none;font-size:12.5px;color:#c9d1e3;padding:7px 0;border-top:1px solid var(--line);display:flex;gap:8px}
+.acta li:first-of-type{border-top:0}
+.acta ul{margin:0;padding:0}
+@media(max-width:960px){.hero .wrap{grid-template-columns:1fr}.collage{height:420px;margin-top:10px}.acta{display:none}}
 
-/* ---------- secciones ---------- */
-section{padding:78px 0}
-.kicker{font-size:12.5px;font-weight:700;letter-spacing:.14em;color:var(--acc2);text-transform:uppercase;margin-bottom:14px}
-h2{font-size:clamp(26px,3.6vw,38px);letter-spacing:-.028em;line-height:1.16;font-weight:800}
-.sub{color:var(--mut);margin-top:15px;font-size:16.5px;max-width:640px}
-.center{text-align:center}.center .sub{margin-left:auto;margin-right:auto}
+/* strip */
+.strip{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg2);padding:18px 0;overflow:hidden}
+.strip .wrap{display:flex;gap:40px;align-items:center;white-space:nowrap;font-size:13px;color:var(--mut);justify-content:space-between;flex-wrap:wrap}
+.strip b{color:var(--txt)}
 
-.split{background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.dolor{display:grid;grid-template-columns:1fr 1fr;gap:46px;align-items:center}
-@media(max-width:860px){.dolor{grid-template-columns:1fr;gap:30px}}
-.dolor p{color:#bcc6df;margin-top:16px;font-size:16.5px}
-.antes{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px 28px}
-.antes h3{font-size:21px;letter-spacing:-.015em;color:var(--txt);margin-bottom:18px}
-.antes ol{list-style:none;display:flex;flex-direction:column;gap:13px}
-.antes li{font-size:14.5px;color:#cbd4e8;padding-left:30px;position:relative}
-.antes li::before{content:"✓";position:absolute;left:0;color:#3ddc97;font-weight:700}
+/* ---------- sections ---------- */
+section{padding:110px 0}
+.head{max-width:720px;margin-bottom:56px}
+.head p{color:var(--mut);font-size:18px;margin-top:18px}
 
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;margin-top:48px}
-@media(max-width:860px){.steps{grid-template-columns:1fr}}
-.step{position:relative;padding-top:12px}
-.stepn{font-size:13px;font-weight:800;color:#04101f;background:var(--grad);width:30px;height:30px;
-  border-radius:9px;display:grid;place-items:center;margin-bottom:16px}
-.step h3{font-size:22px;margin-bottom:10px;letter-spacing:-.018em}
-.step p{font-size:14.5px;color:var(--mut)}
+/* para quién: photo cards */
+.quien{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.qc{position:relative;border-radius:var(--r);overflow:hidden;aspect-ratio:3/4;border:1px solid var(--line);background:var(--card)}
+.qc img{width:100%;height:100%;object-fit:cover;transition:transform .9s ease,filter .9s}
+.qc:hover img{transform:scale(1.06)}
+.qc .ov{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,14,26,0) 35%,rgba(10,14,26,.92) 100%)}
+.qc .tx{position:absolute;left:18px;right:18px;bottom:18px}
+.qc h3{font-size:20px;margin-bottom:6px}
+.qc p{font-size:13px;color:#c9d1e3;line-height:1.45;max-height:0;overflow:hidden;opacity:0;transition:.45s}
+.qc:hover p,.qc:focus-within p{max-height:120px;opacity:1}
+.qc .n{position:absolute;top:14px;left:14px;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--txt);background:rgba(10,14,26,.6);backdrop-filter:blur(6px);padding:4px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.1)}
+.qc.wide{grid-column:span 2;aspect-ratio:3/2}
+@media(max-width:1000px){.quien{grid-template-columns:repeat(2,1fr)}.qc.wide{grid-column:span 2}}
+@media(max-width:560px){.quien{grid-template-columns:1fr}.qc.wide{grid-column:span 1}.qc p{max-height:none;opacity:1}}
 
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:48px}
-@media(max-width:940px){.grid3{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:640px){.grid3{grid-template-columns:1fr}}
-.feat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px;transition:.2s}
-.feat:hover{border-color:#2c3a5c;transform:translateY(-3px)}
-.feat .ic{font-size:26px;margin-bottom:14px;display:block}
-.feat h3{font-size:20px;margin-bottom:10px;letter-spacing:-.015em}
-.feat p{font-size:14px;color:var(--mut);line-height:1.6}
+/* cómo funciona */
+.pasos{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+.paso{display:flex;gap:20px;padding:22px 0;border-top:1px solid var(--line)}
+.paso:last-child{border-bottom:1px solid var(--line)}
+.paso .num{font-family:var(--serif);font-size:40px;line-height:1;color:var(--acc);min-width:52px}
+.paso h3{margin-bottom:6px}.paso p{color:var(--mut);font-size:15px}
+.demo{background:#0d1322;border:1px solid var(--line2);border-radius:22px;padding:22px;box-shadow:var(--sh)}
+.demo .bar{display:flex;align-items:center;gap:8px;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--dim);letter-spacing:.1em;margin-bottom:16px}
+.demo .bar i{width:8px;height:8px;border-radius:50%;background:#ff5f57;box-shadow:14px 0 0 #febc2e,28px 0 0 #28c840;display:inline-block;margin-right:28px}
+.msg{display:flex;gap:12px;padding:10px 0;animation:aparece .6s both}
+.msg .av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#05070f;flex:none}
+.msg .w{font-size:11px;color:var(--dim);margin-bottom:3px}
+.msg .b{font-size:14px;color:#dfe5f3}
+.demo .out{margin-top:16px;border-top:1px dashed var(--line2);padding-top:14px}
+.demo .out .t{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.14em;color:var(--warm);text-transform:uppercase;margin-bottom:8px}
+.demo .out li{list-style:none;font-size:13px;color:#c9d1e3;padding:5px 0}
+.demo .out ul{margin:0;padding:0}
+@keyframes aparece{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(max-width:900px){.pasos{grid-template-columns:1fr}}
 
-/* ---------- plantilla destacada ---------- */
-.star{background:linear-gradient(150deg,rgba(79,124,255,.13),rgba(34,211,238,.05));
-  border:1px solid rgba(79,124,255,.28);border-radius:22px;padding:46px;display:grid;
-  grid-template-columns:1.1fr .9fr;gap:42px;align-items:center}
-@media(max-width:860px){.star{grid-template-columns:1fr;padding:32px 26px;gap:28px}}
-.star p{color:#c5cfe6;margin-top:16px;font-size:16.5px}
-.code{background:#080d18;border:1px solid var(--line);border-radius:14px;padding:22px;font:13px/1.9 ui-monospace,SFMono-Regular,Menlo,monospace;color:#9fb0d0;overflow-x:auto}
-.code b{color:var(--gold);font-weight:600}
-.code i{color:#3ddc97;font-style:normal}
+/* features */
+.feats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.ft{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:28px;transition:.25s}
+.ft:hover{border-color:var(--line2);transform:translateY(-3px)}
+.ft .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(61,123,255,.25),rgba(34,211,238,.15));border:1px solid rgba(61,123,255,.35);font-size:20px;margin-bottom:18px}
+.ft h3{font-size:19px;margin-bottom:8px}.ft p{font-size:14.5px;color:var(--mut)}
+@media(max-width:900px){.feats{grid-template-columns:1fr 1fr}}@media(max-width:560px){.feats{grid-template-columns:1fr}}
 
-/* ---------- sectores ---------- */
-.sects{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:44px}
-@media(max-width:940px){.sects{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:560px){.sects{grid-template-columns:1fr}}
-.sect{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
-.sect.main{border-color:rgba(246,196,83,.4);background:linear-gradient(160deg,rgba(246,196,83,.08),var(--card))}
-.sect b{display:block;font-size:15px;margin-bottom:7px}
-.sect span{font-size:13.5px;color:var(--mut)}
+/* banda fotográfica */
+.banda{position:relative;border-radius:28px;overflow:hidden;min-height:520px;display:flex;align-items:flex-end;border:1px solid var(--line)}
+.banda img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.banda::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,14,26,.94) 0%,rgba(10,14,26,.7) 45%,rgba(10,14,26,.15) 100%)}
+.banda .in{position:relative;z-index:1;padding:56px;max-width:620px}
+.banda h2{font-size:clamp(30px,3.6vw,44px)}
+.banda p{color:#c9d1e3;font-size:17px;margin-top:16px}
+.banda .kpi{display:flex;gap:36px;margin-top:30px;flex-wrap:wrap}
+.banda .kpi b{display:block;font-family:var(--serif);font-size:38px;font-weight:500;line-height:1}
+.banda .kpi span{font-size:12.5px;color:var(--mut)}
+@media(max-width:700px){.banda .in{padding:28px}.banda::after{background:linear-gradient(180deg,rgba(10,14,26,.1),rgba(10,14,26,.95) 60%)}}
 
-/* ---------- precios ---------- */
-.plans{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:48px;align-items:stretch}
-@media(max-width:1000px){.plans{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:600px){.plans{grid-template-columns:1fr}}
-.plan{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px 24px;display:flex;flex-direction:column;position:relative}
-.plan.best{border-color:var(--acc);border-width:1.5px;box-shadow:0 18px 44px rgba(0,0,0,.45)}
-.badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--grad);color:#04101f;
-  font-size:11px;font-weight:800;letter-spacing:.07em;padding:5px 14px;border-radius:999px;white-space:nowrap}
-.pname{font-size:14px;font-weight:700;color:var(--mut);letter-spacing:.03em;text-transform:uppercase}
-.price{font-size:38px;font-weight:800;letter-spacing:-.03em;margin:12px 0 4px}
-.price small{font-size:14px;font-weight:600;color:var(--mut)}
-.pfor{font-size:13px;color:var(--acc2);margin-bottom:18px;min-height:20px}
-.plan ul{list-style:none;flex:1;display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
-.plan li{font-size:13.8px;color:#c6cfe4;padding-left:23px;position:relative;line-height:1.5}
-.plan li::before{content:"✓";position:absolute;left:0;color:var(--acc2);font-weight:700}
-.plan .btn{width:100%;justify-content:center}
-.ivanota{text-align:center;font-size:13px;color:var(--mut);margin-top:26px}
+/* privacidad */
+.priv{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;background:var(--bg2);border:1px solid var(--line);border-radius:28px;padding:48px}
+.priv ul{margin:22px 0 0;padding:0;list-style:none;display:grid;gap:14px}
+.priv li{display:flex;gap:12px;font-size:15px;color:#c9d1e3}
+.priv li::before{content:"✓";color:var(--acc2);font-weight:700}
+.priv .ph{border-radius:20px;overflow:hidden;aspect-ratio:4/3;border:1px solid var(--line2)}
+.priv .ph img{width:100%;height:100%;object-fit:cover}
+@media(max-width:900px){.priv{grid-template-columns:1fr;padding:28px}}
 
-/* ---------- faq ---------- */
-.faq{max-width:780px;margin:44px auto 0}
-details{border-bottom:1px solid var(--line);padding:20px 0}
-summary{cursor:pointer;font-size:16.5px;font-weight:650;list-style:none;display:flex;justify-content:space-between;gap:20px;align-items:flex-start}
-summary::-webkit-details-marker{display:none}
-summary::after{content:"+";color:var(--acc2);font-size:22px;line-height:1;font-weight:400;flex:none}
-details[open] summary::after{content:"–"}
-details p{color:var(--mut);margin-top:14px;font-size:15px;line-height:1.7}
+/* precios */
+.planes{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:stretch}
+.plan{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:28px;display:flex;flex-direction:column;position:relative}
+.plan.star{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc),0 30px 60px rgba(61,123,255,.18)}
+.plan .badge{position:absolute;top:-12px;left:24px;background:var(--acc);color:#fff;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px}
+.plan .nm{font-size:14px;color:var(--mut);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.plan .pr{font-family:var(--serif);font-size:48px;line-height:1;margin:14px 0 4px}
+.plan .pr small{font-family:var(--sans);font-size:14px;color:var(--mut)}
+.plan .for{font-size:13px;color:var(--dim);min-height:36px}
+.plan ul{margin:18px 0 24px;padding:0;list-style:none;display:grid;gap:9px;flex:1}
+.plan li{font-size:14px;color:#c9d1e3;display:flex;gap:9px}.plan li::before{content:"·";color:var(--acc);font-weight:900}
+.plan .btn{justify-content:center}
+.iva{text-align:center;color:var(--dim);font-size:13px;margin-top:20px}
+@media(max-width:1000px){.planes{grid-template-columns:1fr 1fr}}@media(max-width:560px){.planes{grid-template-columns:1fr}}
 
-/* ---------- cierre ---------- */
-.final{background:linear-gradient(160deg,rgba(79,124,255,.15),rgba(34,211,238,.05));
-  border:1px solid rgba(79,124,255,.3);border-radius:24px;padding:60px 40px;text-align:center}
-@media(max-width:600px){.final{padding:42px 22px}}
+/* faq */
+.faq{max-width:820px}
+details{border-top:1px solid var(--line);padding:20px 0}
+details:last-child{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:17px}
+summary::after{content:"+";font-size:24px;color:var(--acc);transition:.3s}
+details[open] summary::after{transform:rotate(45deg)}
+details p{margin-top:12px;color:var(--mut);font-size:15px;max-width:700px}
 
-footer{border-top:1px solid var(--line);padding:46px 0 40px;margin-top:20px}
-footer .wrap{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
-footer img{height:56px;width:auto;border-radius:8px;opacity:.95}
-.fnote{font-size:12.5px;color:var(--mut);line-height:1.7}
-.flinks{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;font-size:12.5px}
-.flinks a{color:#7aa2ff}
+/* cta final */
+.final{text-align:center;padding:120px 0;position:relative;overflow:hidden}
+.final::before{content:"";position:absolute;inset:auto -10% -40%;height:500px;background:radial-gradient(600px 300px at 50% 100%,rgba(61,123,255,.3),transparent 70%)}
+.final .wrap{position:relative}
+.final h2{font-size:clamp(36px,5vw,64px)}
+.final p{color:var(--mut);font-size:18px;margin:18px auto 34px;max-width:560px}
+
+footer{border-top:1px solid var(--line);padding:40px 0;color:var(--dim);font-size:13px}
+footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center}
+footer a{color:var(--mut)}footer a:hover{color:var(--txt)}
+footer .links{display:flex;gap:18px;flex-wrap:wrap}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(24px);transition:opacity .8s ease,transform .8s ease}
+.rv.in{opacity:1;transform:none}
 </style>
 </head>
 <body>
 
 <header>
   <div class="wrap">
-    <a href="index.html" class="marcaHead" aria-label="ConsteAi"><img src="icons/logo-consteai-oscuro.png" alt="ConsteAi — Que conste en acta"></a>
-    <nav class="hnav">
-      <a href="#como" class="hide-m">Cómo funciona</a>
-      <a href="#plantilla" class="hide-m">Tu plantilla</a>
+    <a href="#"><img src="icons/logo-consteai-oscuro.png" alt="ConsteAi"></a>
+    <nav>
+      <a href="#quien">Para quién</a>
+      <a href="#como">Cómo funciona</a>
+      <a href="#funciones">Funciones</a>
       <a href="#precios">Precios</a>
-      <a href="index.html" class="btn pri" style="padding:10px 18px;font-size:14px">Probar gratis</a>
+      <a href="index.html" class="btn pri" style="padding:10px 18px">Probar gratis</a>
     </nav>
   </div>
 </header>
 
-<!-- ============================ HERO ============================ -->
-<div class="hero">
+<!-- ================= HERO ================= -->
+<section class="hero">
   <div class="wrap">
     <div>
-      <div class="tag">🏛️ Administradores de fincas · Asociaciones · Despachos</div>
-      <h1>La junta termina y el acta <em>ya está redactada</em>.</h1>
-      <p class="lead">ConsteAi escucha la reunión, distingue a cada participante por su voz y te devuelve el borrador del acta <b>en tu propia plantilla de Word</b>, con los acuerdos, las votaciones y los plazos ya ordenados. Tú solo revisas y firmas.</p>
+      <div class="eyebrow">Transcripción · Identificación de voces · Acta automática</div>
+      <h1 style="margin-top:18px">La reunión termina<br>y el acta de <span class="rot" id="rot">la junta</span><br><span class="grad">ya está redactada.</span></h1>
+      <p class="lead">ConsteAi escucha, distingue a cada persona por su voz y te devuelve el borrador del acta <b>en tu propia plantilla</b>, con los acuerdos, las votaciones y los plazos en su sitio. Tú solo revisas y firmas.</p>
       <div class="cta">
-        <a href="index.html" class="btn pri lg">🎙️ Probar gratis</a>
+        <a href="index.html" class="btn pri lg">🎙️ Probar 5 minutos sin registro</a>
         <a href="#como" class="btn lg">Ver cómo funciona</a>
       </div>
-      <p class="mini">Sin tarjeta para empezar · En español con todos los acentos · Requiere Chrome o Edge</p>
+      <p class="fine">Sin tarjeta · En español con todos los acentos · Funciona en Chrome y Edge, en el ordenador y en el móvil</p>
     </div>
-
-    <div class="mock">
-      <div class="mockbar"><i></i><i></i><i></i><b>JUNTA ORDINARIA · C/ MAYOR 14 · EN DIRECTO</b></div>
-      <div class="line">
-        <div class="av" style="background:#4f7cff">P</div>
-        <div><div class="who">Presidenta · 00:12</div><div class="said">Pasamos al punto tres: la derrama del ascensor.</div></div>
-      </div>
-      <div class="line">
-        <div class="av" style="background:#22d3ee">V</div>
-        <div><div class="who">Vecino 3ºB · 00:31</div><div class="said">Yo voto a favor, pero que se pague en tres plazos.</div></div>
-      </div>
-      <div class="line">
-        <div class="av" style="background:#f6c453">A</div>
-        <div><div class="who">Administrador · 00:48</div><div class="said">Queda aprobado por mayoría: 14 a favor, 2 en contra.</div></div>
-      </div>
+    <div class="collage">
+      <div class="ph p1"><img src="https://images.unsplash.com/photo-1758518730151-cf64fddb4f0a?auto=format&fit=crop&w=1000&q=72" alt="Equipo de un despacho en una reunión de trabajo"><span class="tag">🏢 Despacho · Consejo</span></div>
+      <div class="ph p2"><img src="https://images.unsplash.com/photo-1751977979590-3554dd691c5e?auto=format&fit=crop&w=600&q=72" alt="Vecinos mayores reunidos alrededor de una mesa"><span class="tag">🏘️ Junta de vecinos</span></div>
+      <div class="ph p3"><img src="https://images.unsplash.com/photo-1758691462878-6edc3d3da1be?auto=format&fit=crop&w=700&q=72" alt="Médico en consulta con un paciente"><span class="tag">🩺 Consulta</span></div>
       <div class="acta">
-        <b>✨ BORRADOR DEL ACTA</b>
+        <div class="t"><i></i>Borrador del acta · 14 nov</div>
         <ul>
-          <li>✅ <b style="color:#e9eef9">Acuerdo 3.1</b> — Derrama del ascensor aprobada por mayoría (14/2), fraccionada en tres plazos.</li>
-          <li>📌 <b style="color:#e9eef9">Tarea</b> — El administrador solicita tres presupuestos antes del 15/10.</li>
-          <li>📅 <b style="color:#e9eef9">Próxima junta</b> — Segunda quincena de noviembre.</li>
+          <li>✅ <span><b>Acuerdo 3.1</b> — Derrama del ascensor aprobada por mayoría (14 a favor, 2 en contra), fraccionada en tres plazos.</span></li>
+          <li>📌 <span><b>Tarea</b> — El administrador solicita tres presupuestos antes del 15/10.</span></li>
+          <li>📅 <span><b>Próxima junta</b> — Segunda quincena de noviembre.</span></li>
         </ul>
       </div>
     </div>
+  </div>
+</section>
+
+<div class="strip">
+  <div class="wrap">
+    <span><b>Administradores de fincas</b></span><span>Despachos profesionales</span><span>Consultas</span><span>Centros de formación</span><span>Asociaciones</span><span>Ayuntamientos</span><span>Equipos comerciales</span>
   </div>
 </div>
 
-<!-- ============================ DOLOR ============================ -->
-<section class="split">
-  <div class="wrap dolor">
-    <div>
-      <div class="kicker">El problema</div>
-      <h2>Lo peor de la junta no es la junta. Es el día siguiente.</h2>
-      <p>Sales a las once de la noche con seis folios de notas, la mitad ilegibles, y todavía te queda redactar el acta: quién asistió, qué se acordó, cuántos votos, qué queda pendiente. Si la haces al día siguiente tardas horas. Si la dejas para el viernes, ya no te acuerdas de quién dijo qué.</p>
-      <p>ConsteAi se encarga de esa parte. Grabas la junta, y el borrador del acta te espera al terminar.</p>
+<!-- ================= PARA QUIÉN ================= -->
+<section id="quien">
+  <div class="wrap">
+    <div class="head rv">
+      <div class="eyebrow">Para quién</div>
+      <h2 style="margin-top:14px">Gente que levanta acta<br>cada semana. Como tú.</h2>
+      <p>Da igual si es una junta de cuarenta vecinos o una consulta de dos personas: donde alguien tiene que dejar por escrito lo que se dijo, ConsteAi hace el trabajo pesado.</p>
     </div>
-    <div class="antes">
-      <h3>Con ConsteAi</h3>
-      <ol>
-        <li>Pulsas grabar al empezar la junta y te olvidas.</li>
-        <li>Cada intervención queda etiquetada con quién la dijo.</li>
-        <li>Al acabar, el acta está redactada en tu plantilla.</li>
-        <li>Revisas diez minutos, exportas a Word y la envías.</li>
-      </ol>
+    <div class="quien">
+      <a class="qc wide rv" href="index.html">
+        <img src="https://images.unsplash.com/photo-1582243568365-ff8411fe3c0b?auto=format&fit=crop&w=1200&q=72" alt="Vecinos sentados en filas durante una junta de propietarios">
+        <div class="ov"></div><span class="n">01 · Fincas</span>
+        <div class="tx"><h3>Administradores de fincas</h3><p>La junta de las ocho acaba a las once y el acta se escribía al día siguiente de memoria. Ahora sale con cada acuerdo, cada votación y cada derrama en la plantilla de tu despacho.</p></div>
+      </a>
+      <a class="qc rv" href="index.html">
+        <img src="https://images.unsplash.com/photo-1714974528693-f77f6fcc56af?auto=format&fit=crop&w=700&q=72" alt="Abogados revisando documentos con un cliente en el despacho">
+        <div class="ov"></div><span class="n">02 · Despachos</span>
+        <div class="tx"><h3>Abogados y asesorías</h3><p>Reuniones con clientes, consejos de administración, juntas de socios. Cada intervención atribuida a quien la dijo, con el tono formal que exige el documento.</p></div>
+      </a>
+      <a class="qc rv" href="index.html">
+        <img src="https://images.unsplash.com/photo-1758691462878-6edc3d3da1be?auto=format&fit=crop&w=700&q=72" alt="Médico en consulta con una paciente">
+        <div class="ov"></div><span class="n">03 · Salud</span>
+        <div class="tx"><h3>Consultas y terapia</h3><p>Nota de sesión con observaciones, pauta y próxima cita, sin dejar de mirar al paciente para teclear. Todo se procesa en tu dispositivo.</p></div>
+      </a>
+      <a class="qc rv" href="index.html">
+        <img src="https://images.unsplash.com/photo-1758270704925-fa59d93119c1?auto=format&fit=crop&w=700&q=72" alt="Profesor impartiendo clase a adultos">
+        <div class="ov"></div><span class="n">04 · Formación</span>
+        <div class="tx"><h3>Docentes y formadores</h3><p>La clase entera transcrita, con los temas tratados, las dudas de los alumnos y las fechas de entrega. Para el alumno que faltó y para el que no pudo tomar apuntes.</p></div>
+      </a>
+      <a class="qc rv" href="index.html">
+        <img src="https://images.unsplash.com/photo-1559523161-0fc0d8b38a7a?auto=format&fit=crop&w=700&q=72" alt="Dos periodistas grabando una entrevista con auriculares">
+        <div class="ov"></div><span class="n">05 · Medios</span>
+        <div class="tx"><h3>Periodistas y pódcast</h3><p>Entrevistas con cada voz separada y las declaraciones destacadas ya marcadas. Sube el audio que grabaste con el móvil y en minutos tienes el texto.</p></div>
+      </a>
+      <a class="qc rv" href="index.html">
+        <img src="https://images.unsplash.com/photo-1758519288355-fe5b6fcc9f39?auto=format&fit=crop&w=700&q=72" alt="Dos comerciales en una reunión con un cliente">
+        <div class="ov"></div><span class="n">06 · Ventas</span>
+        <div class="tx"><h3>Equipos comerciales</h3><p>Informe de la reunión con necesidades detectadas, objeciones y próximos pasos, enviado al cliente antes de que llegues al coche.</p></div>
+      </a>
+      <a class="qc wide rv" href="index.html">
+        <img src="https://images.unsplash.com/photo-1734174050925-3dca7c6bbad1?auto=format&fit=crop&w=1200&q=72" alt="Asamblea de una asociación en una sala">
+        <div class="ov"></div><span class="n">07 · Asociaciones</span>
+        <div class="tx"><h3>Asociaciones y cooperativas</h3><p>Asambleas ordinarias y extraordinarias con los acuerdos conforme a los estatutos, listos para el libro de actas.</p></div>
+      </a>
+      <a class="qc wide rv" href="index.html">
+        <img src="https://images.unsplash.com/photo-1771340592111-19ea0bcd77f3?auto=format&fit=crop&w=1200&q=72" alt="Persona interviniendo en un atril ante el público">
+        <div class="ov"></div><span class="n">08 · Instituciones</span>
+        <div class="tx"><h3>Ayuntamientos y órganos colegiados</h3><p>Plenos, comisiones y consejos escolares con el orden del día, las intervenciones y las votaciones a favor, en contra y abstenciones. El secretario revisa, no transcribe.</p></div>
+      </a>
     </div>
   </div>
 </section>
 
-<!-- ============================ CÓMO FUNCIONA ============================ -->
-<section id="como">
+<!-- ================= CÓMO FUNCIONA ================= -->
+<section id="como" style="background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
   <div class="wrap">
-    <div class="center">
-      <div class="kicker">Cómo funciona</div>
-      <h2>Tres pasos. El tercero lo hace la aplicación.</h2>
-      <p class="sub">No hay nada que instalar ni configurar. Se abre en el navegador del portátil o del móvil y funciona.</p>
+    <div class="head rv">
+      <div class="eyebrow">Cómo funciona</div>
+      <h2 style="margin-top:14px">Pulsas grabar. Lo demás<br>lo hace ConsteAi.</h2>
     </div>
-    <div class="steps">
-      <div class="step">
-        <div class="stepn">1</div>
-        <h3>Presentas a los que hablan</h3>
-        <p>Cada participante habitual dice una frase de seis segundos y la aplicación memoriza su voz. Se hace una sola vez por comunidad: en las siguientes juntas ya los reconoce.</p>
+    <div class="pasos">
+      <div class="rv">
+        <div class="paso"><div class="num">1</div><div><h3>Elige la comunidad y pulsa el micrófono</h3><p>La organización ya tiene su plantilla, su presidente, su secretario y los correos de los destinatarios. No hay nada que configurar en cada reunión.</p></div></div>
+        <div class="paso"><div class="num">2</div><div><h3>Habla con normalidad</h3><p>El texto aparece en tiempo real, cada frase con su hablante. En juntas grandes, el motor profesional separa las voces por sí solo; nadie tiene que presentarse al micro.</p></div></div>
+        <div class="paso"><div class="num">3</div><div><h3>Redacta el acta y envíala</h3><p>La IA extrae acuerdos, tareas, plazos y votaciones, sin inventar lo que no se dijo. Sale en tu Word con tu membrete y se envía a los vecinos con un clic.</p></div></div>
+        <div style="margin-top:30px"><a href="index.html" class="btn pri">Probarlo ahora, sin registro</a></div>
       </div>
-      <div class="step">
-        <div class="stepn">2</div>
-        <h3>Grabas la reunión</h3>
-        <p>El texto aparece en pantalla mientras se habla, con el nombre de quien interviene. Dura lo que dure la junta, y si entra una llamada la grabación no se corta.</p>
-      </div>
-      <div class="step">
-        <div class="stepn">3</div>
-        <h3>Recibes el acta</h3>
-        <p>Acuerdos, votaciones, tareas con responsable y fecha, y temas pendientes. En tu plantilla de Word, en Markdown o en texto, lista para revisar y enviar.</p>
+      <div class="demo rv">
+        <div class="bar"><i></i>JUNTA ORDINARIA · C/ MAYOR 14 · EN DIRECTO</div>
+        <div class="msg" style="animation-delay:.2s"><div class="av" style="background:#8b5cf6">P</div><div><div class="w">Presidenta · 00:12</div><div class="b">Pasamos al punto tres: la derrama del ascensor.</div></div></div>
+        <div class="msg" style="animation-delay:.9s"><div class="av" style="background:#22d3ee">V</div><div><div class="w">Vecino 3ºB · 00:31</div><div class="b">Yo voto a favor, pero que se pague en tres plazos.</div></div></div>
+        <div class="msg" style="animation-delay:1.6s"><div class="av" style="background:#f5b65a">A</div><div><div class="w">Administrador · 00:48</div><div class="b">Queda aprobado por mayoría: 14 a favor, 2 en contra.</div></div></div>
+        <div class="out">
+          <div class="t">✨ Borrador del acta</div>
+          <ul>
+            <li>✅ <b>Acuerdo 3.1</b> — Derrama del ascensor aprobada por mayoría (14/2), fraccionada en tres plazos.</li>
+            <li>📌 <b>Tarea</b> — El administrador solicita tres presupuestos antes del 15/10.</li>
+            <li>📅 <b>Próxima junta</b> — Segunda quincena de noviembre.</li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ============================ PLANTILLA ============================ -->
-<section id="plantilla" class="split">
+<!-- ================= FUNCIONES ================= -->
+<section id="funciones">
   <div class="wrap">
-    <div class="star">
+    <div class="head rv">
+      <div class="eyebrow">Funciones</div>
+      <h2 style="margin-top:14px">Hecho para el acta,<br>no para "tomar notas".</h2>
+    </div>
+    <div class="feats">
+      <div class="ft rv"><div class="ic">🗣️</div><h3>Sabe quién habla</h3><p>Identifica a cada persona por su voz. En juntas grandes separa las voces sin calibrar a nadie y tú les pones nombre después.</p></div>
+      <div class="ft rv"><div class="ic">🧠</div><h3>Acta redactada con IA</h3><p>Acuerdos, tareas, plazos y votaciones en registro formal. Si no se dijo el recuento, no se inventa: antes un acta incompleta que una falsa.</p></div>
+      <div class="ft rv"><div class="ic">✍️</div><h3>Escribe como tú</h3><p>Súbele dos o tres actas tuyas y aprende tu tono, tus secciones y tus fórmulas. Las siguientes salen con la voz de tu despacho.</p></div>
+      <div class="ft rv"><div class="ic">📄</div><h3>En tu Word, con tu membrete</h3><p>Sube tu plantilla .docx con marcadores y recibes TU documento relleno. Tipografía, márgenes y pies de firma intactos.</p></div>
+      <div class="ft rv"><div class="ic">💻</div><h3>También por Zoom, Meet o Teams</h3><p>Captura el sonido de la videollamada y lo mezcla con tu micrófono. En el acta salen todos, estén en la sala o en casa.</p></div>
+      <div class="ft rv"><div class="ic">📚</div><h3>Una carpeta por comunidad</h3><p>Cada acta se archiva sola, por organización y por año. Tu equipo entero ve las mismas comunidades con el plan Despacho.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= BANDA ================= -->
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="banda rv">
+      <img src="https://images.unsplash.com/photo-1759903553702-a516f1fc18ad?auto=format&fit=crop&w=1600&q=72" alt="Profesional con auriculares siguiendo una reunión online desde su portátil">
+      <div class="in">
+        <div class="eyebrow">Lo que cambia</div>
+        <h2 style="margin-top:12px">Dos horas de junta.<br>Diez minutos de revisión.</h2>
+        <p>El acta que antes se escribía al día siguiente, de memoria y con prisas, ahora te espera redactada al pulsar parar. Tú decides qué se queda y qué se corrige; ConsteAi no firma por ti.</p>
+        <div class="kpi">
+          <div><b>5 min</b><span>de prueba sin registro</span></div>
+          <div><b>0 €</b><span>para empezar</span></div>
+          <div><b>1 clic</b><span>para enviar a los vecinos</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PRIVACIDAD ================= -->
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="priv rv">
       <div>
-        <div class="kicker">Lo que nos diferencia</div>
-        <h2>El acta sale en <em style="font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">tu</em> plantilla, no en la nuestra.</h2>
-        <p>Sube el modelo de acta que usas siempre —el de tu despacho, con tu membrete y tu redacción— y marca con etiquetas dónde va cada dato. ConsteAi lo rellena respetando tu formato: tipografía, márgenes, numeración y pies de firma intactos.</p>
-        <p>Nada de copiar y pegar desde otro programa. Descargas el Word y ya está listo para el libro de actas.</p>
-      </div>
-      <div class="code">
-ACTA DE LA JUNTA DE <b>{{organizacion}}</b><br>
-Celebrada el <b>{{fecha}}</b> a las <b>{{hora}}</b><br><br>
-Asistentes: <b>{{asistentes}}</b><br>
-Preside: <b>{{presidente}}</b><br><br>
-ACUERDOS:<br>
-<b>{{acuerdos}}</b><br><br>
-TAREAS PENDIENTES:<br>
-<b>{{tareas}}</b><br><br>
-<i>— y 9 etiquetas más —</i>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============================ FUNCIONES ============================ -->
-<section>
-  <div class="wrap">
-    <div class="center">
-      <div class="kicker">Funciones</div>
-      <h2>Pensada para actas, no para tomar notas</h2>
-      <p class="sub">Todo lo que hace falta desde que empieza la reunión hasta que el acta sale enviada por correo.</p>
-    </div>
-    <div class="grid3">
-      <div class="feat">
-        <span class="ic">🗣️</span>
-        <h3>Reconoce quién habla</h3>
-        <p>Distingue a cada participante por el timbre y el tono de su voz, y colorea sus intervenciones. Se calibra una vez por comunidad y queda guardado.</p>
-      </div>
-      <div class="feat">
-        <span class="ic">⚡</span>
-        <h3>Transcribe mientras hablan</h3>
-        <p>El texto aparece en pantalla en tiempo real, en español y con los acentos de toda España: andaluz, canario, gallego, catalán, del norte.</p>
-      </div>
-      <div class="feat">
-        <span class="ic">📋</span>
-        <h3>Ocho modelos de acta</h3>
-        <p>Junta de propietarios, asamblea de asociación, pleno municipal, consejo, reunión comercial, consulta, formación y entrevista. O el tuyo propio.</p>
-      </div>
-      <div class="feat">
-        <span class="ic">📧</span>
-        <h3>Envío a los asistentes</h3>
-        <p>Guarda los correos de cada comunidad y envía el acta terminada a todos con copia oculta, sin exponer las direcciones de unos a otros.</p>
-      </div>
-      <div class="feat">
-        <span class="ic">💻</span>
-        <h3>También por Zoom o Meet</h3>
-        <p>Si la junta es online, ConsteAi captura el sonido de la videollamada y lo mezcla con tu micrófono: en el acta salen todos, estén en la sala o en su casa. Requiere Chrome o Edge en ordenador.</p>
-      </div>
-      <div class="feat">
-        <span class="ic">📚</span>
-        <h3>Una carpeta por comunidad</h3>
-        <p>Cada acta se archiva sola en la carpeta de su comunidad, ordenada por año. Las actas y transcripciones se guardan en tu cuenta y te siguen a cualquier dispositivo; el audio se queda en el equipo donde grabaste y puedes descargarlo con la carpeta completa de la junta en un ZIP.</p>
-      </div>
-      <div class="feat">
-        <span class="ic">📤</span>
-        <h3>Exporta a donde haga falta</h3>
-        <p>Word con tu plantilla, Markdown, texto plano, JSON y el audio original de la reunión guardado con el nombre de la comunidad y la fecha.</p>
-      </div>
-      <div class="feat">
-        <span class="ic">🔐</span>
-        <h3>El audio no pasa por nosotros</h3>
-        <p>El dictado en directo se procesa en tu propio dispositivo. Cuando usas la transcripción profesional, el audio viaja cifrado de tu navegador al motor de reconocimiento, sin escala en nuestros servidores. Tu cuenta y tus actas se guardan en la UE.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============================ SECTORES ============================ -->
-<section class="split">
-  <div class="wrap">
-    <div class="center">
-      <div class="kicker">Para quién es</div>
-      <h2>Si tu trabajo acaba en un acta, es para ti</h2>
-      <p class="sub">Nació para las juntas de propietarios, pero el problema se repite en cualquier reunión que haya que documentar.</p>
-    </div>
-    <div class="sects">
-      <div class="sect main">
-        <b>🏛️ Administradores de fincas</b>
-        <span>Juntas ordinarias y extraordinarias, con acuerdos, votaciones y coeficientes. El uso para el que está diseñada.</span>
-      </div>
-      <div class="sect">
-        <b>🤝 Asociaciones y fundaciones</b>
-        <span>Asambleas generales, juntas directivas y actas obligatorias para el registro y las subvenciones.</span>
-      </div>
-      <div class="sect">
-        <b>⚖️ Despachos y asesorías</b>
-        <span>Reuniones con cliente documentadas al detalle, sin que nadie tenga que tomar notas mientras habla.</span>
-      </div>
-      <div class="sect">
-        <b>🏢 Consejos y comités</b>
-        <span>Consejos de administración, comités de dirección y órganos colegiados con libro de actas.</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============================ PRECIOS ============================ -->
-<section id="precios">
-  <div class="wrap">
-    <div class="center">
-      <div class="kicker">Precios</div>
-      <h2>Menos de lo que cuesta una hora de tu tiempo</h2>
-      <p class="sub">Empieza gratis y sin tarjeta. Si te sirve, pasas a Pro; si no, te quedas en el plan gratuito para siempre.</p>
-    </div>
-    <div class="plans">
-
-      <div class="plan">
-        <div class="pname">Gratis</div>
-        <div class="price">0€<small> /siempre</small></div>
-        <div class="pfor">Para probarlo con una junta</div>
+        <div class="eyebrow">Privacidad y cumplimiento</div>
+        <h2 style="margin-top:12px;font-size:clamp(28px,3.4vw,40px)">El audio de tus vecinos<br>no pasa por nosotros.</h2>
         <ul>
-          <li>Transcripción en tiempo real</li>
-          <li>2 perfiles de voz</li>
-          <li>1 comunidad u organización</li>
-          <li>Resumen automático</li>
-          <li>Exportación a texto</li>
+          <li>La grabación se queda en tu dispositivo. Nunca se guarda en nuestros servidores.</li>
+          <li>Transcripción profesional con permiso temporal de diez minutos: el audio viaja directo de tu navegador al motor, y se descarta.</li>
+          <li>Cada cuenta ve solo lo suyo o lo de su despacho. Aislamiento a nivel de base de datos.</li>
+          <li>Contrato de encargado del tratamiento (art. 28 RGPD) incluido, y un aviso para los asistentes listo para leer o enviar.</li>
+          <li>Sin cookies, sin rastreo entre webs, sin banner.</li>
         </ul>
-        <a href="index.html" class="btn">Empezar gratis</a>
+        <div style="margin-top:26px;display:flex;gap:12px;flex-wrap:wrap"><a href="privacidad.html" class="btn">Política de privacidad</a><a href="encargado.html" class="btn">Contrato de encargado</a></div>
       </div>
+      <div class="ph"><img src="https://images.unsplash.com/photo-1752650732081-8f61e81813ed?auto=format&fit=crop&w=900&q=72" alt="Dos profesionales conversando con confianza en una oficina"></div>
+    </div>
+  </div>
+</section>
 
-      <div class="plan best">
-        <div class="badge">EL MÁS ELEGIDO</div>
-        <div class="pname">Pro</div>
-        <div class="price">19€<small> /mes</small></div>
-        <div class="pfor">Para el administrador en activo</div>
-        <ul>
-          <li>Todo lo del plan gratuito</li>
-          <li>Comunidades y voces ilimitadas</li>
-          <li>Tu plantilla de Word propia</li>
-          <li>Los 8 modelos de acta</li>
-          <li>Envío del acta por correo</li>
-          <li>Historial guardado en la nube</li>
-          <li>Transcripción de audios grabados</li>
-        </ul>
+<!-- ================= PRECIOS ================= -->
+<section id="precios" style="background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="head rv" style="text-align:center;margin-left:auto;margin-right:auto">
+      <div class="eyebrow">Precios</div>
+      <h2 style="margin-top:14px">Empieza gratis. Paga cuando<br>te ahorre horas de verdad.</h2>
+    </div>
+    <div class="planes">
+      <div class="plan rv">
+        <div class="nm">Gratis</div><div class="pr">0€<small> para siempre</small></div><div class="for">Para probar con reuniones pequeñas</div>
+        <ul><li>Transcripción en directo ilimitada</li><li>2 voces y 1 organización</li><li>Resumen automático</li><li>Un acta con IA de regalo</li><li>Exportación a texto</li></ul>
+        <a href="index.html" class="btn">Empezar</a>
+      </div>
+      <div class="plan star rv">
+        <span class="badge">El más elegido</span>
+        <div class="nm">Pro</div><div class="pr">19€<small> /mes</small></div><div class="for">Para quien levanta acta cada semana</div>
+        <ul><li>Comunidades y voces ilimitadas</li><li>Acta redactada con IA</li><li>Modelos de acta con tu estilo</li><li>Tu Word con tu membrete</li><li>10 h/mes de transcripción profesional</li><li>Juntas online y biblioteca en la nube</li></ul>
         <a href="https://buy.stripe.com/aFacN6aFW5H5fYAbMH9k403" class="btn pri">Contratar Pro</a>
       </div>
-
-      <div class="plan">
-        <div class="pname">Pro anual</div>
-        <div class="price">190€<small> /año</small></div>
-        <div class="pfor">Dos meses de regalo</div>
-        <ul>
-          <li>Todo lo del plan Pro</li>
-          <li>Ahorras 38 € al año</li>
-          <li>Precio bloqueado mientras sigas</li>
-          <li>Soporte prioritario</li>
-        </ul>
+      <div class="plan rv">
+        <div class="nm">Pro anual</div><div class="pr">190€<small> /año</small></div><div class="for">Dos meses gratis, precio bloqueado</div>
+        <ul><li>Todo lo del plan Pro</li><li>Ahorras 38 € al año</li><li>Soporte prioritario</li></ul>
         <a href="https://buy.stripe.com/dRmcN6bK0glJ13GeYT9k404" class="btn">Contratar anual</a>
       </div>
-
-      <div class="plan">
-        <div class="pname">Despacho</div>
-        <div class="price">149€<small> /mes</small></div>
-        <div class="pfor">5 personas · todo el equipo en una sola cuenta de despacho</div>
-        <ul>
-          <li>Todo lo del plan Pro para cada persona</li>
-          <li>Comunidades, voces y modelos de acta compartidos</li>
-          <li>Bolsa común de 40 h/mes de transcripción profesional</li>
-          <li>Las actas de todo el equipo en una biblioteca</li>
-          <li>Contrato de encargado del tratamiento incluido</li>
-          <li>Asiento extra: 25 €/mes</li>
-        </ul>
-        <a href="index.html?plan=despacho" class="btn" id="btnPlanDespacho">Contratar</a>
+      <div class="plan rv">
+        <div class="nm">Despacho</div><div class="pr">149€<small> /mes</small></div><div class="for">5 personas, un solo equipo</div>
+        <ul><li>Todo lo del Pro para cada persona</li><li>Comunidades, voces y modelos compartidos</li><li>Bolsa común de 40 h/mes</li><li>Actas de todo el equipo en una biblioteca</li><li>Contrato de encargado incluido</li></ul>
+        <a href="index.html?plan=despacho" class="btn">Contratar Despacho</a>
       </div>
-
     </div>
-    <p class="ivanota">Precios con IVA incluido. Sin permanencia: cancelas cuando quieras desde la propia aplicación.</p>
+    <p class="iva">Precios con IVA incluido · Sin permanencia · Cancelas cuando quieras desde la propia aplicación</p>
   </div>
 </section>
 
-<!-- ============================ FAQ ============================ -->
-<section class="split">
-  <div class="wrap">
-    <div class="center">
-      <div class="kicker">Dudas frecuentes</div>
-      <h2>Lo que nos preguntan antes de empezar</h2>
-    </div>
-    <div class="faq">
-      <details open>
-        <summary>¿Qué necesito para usarla?</summary>
-        <p>Un portátil o un móvil con <b>Google Chrome o Microsoft Edge</b>, que son los navegadores donde el dictado en directo funciona bien. En Safari puede fallar y Firefox no lo admite; si usas alguno de esos, puedes grabar la junta con la grabadora del móvil y luego subir el audio a ConsteAi para transcribirlo. No hay que instalar ningún programa, aunque puedes añadir la aplicación a la pantalla de inicio como si lo fuera.</p>
-      </details>
-      <details>
-        <summary>¿Entiende a los vecinos que hablan rápido o con acento?</summary>
-        <p>Está ajustada al español de España y a sus acentos. En una junta con mucho ruido o gente hablando a la vez, ninguna transcripción automática es perfecta: por eso el resultado es un <b>borrador para revisar</b>, no un acta definitiva. Aun así, el trabajo pesado —quién dijo qué, qué se acordó y con cuántos votos— ya está hecho.</p>
-      </details>
-      <details>
-        <summary>¿Cómo sabe quién está hablando?</summary>
-        <p>Cada persona graba una frase de seis segundos y la aplicación guarda las características de su voz (tono y timbre). Durante la reunión compara lo que oye con esos perfiles y etiqueta cada intervención. Los perfiles quedan guardados en la comunidad, así que solo se hace una vez.</p>
-      </details>
-      <details>
-        <summary>¿Dónde acaban mis grabaciones?</summary>
-        <p>El audio se procesa en tu dispositivo y <b>no se sube a nuestros servidores</b>: la grabación se queda contigo y puedes descargarla o borrarla cuando quieras. Lo que sí guardamos, si activas la sincronización, son tu cuenta y las actas que decidas conservar, cifradas y en servidores alojados en la Unión Europea. Puedes borrar tu cuenta y todo su contenido desde Ajustes, sin llamar a nadie. Está todo detallado en la <a href="privacidad.html" style="color:var(--acc2)">política de privacidad</a>.</p>
-      </details>
-      <details>
-        <summary>¿Puedo grabar la junta legalmente?</summary>
-        <p>En España puedes grabar una reunión en la que participas. Lo correcto, y lo que recomienda la Agencia Española de Protección de Datos, es <b>avisar a los asistentes al empezar</b> de que se va a grabar para levantar el acta. Suele bastar con dejarlo dicho y recogerlo en la propia acta. La responsabilidad de ese aviso es de quien convoca la reunión.</p>
-      </details>
-      <details>
-        <summary>¿Y si quiero usar mi propio modelo de acta?</summary>
-        <p>Es justo lo que hace el plan Pro. Subes tu documento de Word con unas etiquetas sencillas en los huecos —<b style="color:var(--gold)">{{acuerdos}}</b>, <b style="color:var(--gold)">{{asistentes}}</b>— y la aplicación las rellena sin tocar tu formato. Si no te aclaras con las etiquetas, te lo dejamos montado nosotros.</p>
-      </details>
-      <details>
-        <summary>¿Puedo cancelar cuando quiera?</summary>
-        <p>Sí. No hay permanencia ni penalización: se cancela desde la propia aplicación en un clic y sigues teniendo acceso hasta el final del periodo que ya has pagado. Después pasas al plan gratuito y conservas tus actas.</p>
-      </details>
-    </div>
-  </div>
-</section>
-
-<!-- ============================ CIERRE ============================ -->
+<!-- ================= FAQ ================= -->
 <section>
   <div class="wrap">
-    <div class="final">
-      <h2>La próxima junta puede documentarse sola</h2>
-      <p class="sub center" style="margin:16px auto 0">Pruébala esta misma semana con una reunión real. No hace falta tarjeta ni instalar nada.</p>
-      <div class="cta" style="justify-content:center;margin-top:30px">
-        <a href="index.html" class="btn pri lg">🎙️ Abrir ConsteAi gratis</a>
-        <a href="mailto:contact@talentdigitalconsulting.com?subject=Consulta%20sobre%20ConsteAi" class="btn lg">Hablar con nosotros</a>
-      </div>
+    <div class="head rv"><div class="eyebrow">Preguntas frecuentes</div><h2 style="margin-top:14px">Lo que nos preguntan antes de empezar</h2></div>
+    <div class="faq rv">
+      <details><summary>¿Es legal grabar una junta de propietarios?</summary><p>Sí, informando a los asistentes. ConsteAi incluye el aviso legal listo para leer al empezar o enviar con la convocatoria, y el contrato de encargado del tratamiento que tu despacho necesita como responsable de los datos.</p></details>
+      <details><summary>¿Y si hay cuarenta vecinos? No puedo calibrar a todos.</summary><p>No hace falta. Graba la junta y, al terminar, el motor profesional separa las voces por sí solo. Tú les pones nombre después, y en la próxima junta de esa comunidad ya se acuerda.</p></details>
+      <details><summary>¿La IA se inventa cosas?</summary><p>Tiene prohibido inventar cifras, importes, fechas o resultados de votaciones. Si no se dijo cuántos votaron a favor, el acuerdo sale sin el recuento. Preferimos un acta incompleta a una falsa. Y siempre revisas tú antes de firmar.</p></details>
+      <details><summary>¿Necesito un micrófono especial?</summary><p>Para una consulta o un consejo de pocas personas, el del portátil vale. Para distinguir bien las voces en una sala grande, un micrófono de mesa omnidireccional marca la diferencia. La propia app te lo recuerda.</p></details>
+      <details><summary>¿Dónde se guardan las grabaciones?</summary><p>En tu dispositivo. Las actas y transcripciones viajan con tu cuenta para que las tengas en el PC y en el móvil; el audio no sale de donde grabaste. Puedes descargar la carpeta completa de cada reunión en ZIP cuando quieras.</p></details>
     </div>
+  </div>
+</section>
+
+<!-- ================= CTA FINAL ================= -->
+<section class="final">
+  <div class="wrap rv">
+    <h2>Que conste en acta.<br><span class="grad">Sin que lo escribas tú.</span></h2>
+    <p>Cinco minutos de prueba, sin registro y sin tarjeta. Si no te ahorra tiempo en la primera reunión, no era para ti.</p>
+    <div class="cta" style="justify-content:center"><a href="index.html" class="btn pri lg">🎙️ Abrir ConsteAi gratis</a><a href="mailto:contact@talentdigitalconsulting.com?subject=Consulta%20sobre%20ConsteAi" class="btn lg">Hablar con nosotros</a></div>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    <img src="icons/logo-tdc.png" alt="Talent &amp; Digital Consulting" onerror="this.remove()">
-    <div class="fnote">© 2026 <b style="color:#c9d1e3">Talent &amp; Digital Consulting</b> · Todos los derechos reservados.<br>ConsteAi es un producto desarrollado y propiedad de Talent &amp; Digital Consulting.</div>
-    <div class="flinks">
-      <a href="privacidad.html">Política de privacidad</a><span style="color:#4a5268">·</span>
-      <a href="encargado.html">Contrato de encargado (RGPD)</a><span style="color:#4a5268">·</span>
-      <a href="condiciones.html">Condiciones de uso</a><span style="color:#4a5268">·</span>
-      <a href="aviso-legal.html">Aviso legal</a><span style="color:#4a5268">·</span>
-      <a href="mailto:contact@talentdigitalconsulting.com">contact@talentdigitalconsulting.com</a>
-    </div>
+    <div>© 2026 Talent &amp; Digital Consulting · ConsteAi es un producto desarrollado y propiedad de Talent &amp; Digital Consulting.</div>
+    <div class="links"><a href="privacidad.html">Privacidad</a><a href="condiciones.html">Condiciones</a><a href="encargado.html">Contrato de encargado</a><a href="aviso-legal.html">Aviso legal</a></div>
   </div>
 </footer>
 
-<script src="analitica.js"></script>
 <script>
-/* Cuenta los clics hacia la app, para saber qué parte de la landing convierte. */
-document.querySelectorAll('a[href="index.html"]').forEach(function(a){
-  a.addEventListener("click",function(){ if(window.aEvento)window.aEvento("clic_probar"); });
-});
+// palabra rotatoria del titular
+(function(){
+  var el=document.getElementById("rot"), P=["la junta","la consulta","el consejo","la clase","la asamblea","el pleno","la entrevista"], i=0;
+  setInterval(function(){
+    el.classList.add("fuera");
+    setTimeout(function(){ i=(i+1)%P.length; el.textContent=P[i]; el.classList.remove("fuera"); },380);
+  },2600);
+})();
+// medición sin cookies: cada "Probar" cuenta como clic_probar
+document.querySelectorAll('a[href^="index.html"]').forEach(function(a){ a.addEventListener("click",function(){ if(window.aEvento)window.aEvento("clic_probar"); }); });
+// aparición al hacer scroll
+(function(){
+  var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); } }); },{threshold:.12});
+  document.querySelectorAll(".rv").forEach(function(x,i){ x.style.transitionDelay=(i%4)*70+"ms"; io.observe(x); });
+})();
 </script>
+<script src="analitica.js"></script>
 </body>
 </html>
