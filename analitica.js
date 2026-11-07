@@ -10,6 +10,16 @@
 ===================================================================== */
 (function () {
   "use strict";
+  /* La dirección antigua de GitHub Pages sigue viva: quien llegue por ahí
+     pasa al dominio propio con la misma página y los mismos parámetros,
+     para que no haya dos copias de la app con cuentas distintas. */
+  try {
+    if (/\.github\.io$/i.test(location.hostname)) {
+      var ruta = location.pathname.replace(/^\/EscribAI/i, "") || "/";
+      location.replace("https://consteai.es" + ruta + location.search + location.hash);
+      return;
+    }
+  } catch (e) {}
   var URL_EVENTO = "https://tbaliejmtaeniffmqgif.supabase.co/functions/v1/evento";
 
   function pagina() {

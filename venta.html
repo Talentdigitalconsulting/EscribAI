@@ -6,6 +6,16 @@
 <title>ConsteAi — La reunión termina y el acta ya está redactada</title>
 <meta name="description" content="ConsteAi escucha la reunión, distingue quién habla y redacta el acta sola. Para administradores de fincas, despachos, consultas, aulas, asociaciones y ayuntamientos.">
 <link rel="icon" href="icons/icon-192.png">
+<link rel="canonical" href="https://consteai.es/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ConsteAi">
+<meta property="og:url" content="https://consteai.es/">
+<meta property="og:title" content="ConsteAi — La reunión termina y el acta ya está redactada">
+<meta property="og:description" content="Transcribe la junta, distingue quién habla y redacta el acta en tu plantilla. Para administradores de fincas, despachos, consultas, aulas, asociaciones y ayuntamientos.">
+<meta property="og:image" content="https://consteai.es/icons/logo-consteai-oscuro.png">
+<meta property="og:locale" content="es_ES">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0A0E1A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -210,7 +220,7 @@ footer .links{display:flex;gap:18px;flex-wrap:wrap}
   <div class="wrap">
     <div>
       <div class="eyebrow">Transcripción · Identificación de voces · Acta automática</div>
-      <h1 style="margin-top:18px">La reunión termina<br>y el acta de <span class="rot" id="rot">la junta</span><br><span class="grad">ya está redactada.</span></h1>
+      <h1 style="margin-top:18px">La reunión termina<br>y el acta <span class="rot" id="rot">de la junta</span><br><span class="grad">ya está redactada.</span></h1>
       <p class="lead">ConsteAi escucha, distingue a cada persona por su voz y te devuelve el borrador del acta <b>en tu propia plantilla</b>, con los acuerdos, las votaciones y los plazos en su sitio. Tú solo revisas y firmas.</p>
       <div class="cta">
         <a href="index.html" class="btn pri lg">🎙️ Probar 5 minutos sin registro</a>
@@ -400,12 +410,12 @@ footer .links{display:flex;gap:18px;flex-wrap:wrap}
         <span class="badge">El más elegido</span>
         <div class="nm">Pro</div><div class="pr">19€<small> /mes</small></div><div class="for">Para quien levanta acta cada semana</div>
         <ul><li>Comunidades y voces ilimitadas</li><li>Acta redactada con IA</li><li>Modelos de acta con tu estilo</li><li>Tu Word con tu membrete</li><li>10 h/mes de transcripción profesional</li><li>Juntas online y biblioteca en la nube</li></ul>
-        <a href="https://buy.stripe.com/aFacN6aFW5H5fYAbMH9k403" class="btn pri">Contratar Pro</a>
+        <a href="index.html?plan=pro_mes" class="btn pri">Contratar Pro</a>
       </div>
       <div class="plan rv">
         <div class="nm">Pro anual</div><div class="pr">190€<small> /año</small></div><div class="for">Dos meses gratis, precio bloqueado</div>
         <ul><li>Todo lo del plan Pro</li><li>Ahorras 38 € al año</li><li>Soporte prioritario</li></ul>
-        <a href="https://buy.stripe.com/dRmcN6bK0glJ13GeYT9k404" class="btn">Contratar anual</a>
+        <a href="index.html?plan=pro_anyo" class="btn">Contratar anual</a>
       </div>
       <div class="plan rv">
         <div class="nm">Despacho</div><div class="pr">149€<small> /mes</small></div><div class="for">5 personas, un solo equipo</div>
@@ -450,7 +460,7 @@ footer .links{display:flex;gap:18px;flex-wrap:wrap}
 <script>
 // palabra rotatoria del titular
 (function(){
-  var el=document.getElementById("rot"), P=["la junta","la consulta","el consejo","la clase","la asamblea","el pleno","la entrevista"], i=0;
+  var el=document.getElementById("rot"), P=["de la junta","de la consulta","del consejo","de la clase","de la asamblea","del pleno","de la entrevista"], i=0;
   setInterval(function(){
     el.classList.add("fuera");
     setTimeout(function(){ i=(i+1)%P.length; el.textContent=P[i]; el.classList.remove("fuera"); },380);
