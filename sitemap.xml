@@ -1,8 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://consteai.es/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://consteai.es/privacidad.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://consteai.es/condiciones.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://consteai.es/encargado.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://consteai.es/aviso-legal.html</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url><loc>https://consteai.es/</loc><lastmod>2026-11-08</lastmod><changefreq>weekly</changefreq><priority>1.0</priority><image:image><image:loc>https://consteai.es/img/hero-despacho.jpg</image:loc><image:title>ConsteAi</image:title></image:image></url>
+  <url><loc>https://consteai.es/software-actas-reunion</loc><lastmod>2026-11-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority><image:image><image:loc>https://consteai.es/img/hero-despacho.jpg</image:loc><image:title>Software de actas de reunión</image:title></image:image></url>
+  <url><loc>https://consteai.es/acta-junta-propietarios</loc><lastmod>2026-11-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority><image:image><image:loc>https://consteai.es/img/fincas-junta-2.jpg</image:loc><image:title>Administradores de fincas</image:title></image:image></url>
+  <url><loc>https://consteai.es/transcripcion-reuniones-abogados</loc><lastmod>2026-11-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority><image:image><image:loc>https://consteai.es/img/despacho-abogados.jpg</image:loc><image:title>Despachos de abogados y asesorías</image:title></image:image></url>
+  <url><loc>https://consteai.es/notas-sesion-consulta</loc><lastmod>2026-11-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority><image:image><image:loc>https://consteai.es/img/salud-consulta.jpg</image:loc><image:title>Consultas, psicología y terapia</image:title></image:image></url>
+  <url><loc>https://consteai.es/transcribir-clases</loc><lastmod>2026-11-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority><image:image><image:loc>https://consteai.es/img/formacion-clase.jpg</image:loc><image:title>Docentes, academias y formadores</image:title></image:image></url>
+  <url><loc>https://consteai.es/transcripcion-entrevistas-podcast</loc><lastmod>2026-11-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority><image:image><image:loc>https://consteai.es/img/medios-entrevista.jpg</image:loc><image:title>Periodistas y pódcast</image:title></image:image></url>
+  <url><loc>https://consteai.es/acta-reunion-comercial</loc><lastmod>2026-11-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority><image:image><image:loc>https://consteai.es/img/ventas-reunion.jpg</image:loc><image:title>Equipos comerciales</image:title></image:image></url>
+  <url><loc>https://consteai.es/acta-reunion-padres-consejo-escolar</loc><lastmod>2026-11-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority><image:image><image:loc>https://consteai.es/img/escolar-reunion.jpg</image:loc><image:title>Centros educativos y AMPA</image:title></image:image></url>
+  <url><loc>https://consteai.es/acta-asamblea-asociacion</loc><lastmod>2026-11-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority><image:image><image:loc>https://consteai.es/img/asociaciones-asamblea.jpg</image:loc><image:title>Asociaciones, cooperativas y clubes</image:title></image:image></url>
+  <url><loc>https://consteai.es/acta-pleno-ayuntamiento</loc><lastmod>2026-11-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority><image:image><image:loc>https://consteai.es/img/instituciones-pleno.jpg</image:loc><image:title>Ayuntamientos y órganos colegiados</image:title></image:image></url>
+  <url><loc>https://consteai.es/privacidad.html</loc><lastmod>2026-11-08</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://consteai.es/condiciones.html</loc><lastmod>2026-11-08</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://consteai.es/encargado.html</loc><lastmod>2026-11-08</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://consteai.es/aviso-legal.html</loc><lastmod>2026-11-08</lastmod><changefreq>yearly</changefreq><priority>0.2</priority></url>
 </urlset>

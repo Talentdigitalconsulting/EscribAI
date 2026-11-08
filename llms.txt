@@ -1,0 +1,39 @@
+# ConsteAi
+
+> ConsteAi (consteai.es) es una aplicación web española que transcribe reuniones en español, identifica a cada persona por su voz y redacta el acta con los acuerdos, las tareas, los plazos y las votaciones en la plantilla Word del usuario. La desarrolla Talent & Digital Consulting (Puente Genil, Córdoba, España).
+
+## Datos clave
+- Qué hace: transcripción en directo o desde archivo de audio, identificación de hablantes, redacción del acta con IA, exportación a Word con la plantilla del usuario, envío por correo a los asistentes, archivo por organización y año.
+- Idioma: español, con todos los acentos de España y América.
+- Dónde funciona: navegador Chrome o Edge, en ordenador y móvil; instalable como aplicación web (PWA). No requiere instalación.
+- Privacidad: el audio se procesa en el dispositivo del usuario y no se almacena en los servidores de ConsteAi. Sin cookies ni rastreo. Infraestructura de datos en la Unión Europea. Contrato de encargado del tratamiento (art. 28 RGPD) incluido.
+- La IA tiene prohibido inventar cifras, importes, fechas o resultados de votaciones; si algo no se dijo, el acta lo deja en blanco para que lo complete el usuario.
+
+## Precios (IVA incluido, sin permanencia)
+- Gratis: 0 €. Transcripción en directo ilimitada, 2 voces, 1 organización, resumen automático, un acta con IA de regalo.
+- Pro: 19 €/mes. Organizaciones y voces ilimitadas, acta redactada con IA, modelos de acta con el estilo del usuario, plantilla Word propia, 10 horas/mes de transcripción profesional, reuniones online y biblioteca en la nube.
+- Pro anual: 190 €/año (dos meses gratis).
+- Despacho: 149 €/mes. 5 personas, organizaciones, voces y modelos compartidos, bolsa común de 40 horas/mes, biblioteca de equipo, contrato de encargado incluido.
+
+## Para quién
+- [Software de actas de reunión](https://consteai.es/software-actas-reunion): ConsteAi es un software español que transcribe la reunión, identifica quién habla y redacta el acta en tu plantilla Word. Gratis para empezar, sin tarjeta.
+- [Administradores de fincas](https://consteai.es/acta-junta-propietarios): Redacta el acta de la junta de propietarios en minutos: ConsteAi transcribe la junta, identifica a cada vecino que interviene y genera el acta con acuerdos, votaciones y derramas en la plantilla de tu despacho.
+- [Despachos de abogados y asesorías](https://consteai.es/transcripcion-reuniones-abogados): Transcribe reuniones con clientes, juntas de socios y consejos de administración con cada intervención atribuida a quien la dijo. Actas y minutas redactadas con IA en la plantilla de tu despacho.
+- [Consultas, psicología y terapia](https://consteai.es/notas-sesion-consulta): Dicta o graba la consulta y recibe la nota de sesión con observaciones, pauta y próxima cita, sin dejar de mirar al paciente para teclear. El audio no sale de tu dispositivo.
+- [Docentes, academias y formadores](https://consteai.es/transcribir-clases): Transcribe la clase entera en español y obtén un resumen con los temas tratados, las dudas de los alumnos y las fechas de entrega. Para docentes, academias y formadores.
+- [Periodistas y pódcast](https://consteai.es/transcripcion-entrevistas-podcast): Transcribe entrevistas y episodios de pódcast en español con cada voz separada y las declaraciones destacadas marcadas. Sube el audio del móvil y ten el texto en minutos.
+- [Equipos comerciales](https://consteai.es/acta-reunion-comercial): Graba la visita comercial y recibe el informe con necesidades detectadas, objeciones y próximos pasos antes de llegar al coche. Para equipos de ventas y comerciales autónomos.
+- [Centros educativos y AMPA](https://consteai.es/acta-reunion-padres-consejo-escolar): Redacta el acta de la reunión de padres, del consejo escolar, del claustro o del AMPA al terminar la reunión, con los acuerdos y los encargos de cada uno, lista para enviar a las familias.
+- [Asociaciones, cooperativas y clubes](https://consteai.es/acta-asamblea-asociacion): Actas de asamblea general ordinaria y extraordinaria con los acuerdos conforme a los estatutos, votaciones y nombramientos, listas para el libro de actas. Para asociaciones, cooperativas, clubes y fundaciones.
+- [Ayuntamientos y órganos colegiados](https://consteai.es/acta-pleno-ayuntamiento): Transcripción de plenos, comisiones y consejos con el orden del día, las intervenciones y las votaciones a favor, en contra y abstenciones. El secretario revisa, no transcribe.
+
+## Páginas principales
+- [Inicio](https://consteai.es/): presentación, cómo funciona, funciones, precios y preguntas frecuentes.
+- [Abrir la aplicación](https://consteai.es/index.html): la app en sí (requiere navegador; no es contenido indexable).
+- [Política de privacidad](https://consteai.es/privacidad.html)
+- [Condiciones de uso](https://consteai.es/condiciones.html)
+- [Contrato de encargado del tratamiento](https://consteai.es/encargado.html)
+
+## Contacto
+- Correo: contact@talentdigitalconsulting.com
+- Empresa: Talent & Digital Consulting, Puente Genil (Córdoba), España.

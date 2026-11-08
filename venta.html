@@ -16,6 +16,24 @@
 <meta property="og:locale" content="es_ES">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0A0E1A">
+<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+{"@type":"Organization","@id":"https://consteai.es/#org","name":"Talent & Digital Consulting","url":"https://consteai.es/","logo":"https://consteai.es/icons/logo-consteai-oscuro.png","email":"contact@talentdigitalconsulting.com","address":{"@type":"PostalAddress","addressLocality":"Puente Genil","addressRegion":"Córdoba","addressCountry":"ES"}},
+{"@type":"WebSite","@id":"https://consteai.es/#site","url":"https://consteai.es/","name":"ConsteAi","inLanguage":"es","publisher":{"@id":"https://consteai.es/#org"}},
+{"@type":"SoftwareApplication","@id":"https://consteai.es/#app","name":"ConsteAi","applicationCategory":"BusinessApplication","operatingSystem":"Web (Chrome, Edge), Android, iOS","url":"https://consteai.es/","image":"https://consteai.es/img/hero-despacho.jpg","inLanguage":"es","description":"Aplicación web que transcribe reuniones en español, identifica a cada hablante por su voz y redacta el acta con acuerdos, tareas, plazos y votaciones en la plantilla Word del usuario.","publisher":{"@id":"https://consteai.es/#org"},"offers":[
+{"@type":"Offer","name":"Gratis","price":"0","priceCurrency":"EUR"},
+{"@type":"Offer","name":"Pro","price":"19","priceCurrency":"EUR","description":"Mensual, IVA incluido"},
+{"@type":"Offer","name":"Pro anual","price":"190","priceCurrency":"EUR","description":"Anual, IVA incluido"},
+{"@type":"Offer","name":"Despacho","price":"149","priceCurrency":"EUR","description":"Mensual, 5 personas, IVA incluido"}]},
+{"@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"¿Es legal grabar una junta de propietarios?","acceptedAnswer":{"@type":"Answer","text":"Sí, informando a los asistentes. ConsteAi incluye el aviso legal listo para leer al empezar o enviar con la convocatoria, y el contrato de encargado del tratamiento que tu despacho necesita como responsable de los datos."}},
+{"@type":"Question","name":"¿Y si hay cuarenta vecinos? No puedo calibrar a todos.","acceptedAnswer":{"@type":"Answer","text":"No hace falta. Graba la junta y, al terminar, el motor profesional separa las voces por sí solo. Tú les pones nombre después, y en la próxima junta de esa comunidad ya se acuerda."}},
+{"@type":"Question","name":"¿La IA se inventa cosas?","acceptedAnswer":{"@type":"Answer","text":"Tiene prohibido inventar cifras, importes, fechas o resultados de votaciones. Si no se dijo cuántos votaron a favor, el acuerdo sale sin el recuento. Y siempre revisas tú antes de firmar."}},
+{"@type":"Question","name":"¿Necesito un micrófono especial?","acceptedAnswer":{"@type":"Answer","text":"Para una consulta o un consejo de pocas personas, el del portátil vale. Para distinguir bien las voces en una sala grande, un micrófono de mesa omnidireccional marca la diferencia."}},
+{"@type":"Question","name":"¿Dónde se guardan las grabaciones?","acceptedAnswer":{"@type":"Answer","text":"En tu dispositivo. Las actas y transcripciones viajan con tu cuenta para que las tengas en el PC y en el móvil; el audio no sale de donde grabaste."}}]}
+]}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -209,6 +227,7 @@ footer .links{display:flex;gap:18px;flex-wrap:wrap}
       <a href="#quien">Para quién</a>
       <a href="#como">Cómo funciona</a>
       <a href="#funciones">Funciones</a>
+      <a href="/software-actas-reunion">Soluciones</a>
       <a href="#precios">Precios</a>
       <a href="index.html" class="btn pri" style="padding:10px 18px">Probar gratis</a>
     </nav>
@@ -259,47 +278,47 @@ footer .links{display:flex;gap:18px;flex-wrap:wrap}
       <p>Da igual si es una junta de cuarenta vecinos o una consulta de dos personas: donde alguien tiene que dejar por escrito lo que se dijo, ConsteAi hace el trabajo pesado.</p>
     </div>
     <div class="quien">
-      <a class="qc wide rv" href="index.html">
+      <a class="qc wide rv" href="/acta-junta-propietarios">
         <img src="img/fincas-junta-2.jpg" alt="Vecinos sentados en filas durante una junta de propietarios">
         <div class="ov"></div><span class="n">01 · Fincas</span>
         <div class="tx"><h3>Administradores de fincas</h3><p>La junta de las ocho acaba a las once y el acta se escribía al día siguiente de memoria. Ahora sale con cada acuerdo, cada votación y cada derrama en la plantilla de tu despacho.</p></div>
       </a>
-      <a class="qc rv" href="index.html">
+      <a class="qc rv" href="/transcripcion-reuniones-abogados">
         <img src="img/despacho-abogados.jpg" alt="Abogados revisando documentos con un cliente en el despacho">
         <div class="ov"></div><span class="n">02 · Despachos</span>
         <div class="tx"><h3>Abogados y asesorías</h3><p>Reuniones con clientes, consejos de administración, juntas de socios. Cada intervención atribuida a quien la dijo, con el tono formal que exige el documento.</p></div>
       </a>
-      <a class="qc rv" href="index.html">
+      <a class="qc rv" href="/notas-sesion-consulta">
         <img src="img/salud-consulta.jpg" alt="Médico en consulta con una paciente">
         <div class="ov"></div><span class="n">03 · Salud</span>
         <div class="tx"><h3>Consultas y terapia</h3><p>Nota de sesión con observaciones, pauta y próxima cita, sin dejar de mirar al paciente para teclear. Todo se procesa en tu dispositivo.</p></div>
       </a>
-      <a class="qc rv" href="index.html">
+      <a class="qc rv" href="/transcribir-clases">
         <img src="img/formacion-clase.jpg" alt="Profesor impartiendo clase a adultos">
         <div class="ov"></div><span class="n">04 · Formación</span>
         <div class="tx"><h3>Docentes y formadores</h3><p>La clase entera transcrita, con los temas tratados, las dudas de los alumnos y las fechas de entrega. Para el alumno que faltó y para el que no pudo tomar apuntes.</p></div>
       </a>
-      <a class="qc rv" href="index.html">
+      <a class="qc rv" href="/transcripcion-entrevistas-podcast">
         <img src="img/medios-entrevista.jpg" alt="Dos periodistas grabando una entrevista con auriculares">
         <div class="ov"></div><span class="n">05 · Medios</span>
         <div class="tx"><h3>Periodistas y pódcast</h3><p>Entrevistas con cada voz separada y las declaraciones destacadas ya marcadas. Sube el audio que grabaste con el móvil y en minutos tienes el texto.</p></div>
       </a>
-      <a class="qc rv" href="index.html">
+      <a class="qc rv" href="/acta-reunion-comercial">
         <img src="img/ventas-reunion.jpg" alt="Dos comerciales en una reunión con un cliente">
         <div class="ov"></div><span class="n">06 · Ventas</span>
         <div class="tx"><h3>Equipos comerciales</h3><p>Informe de la reunión con necesidades detectadas, objeciones y próximos pasos, enviado al cliente antes de que llegues al coche.</p></div>
       </a>
-      <a class="qc rv" href="index.html">
+      <a class="qc rv" href="/acta-reunion-padres-consejo-escolar">
         <img src="img/escolar-reunion.jpg" alt="Reunión de padres y madres en un aula con el tutor y la secretaria" style="object-position:68% center">
         <div class="ov"></div><span class="n">07 · Educación</span>
         <div class="tx"><h3>Reuniones escolares</h3><p>Reuniones de padres, consejos escolares, claustros y AMPA. El acta con los acuerdos y los encargos de cada uno, lista para enviar a las familias esa misma tarde.</p></div>
       </a>
-      <a class="qc wide rv" href="index.html">
+      <a class="qc wide rv" href="/acta-asamblea-asociacion">
         <img src="img/asociaciones-asamblea.jpg" alt="Asamblea de una asociación en una sala">
         <div class="ov"></div><span class="n">08 · Asociaciones</span>
         <div class="tx"><h3>Asociaciones y cooperativas</h3><p>Asambleas ordinarias y extraordinarias con los acuerdos conforme a los estatutos, listos para el libro de actas.</p></div>
       </a>
-      <a class="qc wide rv" href="index.html">
+      <a class="qc wide rv" href="/acta-pleno-ayuntamiento">
         <img src="img/instituciones-pleno.jpg" alt="Persona interviniendo en un atril ante el público">
         <div class="ov"></div><span class="n">09 · Instituciones</span>
         <div class="tx"><h3>Ayuntamientos y órganos colegiados</h3><p>Plenos, comisiones y consejos escolares con el orden del día, las intervenciones y las votaciones a favor, en contra y abstenciones. El secretario revisa, no transcribe.</p></div>
@@ -458,6 +477,7 @@ footer .links{display:flex;gap:18px;flex-wrap:wrap}
 <footer>
   <div class="wrap">
     <div>© 2026 Talent &amp; Digital Consulting · ConsteAi es un producto desarrollado y propiedad de Talent &amp; Digital Consulting.</div>
+    <div class="links"><a href="/software-actas-reunion">Software de actas</a><a href="/acta-junta-propietarios">Fincas</a><a href="/transcripcion-reuniones-abogados">Abogados</a><a href="/notas-sesion-consulta">Consultas</a><a href="/transcribir-clases">Clases</a><a href="/transcripcion-entrevistas-podcast">Entrevistas</a><a href="/acta-reunion-comercial">Ventas</a><a href="/acta-reunion-padres-consejo-escolar">Escolar</a><a href="/acta-asamblea-asociacion">Asociaciones</a><a href="/acta-pleno-ayuntamiento">Ayuntamientos</a></div>
     <div class="links"><a href="privacidad.html">Privacidad</a><a href="condiciones.html">Condiciones</a><a href="encargado.html">Contrato de encargado</a><a href="aviso-legal.html">Aviso legal</a></div>
   </div>
 </footer>

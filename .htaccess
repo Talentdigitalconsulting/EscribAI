@@ -9,6 +9,16 @@ RewriteRule ^ https://consteai.es%{REQUEST_URI} [L,R=301]
 # La raíz del dominio es la web de venta; la app vive en index.html.
 RewriteRule ^$ /venta.html [L]
 
+# ---------- URLs limpias para las páginas SEO ----------
+# /acta-junta-propietarios.html -> /acta-junta-propietarios (301, solo para estas páginas)
+RewriteCond %{THE_REQUEST} \s/(software-actas-reunion|acta-junta-propietarios|transcripcion-reuniones-abogados|notas-sesion-consulta|transcribir-clases|transcripcion-entrevistas-podcast|acta-reunion-comercial|acta-reunion-padres-consejo-escolar|acta-asamblea-asociacion|acta-pleno-ayuntamiento)\.html[?\s] [NC]
+RewriteRule ^ /%1 [R=301,L]
+# /acta-junta-propietarios -> sirve acta-junta-propietarios.html
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{DOCUMENT_ROOT}/$1.html -f
+RewriteRule ^([a-z0-9-]+)$ /$1.html [L]
+
 # ---------- tipos de archivo ----------
 AddType application/manifest+json .webmanifest .json
 AddType application/javascript .js
